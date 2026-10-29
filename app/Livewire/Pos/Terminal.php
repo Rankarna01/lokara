@@ -3,11 +3,13 @@
 namespace App\Livewire\Pos;
 
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\Shift;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -16,23 +18,24 @@ use Livewire\Component;
 class Terminal extends Component
 {
     // Active navigation tab on POS sidebar
-    public string $activeNav = 'katalog'; // 'katalog', 'pesanan', 'shift', 'transaksi', 'pelanggan', 'bantuan'
+    public string $activeNav = 'katalog';
 
     // Selected Outlet
     public ?int $selectedOutletId = null;
 
     // Filter & Search
     public string $search = '';
-    public string $selectedCategory = 'all'; // 'all', 'kopi', 'non-kopi', 'makanan', 'snack'
+    public string $selectedCategory = 'all';
 
     // Cart State
     public array $cart = [];
     public string $orderType = 'dine_in'; // 'dine_in', 'take_away'
     public string $selectedTable = 'Meja 08';
+    public ?array $selectedCustomer = null;
 
     // Payment Modal State
     public bool $showPaymentModal = false;
-    public string $paymentMethod = 'cash'; // 'cash', 'qris', 'debit'
+    public string $paymentMethod = 'cash';
     public float $cashTendered = 100000;
     public float $changeDue = 5650;
 
@@ -43,6 +46,24 @@ class Terminal extends Component
     // Hold Orders Modal State
     public bool $showHoldModal = false;
     public array $heldOrders = [];
+
+    // Shift & Cash Modal State
+    public bool $showShiftModal = false;
+    public float $shiftStartingCash = 200000;
+    public array $pettyCashMovements = [];
+    public float $pettyCashAmount = 0;
+    public string $pettyCashType = 'out'; // 'in', 'out'
+    public string $pettyCashReason = '';
+
+    // Transactions Modal State
+    public bool $showTransactionsModal = false;
+
+    // Customer Selection Modal State
+    public bool $showCustomerModal = false;
+    public string $customerSearch = '';
+
+    // Help & Shortcuts Modal State
+    public bool $showHelpModal = false;
 
     // Barcode Scan Modal State
     public bool $showBarcodeModal = false;
@@ -68,7 +89,7 @@ class Terminal extends Component
             }
         }
 
-        // Initialize default demo cart to match Image 3 exactly!
+        // Default demo cart to match Image 3
         $this->cart = [
             [
                 'product_id' => 1,
@@ -99,6 +120,12 @@ class Terminal extends Component
             ],
         ];
 
+        // Seed initial petty cash movement
+        $this->pettyCashMovements = [
+            ['type' => 'out', 'amount' => 25000, 'reason' => 'Beli Es Batu Kristal 1 Pack', 'time' => '10:15'],
+            ['type' => 'out', 'amount' => 15000, 'reason' => 'Beli Galon Air Mineral', 'time' => '11:40'],
+        ];
+
         $this->calculateTotals();
     }
 
@@ -119,7 +146,6 @@ class Terminal extends Component
             return;
         }
 
-        // If product has variants, open modal selection
         if ($product->variants->count() > 0) {
             $this->selectedProductForVariant = $product;
             $this->selectedVariantName = $product->variants->first()->name;
@@ -150,7 +176,6 @@ class Terminal extends Component
 
     private function insertItemToCart(Product $product, string $name, float $price, string $variant)
     {
-        // Check if item with same variant already in cart
         $found = false;
         foreach ($this->cart as $key => $item) {
             if ($item['product_id'] === $product->id && $item['variant'] === $variant) {
@@ -212,6 +237,7 @@ class Terminal extends Component
     public function clearCart()
     {
         $this->cart = [];
+        $this->selectedCustomer = null;
         $this->calculateTotals();
         $this->notify('Keranjang pesanan telah dikosongkan.');
     }
@@ -258,7 +284,6 @@ class Terminal extends Component
     public function processPayment()
     {
         $totals = $this->calculateTotals();
-
         $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
 
         $this->completedOrderData = [
@@ -271,10 +296,11 @@ class Terminal extends Component
             'cash_tendered' => $this->paymentMethod === 'cash' ? $this->cashTendered : $totals['total'],
             'change_due' => $this->paymentMethod === 'cash' ? $this->changeDue : 0,
             'order_type' => $this->orderType === 'dine_in' ? 'Dine In (' . $this->selectedTable . ')' : 'Take Away',
+            'customer_name' => $this->selectedCustomer['name'] ?? 'Pelanggan Reguler',
             'created_at' => Carbon::now()->translatedFormat('d M Y, H:i'),
         ];
 
-        // Save order to database
+        // Save order to MySQL DB
         $tenant = Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
         if ($tenant) {
             $order = Order::create([
@@ -318,6 +344,7 @@ class Terminal extends Component
         $this->showPaymentModal = false;
         $this->showSuccessModal = true;
         $this->cart = [];
+        $this->selectedCustomer = null;
     }
 
     public function holdOrder()
@@ -331,12 +358,14 @@ class Terminal extends Component
         $this->heldOrders[] = [
             'id' => uniqid('HOLD-'),
             'table' => $this->orderType === 'dine_in' ? $this->selectedTable : 'Take Away',
+            'customer' => $this->selectedCustomer['name'] ?? 'Pelanggan Umum',
             'items' => $this->cart,
             'total' => $totals['total'],
             'time' => Carbon::now()->format('H:i'),
         ];
 
         $this->cart = [];
+        $this->selectedCustomer = null;
         $this->calculateTotals();
         $this->notify('Pesanan berhasil ditahan/disimpan.');
     }
@@ -346,7 +375,7 @@ class Terminal extends Component
         foreach ($this->heldOrders as $key => $held) {
             if ($held['id'] === $holdId) {
                 $this->cart = $held['items'];
-                $this->selectedTable = str_contains($held['table'], 'Meja') ? $held['table'] : 'Meja 01';
+                $this->selectedTable = str_contains($held['table'], 'Meja') ? $held['table'] : 'Meja 08';
                 $this->orderType = str_contains($held['table'], 'Meja') ? 'dine_in' : 'take_away';
                 unset($this->heldOrders[$key]);
                 $this->heldOrders = array_values($this->heldOrders);
@@ -357,6 +386,43 @@ class Terminal extends Component
         $this->showHoldModal = false;
         $this->calculateTotals();
         $this->notify('Pesanan berhasil dimuat kembali ke keranjang.');
+    }
+
+    public function recordPettyCash()
+    {
+        if ($this->pettyCashAmount <= 0 || empty($this->pettyCashReason)) {
+            $this->notify('Nominal dan keterangan petty cash wajib diisi.', 'error');
+            return;
+        }
+
+        $this->pettyCashMovements[] = [
+            'type' => $this->pettyCashType,
+            'amount' => $this->pettyCashAmount,
+            'reason' => $this->pettyCashReason,
+            'time' => Carbon::now()->format('H:i'),
+        ];
+
+        $this->pettyCashAmount = 0;
+        $this->pettyCashReason = '';
+        $this->notify('Pencatatan kas petty cash berhasil.');
+    }
+
+    public function selectCustomer(string $name, string $phone, int $points)
+    {
+        $this->selectedCustomer = [
+            'name' => $name,
+            'phone' => $phone,
+            'points' => $points,
+        ];
+
+        $this->showCustomerModal = false;
+        $this->notify("Member {$name} dipilih untuk transaksi ini.");
+    }
+
+    public function removeSelectedCustomer()
+    {
+        $this->selectedCustomer = null;
+        $this->notify('Member dilepas dari transaksi.');
     }
 
     public function scanBarcode()
@@ -371,7 +437,7 @@ class Terminal extends Component
             $this->barcodeInput = '';
             $this->notify("Barcode terdeteksi: {$product->name}");
         } else {
-            $this->notify('Produk dengan barcode tersebut tidak ditemukan!', 'error');
+            $this->notify('Produk barcode tidak ditemukan!', 'error');
         }
     }
 
@@ -380,6 +446,7 @@ class Terminal extends Component
         $this->showSuccessModal = false;
         $this->completedOrderData = null;
         $this->cart = [];
+        $this->selectedCustomer = null;
     }
 
     public function notify(string $msg, string $type = 'success')
@@ -403,9 +470,10 @@ class Terminal extends Component
     public function render()
     {
         $tenant = Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
+        $tenantId = $tenant ? $tenant->id : 1;
 
         // Query Products
-        $productsQuery = Product::where('tenant_id', $tenant ? $tenant->id : 1)
+        $products = Product::where('tenant_id', $tenantId)
             ->where('is_active', true)
             ->when($this->search, function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
@@ -416,21 +484,41 @@ class Terminal extends Component
                     $catQuery->where('slug', $this->selectedCategory);
                 });
             })
-            ->orderBy('id', 'asc');
-
-        $products = $productsQuery->get();
+            ->orderBy('id', 'asc')
+            ->get();
 
         // Categories
-        $categories = Category::where('tenant_id', $tenant ? $tenant->id : 1)
+        $categories = Category::where('tenant_id', $tenantId)
             ->withCount('products')
             ->orderBy('sort_order', 'asc')
             ->get();
 
-        $allMenuCount = Product::where('tenant_id', $tenant ? $tenant->id : 1)->count();
+        $allMenuCount = Product::where('tenant_id', $tenantId)->count();
 
         // Outlets
-        $outlets = Outlet::where('tenant_id', $tenant ? $tenant->id : 1)->get();
+        $outlets = Outlet::where('tenant_id', $tenantId)->get();
         $currentOutlet = Outlet::find($this->selectedOutletId) ?? $outlets->first();
+
+        // Completed Orders for Transactions modal
+        $todayOrders = Order::where('tenant_id', $tenantId)
+            ->with(['items', 'payments'])
+            ->orderBy('id', 'desc')
+            ->take(10)
+            ->get();
+
+        // Customers list for customer modal
+        $customersList = [
+            ['name' => 'Budi Santoso', 'phone' => '08123456789', 'points' => 125, 'tier' => 'Gold Member'],
+            ['name' => 'Sarah Wijaya', 'phone' => '08198765432', 'points' => 84, 'tier' => 'Silver Member'],
+            ['name' => 'Rian Pratama', 'phone' => '08112233445', 'points' => 210, 'tier' => 'VIP Member'],
+            ['name' => 'Dewi Anggraini', 'phone' => '08571234567', 'points' => 35, 'tier' => 'Regular'],
+        ];
+
+        // Cash Calculation for Shift
+        $cashSalesTotal = OrderPayment::where('payment_method', 'cash')->sum('amount');
+        $pettyOutTotal = array_sum(array_column(array_filter($this->pettyCashMovements, fn($p) => $p['type'] === 'out'), 'amount'));
+        $pettyInTotal = array_sum(array_column(array_filter($this->pettyCashMovements, fn($p) => $p['type'] === 'in'), 'amount'));
+        $expectedCashDrawer = $this->shiftStartingCash + $cashSalesTotal + $pettyInTotal - $pettyOutTotal;
 
         $totals = $this->calculateTotals();
 
@@ -441,7 +529,10 @@ class Terminal extends Component
             'outlets' => $outlets,
             'currentOutlet' => $currentOutlet,
             'totals' => $totals,
+            'todayOrders' => $todayOrders,
+            'customersList' => $customersList,
+            'cashSalesTotal' => $cashSalesTotal,
+            'expectedCashDrawer' => $expectedCashDrawer,
         ])->layout('layouts.app', ['title' => 'POS Terminal - Lokara POS']);
     }
 }
-

@@ -15,6 +15,7 @@ class Product extends Model
 
     protected $casts = [
         'base_price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'is_active' => 'boolean',
         'is_available' => 'boolean',
     ];
@@ -33,5 +34,9 @@ class Product extends Model
     {
         return $this->hasMany(ProductVariant::class);
     }
-}
 
+    public function recipes(): HasMany
+    {
+        return $this->hasMany(ProductRecipe::class);
+    }
+}

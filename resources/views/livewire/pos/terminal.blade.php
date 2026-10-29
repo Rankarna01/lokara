@@ -58,28 +58,31 @@
                     </button>
 
                     <!-- Shift & Kas -->
-                    <button wire:click="notify('Shift aktif: Dina Putri • Modal Kas: Rp 200.000')"
+                    <button wire:click="$set('showShiftModal', true)"
                             class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'shift' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                         <i class="fa-solid fa-cash-register text-sm w-4 text-center text-slate-400"></i>
                         <span>Shift & Kas</span>
                     </button>
 
                     <!-- Transaksi -->
-                    <button wire:click="notify('Riwayat transaksi shift ini siap dicetak ulang')"
+                    <button wire:click="$set('showTransactionsModal', true)"
                             class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'transaksi' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                         <i class="fa-solid fa-receipt text-sm w-4 text-center text-slate-400"></i>
                         <span>Transaksi</span>
                     </button>
 
                     <!-- Pelanggan -->
-                    <button wire:click="notify('Data member dan poin loyalti pelanggan')"
+                    <button wire:click="$set('showCustomerModal', true)"
                             class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'pelanggan' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                         <i class="fa-solid fa-user-group text-sm w-4 text-center text-slate-400"></i>
                         <span>Pelanggan</span>
+                        @if ($selectedCustomer)
+                            <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500"></span>
+                        @endif
                     </button>
 
                     <!-- Bantuan -->
-                    <button wire:click="notify('Panduan pintas kasir: F1 Bayar • F2 Cari • Esc Batal')"
+                    <button wire:click="$set('showHelpModal', true)"
                             class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'bantuan' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                         <i class="fa-regular fa-circle-question text-sm w-4 text-center text-slate-400"></i>
                         <span>Bantuan</span>
@@ -87,10 +90,15 @@
                 </nav>
             </div>
 
-            <!-- Bottom Logout Link (Matching Image 3) -->
-            <div class="p-3 border-t border-slate-100">
+            <!-- Bottom Back to Admin / Logout Link -->
+            <div class="p-3 border-t border-slate-100 space-y-1">
+                <a href="{{ route('tenant.dashboard') }}"
+                   class="w-full flex items-center gap-3 px-3.5 py-2 text-xs text-orange-600 hover:bg-orange-50 rounded-lg transition font-semibold">
+                    <i class="fa-solid fa-chart-pie text-sm w-4 text-center"></i>
+                    <span>Back Office Toko</span>
+                </a>
                 <button wire:click="logout"
-                        class="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition font-medium">
+                        class="w-full flex items-center gap-3 px-3.5 py-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition font-medium">
                     <i class="fa-solid fa-arrow-right-from-bracket text-sm w-4 text-center"></i>
                     <span>Keluar</span>
                 </button>
@@ -308,9 +316,10 @@
                         <i class="fa-solid fa-ellipsis"></i>
                     </button>
                     <div x-show="open" @click.outside="open = false" x-transition
-                         class="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30 text-xs">
-                        <button wire:click="clearCart" @click="open = false" class="w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50 font-medium">Kosongkan Keranjang</button>
+                         class="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30 text-xs">
+                        <button wire:click="$set('showCustomerModal', true)" @click="open = false" class="w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50 font-medium">Pilih Member Pelanggan</button>
                         <button wire:click="holdOrder" @click="open = false" class="w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50 font-medium">Tahan Pesanan</button>
+                        <button wire:click="clearCart" @click="open = false" class="w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50 font-medium border-t border-slate-100 mt-1">Kosongkan Keranjang</button>
                     </div>
                 </div>
             </div>
@@ -356,6 +365,22 @@
                                 </button>
                             @endforeach
                         </div>
+                    </div>
+                @endif
+
+                <!-- Member Badge if selected -->
+                @if ($selectedCustomer)
+                    <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-id-card text-emerald-600"></i>
+                            <div>
+                                <div class="font-bold text-emerald-900 leading-tight">{{ $selectedCustomer['name'] }}</div>
+                                <div class="text-[10px] text-emerald-600">{{ $selectedCustomer['points'] }} Poin Member</div>
+                            </div>
+                        </div>
+                        <button wire:click="removeSelectedCustomer" class="text-slate-400 hover:text-rose-500">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
                     </div>
                 @endif
 
@@ -563,6 +588,10 @@
                         <span class="font-semibold text-slate-800">{{ $completedOrderData['order_type'] }}</span>
                     </div>
                     <div class="flex justify-between">
+                        <span class="text-slate-500">Pelanggan:</span>
+                        <span class="font-semibold text-slate-800">{{ $completedOrderData['customer_name'] }}</span>
+                    </div>
+                    <div class="flex justify-between">
                         <span class="text-slate-500">Metode Bayar:</span>
                         <span class="font-semibold text-slate-800">{{ $completedOrderData['payment_method'] }}</span>
                     </div>
@@ -693,5 +722,246 @@
         </div>
     @endif
 
-</div>
+    <!-- ================= MODAL: SHIFT & KAS ================= -->
+    @if ($showShiftModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Manajemen Shift & Kas Laci</h3>
+                        <p class="text-[11px] text-slate-400">Kasir: Dina Putri • Shift Berjalan</p>
+                    </div>
+                    <button wire:click="$set('showShiftModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
 
+                <!-- Cash Summary Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Modal Awal</span>
+                        <div class="font-bold text-slate-800 text-sm mt-0.5">Rp{{ number_format($shiftStartingCash, 0, ',', '.') }}</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Penjualan Tunai</span>
+                        <div class="font-bold text-emerald-600 text-sm mt-0.5">+Rp{{ number_format($cashSalesTotal, 0, ',', '.') }}</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Kas Keluar</span>
+                        <div class="font-bold text-rose-500 text-sm mt-0.5">-Rp{{ number_format(array_sum(array_column(array_filter($pettyCashMovements, fn($p) => $p['type'] === 'out'), 'amount')), 0, ',', '.') }}</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-orange-50 border border-orange-100">
+                        <span class="text-[10px] text-orange-600 uppercase font-bold">Uang di Laci</span>
+                        <div class="font-extrabold text-orange-600 text-sm mt-0.5">Rp{{ number_format($expectedCashDrawer, 0, ',', '.') }}</div>
+                    </div>
+                </div>
+
+                <!-- Petty Cash Entry Form -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs">
+                    <div class="font-bold text-slate-800 flex items-center justify-between">
+                        <span>Pencatatan Kas Masuk / Keluar (Petty Cash)</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <select wire:model="pettyCashType" class="border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700">
+                            <option value="out">Kas Keluar (-)</option>
+                            <option value="in">Kas Masuk (+)</option>
+                        </select>
+                        <input type="number" wire:model="pettyCashAmount" placeholder="Nominal Rp" class="border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white" />
+                        <input type="text" wire:model="pettyCashReason" placeholder="Keterangan (misal: Es Batu)" class="border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white" />
+                    </div>
+                    <div class="text-right">
+                        <button type="button" wire:click="recordPettyCash" class="px-3 py-1.5 rounded-lg bg-slate-800 text-white font-semibold text-[11px] hover:bg-slate-900 transition">
+                            Simpan Mutasi Kas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Petty Cash History List -->
+                <div class="space-y-1.5 max-h-36 overflow-y-auto text-xs">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Riwayat Kas Selama Shift:</div>
+                    @foreach ($pettyCashMovements as $pcm)
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-100 text-[11px]">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $pcm['type'] === 'out' ? 'bg-rose-500' : 'bg-emerald-500' }}"></span>
+                                <span class="font-medium text-slate-800">{{ $pcm['reason'] }}</span>
+                                <span class="text-slate-400 font-normal">({{ $pcm['time'] }})</span>
+                            </div>
+                            <span class="font-bold {{ $pcm['type'] === 'out' ? 'text-rose-500' : 'text-emerald-600' }}">
+                                {{ $pcm['type'] === 'out' ? '-' : '+' }}Rp{{ number_format($pcm['amount'], 0, ',', '.') }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                    <button wire:click="notify('Laci kasir fisik (Cash Drawer) terbuka otomatis via perintah ESC/POS')" class="text-slate-600 hover:text-slate-900 font-medium">
+                        <i class="fa-solid fa-vault mr-1 text-slate-400"></i> Buka Laci Kas
+                    </button>
+                    <button wire:click="notify('Shift ditutup. Laporan ringkasan kas dicetak ke printer.')" class="px-4 py-2 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition">
+                        Tutup Shift & Rekonsiliasi
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL: TRANSAKSI HARI INI ================= -->
+    @if ($showTransactionsModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Riwayat Transaksi Shift Ini</h3>
+                        <p class="text-[11px] text-slate-400">Daftar transaksi yang diselesaikan kasir hari ini</p>
+                    </div>
+                    <button wire:click="$set('showTransactionsModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
+                            <tr>
+                                <th class="py-2 px-3 font-semibold">No. Order</th>
+                                <th class="py-2 px-3 font-semibold">Waktu / Tipe</th>
+                                <th class="py-2 px-3 font-semibold">Metode</th>
+                                <th class="py-2 px-3 font-semibold">Total</th>
+                                <th class="py-2 px-3 font-semibold text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse ($todayOrders as $to)
+                                <tr class="hover:bg-slate-50/50 transition">
+                                    <td class="py-2.5 px-3 font-bold text-slate-900">{{ $to->order_number }}</td>
+                                    <td class="py-2.5 px-3 text-slate-500">
+                                        {{ $to->created_at ? $to->created_at->format('H:i') : '14:20' }} • {{ $to->order_type === 'dine_in' ? ($to->table_number ?? 'Dine In') : 'Take Away' }}
+                                    </td>
+                                    <td class="py-2.5 px-3">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                                            {{ $to->payments->first() ? $to->payments->first()->payment_method : 'QRIS' }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2.5 px-3 font-bold text-slate-900">Rp{{ number_format($to->total_amount, 0, ',', '.') }}</td>
+                                    <td class="py-2.5 px-3 text-right">
+                                        <button wire:click="notify('Struk order {{ $to->order_number }} dikirim ke printer thermal')" class="px-2.5 py-1 rounded border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-semibold">
+                                            <i class="fa-solid fa-print mr-1"></i> Cetak Ulang
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="py-6 text-center text-slate-400">Belum ada transaksi di database untuk shift ini.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL: PELANGGAN (CRM / MEMBER) ================= -->
+    @if ($showCustomerModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Pilih Pelanggan / Member</h3>
+                        <p class="text-[11px] text-slate-400">Hubungkan transaksi ke akun member untuk menambah poin</p>
+                    </div>
+                    <button wire:click="$set('showCustomerModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                @if ($selectedCustomer)
+                    <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                        <div>
+                            <span class="text-[10px] text-emerald-600 uppercase font-bold">Member Terpilih:</span>
+                            <div class="font-bold text-emerald-900 text-sm">{{ $selectedCustomer['name'] }} ({{ $selectedCustomer['phone'] }})</div>
+                            <div class="text-[11px] text-emerald-700">{{ $selectedCustomer['points'] }} Poin Tersedia</div>
+                        </div>
+                        <button wire:click="removeSelectedCustomer" class="text-xs text-rose-600 font-semibold hover:underline">Lepas</button>
+                    </div>
+                @endif
+
+                <div class="space-y-2 text-xs">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" placeholder="Cari nama atau nomor WhatsApp pelanggan..." class="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                    </div>
+
+                    <div class="space-y-2 max-h-60 overflow-y-auto pt-1">
+                        @foreach ($customersList as $cust)
+                            <div class="p-3 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                                <div>
+                                    <div class="font-bold text-slate-900">{{ $cust['name'] }} <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-semibold {{ $cust['tier'] === 'VIP Member' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700' }}">{{ $cust['tier'] }}</span></div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">{{ $cust['phone'] }} • {{ $cust['points'] }} Poin</div>
+                                </div>
+                                <button type="button" wire:click="selectCustomer('{{ $cust['name'] }}', '{{ $cust['phone'] }}', {{ $cust['points'] }})"
+                                        class="px-3 py-1.5 rounded-lg bg-orange-500 text-white font-bold text-[11px] hover:bg-orange-600 transition">
+                                    Pilih
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL: BANTUAN & PINTASAN KEYBOARD ================= -->
+    @if ($showHelpModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-keyboard"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Pintasan Keyboard (Shortcuts)</h3>
+                            <p class="text-[11px] text-slate-400">Gunakan tombol keyboard untuk operasi kasir super cepat</p>
+                        </div>
+                    </div>
+                    <button wire:click="$set('showHelpModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600">Buka Pembayaran</span>
+                        <kbd class="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono font-bold text-slate-800 shadow-xs">F1 / Enter</kbd>
+                    </div>
+                    <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600">Cari Menu</span>
+                        <kbd class="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono font-bold text-slate-800 shadow-xs">F2 / /</kbd>
+                    </div>
+                    <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600">Tahan Pesanan (Hold)</span>
+                        <kbd class="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono font-bold text-slate-800 shadow-xs">F3</kbd>
+                    </div>
+                    <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600">Scan Barcode</span>
+                        <kbd class="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono font-bold text-slate-800 shadow-xs">F4</kbd>
+                    </div>
+                    <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600">Batal / Tutup Dialog</span>
+                        <kbd class="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono font-bold text-slate-800 shadow-xs">Esc</kbd>
+                    </div>
+                    <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <span class="text-slate-600">Ubah Kuantitas</span>
+                        <kbd class="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono font-bold text-slate-800 shadow-xs">+ / -</kbd>
+                    </div>
+                </div>
+
+                <div class="pt-2 text-center text-[11px] text-slate-400">
+                    Perlu bantuan teknis? Hubungi Owner atau Super Admin di <span class="font-bold text-slate-700">support@lokarapos.id</span>
+                </div>
+            </div>
+        </div>
+    @endif
+
+</div>

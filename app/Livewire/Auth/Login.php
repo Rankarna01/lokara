@@ -25,7 +25,7 @@ class Login extends Component
     public function mount()
     {
         if (Auth::check()) {
-            return redirect()->route('superadmin.dashboard');
+            return $this->redirectBasedOnRole(Auth::user());
         }
     }
 
@@ -41,22 +41,44 @@ class Login extends Component
         $this->password = 'password';
     }
 
+    public function fillDemoOwner()
+    {
+        $this->email = 'rian@kopiruangpagi.id';
+        $this->password = 'password';
+    }
+
+    public function fillDemoCashier()
+    {
+        $this->email = 'dina@kopiruangpagi.id';
+        $this->password = 'password';
+    }
+
     public function login()
     {
         $this->validate();
 
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             session()->regenerate();
-            return redirect()->intended(route('superadmin.dashboard'));
+            return $this->redirectBasedOnRole(Auth::user());
         }
 
         $this->addError('email', 'Email atau kata sandi tidak sesuai dengan data kami.');
     }
 
+    private function redirectBasedOnRole($user)
+    {
+        if ($user && in_array($user->role, ['owner', 'manager'])) {
+            return redirect()->route('tenant.dashboard');
+        } elseif ($user && $user->role === 'cashier') {
+            return redirect()->route('pos.terminal');
+        }
+
+        return redirect()->intended(route('superadmin.dashboard'));
+    }
+
     public function render()
     {
         return view('livewire.auth.login')
-            ->layout('layouts.app', ['title' => 'Masuk - Lokara POS Super Admin']);
+            ->layout('layouts.app', ['title' => 'Masuk - Lokara POS']);
     }
 }
-

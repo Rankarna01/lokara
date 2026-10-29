@@ -22,8 +22,10 @@ class AuthTest extends TestCase
     {
         $this->get('/login')
             ->assertStatus(200)
-            ->assertSee('Platform Super Admin')
-            ->assertSee('admin@lokarapos.id');
+            ->assertSee('Lokara')
+            ->assertSee('Super Admin')
+            ->assertSee('Owner Tenant')
+            ->assertSee('Kasir Toko');
     }
 
     public function test_super_admin_can_login_with_valid_credentials()

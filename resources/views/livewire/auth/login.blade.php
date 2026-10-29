@@ -1,18 +1,18 @@
-<div class="min-h-screen bg-surface flex flex-col justify-center py-12 sm:px-6 lg:px-8 antialiased text-dark" x-data="{ showPassword: false }">
+<div class="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 antialiased text-slate-800" x-data="{ showPassword: false }">
 
     <!-- Top Logo & Heading -->
     <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div class="inline-flex items-center gap-2.5 mb-3">
             <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
-                <i class="fa-solid fa-cubes text-lg"></i>
+                <i class="fa-solid fa-shapes text-lg"></i>
             </div>
             <div class="flex items-center">
                 <span class="text-2xl font-bold tracking-tight text-slate-900">Lokara</span>
                 <span class="ml-1.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold uppercase bg-orange-500 text-white tracking-wider">POS</span>
             </div>
         </div>
-        <h2 class="text-xl font-bold tracking-tight text-slate-900">Platform Super Admin</h2>
-        <p class="mt-1 text-xs text-slate-500">Masuk untuk mengelola seluruh ekosistem bisnis dan tenant</p>
+        <h2 class="text-xl font-bold tracking-tight text-slate-900">Masuk ke Sistem Lokara POS</h2>
+        <p class="mt-1 text-xs text-slate-500">Pilih akun untuk masuk ke Platform Admin, Tenant Back Office, atau Layar Kasir</p>
     </div>
 
     <!-- Login Card -->
@@ -23,20 +23,25 @@
             <div class="p-3.5 bg-orange-50/60 border border-orange-100 rounded-xl">
                 <div class="flex items-center justify-between text-xs font-semibold text-orange-800 mb-2">
                     <span class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt text-orange-500"></i> Akun Demo Tersedia:
+                        <i class="fa-solid fa-bolt text-orange-500"></i> Akun Demo Siap Pakai:
                     </span>
                     <span class="text-[10px] text-orange-600 bg-orange-100/60 px-1.5 py-0.5 rounded">1-Klik Isi</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="grid grid-cols-3 gap-1.5 text-xs">
                     <button type="button" wire:click="fillDemoAdmin"
-                            class="px-2.5 py-1.5 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-xs">
-                        <div class="font-bold text-[11px] text-slate-900">Admin Utama</div>
-                        <div class="text-[10px] text-slate-400 truncate">admin@lokarapos.id</div>
+                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
+                        <div class="font-bold text-[11px] text-slate-900">Super Admin</div>
+                        <div class="text-[9px] text-slate-400 truncate">Platform</div>
                     </button>
-                    <button type="button" wire:click="fillDemoSupport"
-                            class="px-2.5 py-1.5 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-xs">
-                        <div class="font-bold text-[11px] text-slate-900">Support Admin</div>
-                        <div class="text-[10px] text-slate-400 truncate">support@lokarapos.id</div>
+                    <button type="button" wire:click="fillDemoOwner"
+                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
+                        <div class="font-bold text-[11px] text-slate-900">Owner Tenant</div>
+                        <div class="text-[9px] text-slate-400 truncate">Admin POS</div>
+                    </button>
+                    <button type="button" wire:click="fillDemoCashier"
+                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
+                        <div class="font-bold text-[11px] text-slate-900">Kasir Toko</div>
+                        <div class="text-[9px] text-slate-400 truncate">Layar POS</div>
                     </button>
                 </div>
             </div>
@@ -54,7 +59,7 @@
                         <input id="email"
                                type="email"
                                wire:model.defer="email"
-                               placeholder="nama@lokarapos.id"
+                               placeholder="nama@kopiruangpagi.id"
                                class="w-full pl-9 pr-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition" />
                     </div>
                     @error('email')
@@ -102,7 +107,7 @@
                 <div class="pt-2">
                     <button type="submit"
                             class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 shadow-sm shadow-orange-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition">
-                        <span wire:loading.remove>Masuk ke Dashboard Platform</span>
+                        <span wire:loading.remove>Masuk ke Aplikasi</span>
                         <span wire:loading class="flex items-center gap-2">
                             <i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...
                         </span>
@@ -119,4 +124,3 @@
         </div>
     </div>
 </div>
-

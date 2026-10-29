@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Auth\Login;
+use App\Livewire\Pos\Terminal;
 use App\Livewire\SuperAdmin\PlatformDashboard;
+use App\Livewire\Tenant\BackofficeDashboard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -17,8 +19,13 @@ Route::match(['get', 'post'], '/logout', function () {
 })->name('logout');
 
 // POS Terminal Kasir (Modul 07)
-Route::get('/pos', \App\Livewire\Pos\Terminal::class)->name('pos.terminal');
-Route::get('/app/pos', \App\Livewire\Pos\Terminal::class);
+Route::get('/pos', Terminal::class)->name('pos.terminal');
+Route::get('/app/pos', Terminal::class);
+
+// Tenant Admin / Back Office (Modul 02, 03, 04, 05, 06, 08, 09)
+Route::get('/app', BackofficeDashboard::class)->name('tenant.dashboard');
+Route::get('/tenant', BackofficeDashboard::class);
+Route::get('/backoffice', BackofficeDashboard::class);
 
 // Super Admin Platform Dashboard (Modul 01)
 Route::middleware(['web'])->group(function () {
