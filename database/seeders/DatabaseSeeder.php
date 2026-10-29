@@ -15,14 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@lokarapos.id'],
-            [
-                'name' => 'Admin Lokara',
-                'password' => bcrypt('password'),
-            ]
-        );
-
-        $this->call(SuperAdminPlatformSeeder::class);
+        $this->call([
+            UserSeeder::class,
+            SuperAdminPlatformSeeder::class,
+        ]);
     }
 }

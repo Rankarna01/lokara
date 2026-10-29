@@ -170,6 +170,14 @@ class PlatformDashboard extends Component
         $this->notify("Invoice {$invoice->invoice_number} berhasil ditandai LUNAS.");
     }
 
+    public function logout()
+    {
+        \Illuminate\Support\Facades\Auth::logout();
+        session()->invalidate();
+        session()->regenerateToken();
+        return redirect()->route('login');
+    }
+
     public function notify(string $message, string $type = 'success')
     {
         $this->toastMessage = $message;

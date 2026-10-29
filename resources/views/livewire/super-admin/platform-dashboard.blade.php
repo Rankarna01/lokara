@@ -122,18 +122,34 @@
             </div>
 
             <!-- Bottom User Profile Card (Matching Image 1) -->
-            <div class="p-3 border-t border-slate-100">
-                <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer">
+            <div class="p-3 border-t border-slate-100" x-data="{ bottomMenuOpen: false }">
+                <div @click="bottomMenuOpen = !bottomMenuOpen"
+                     class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-sm">
                             <i class="fa-solid fa-user-tie"></i>
                         </div>
                         <div class="text-left">
-                            <div class="text-xs font-bold text-slate-900">Super Admin</div>
-                            <div class="text-[11px] text-slate-400">Platform Owner</div>
+                            <div class="text-xs font-bold text-slate-900">{{ auth()->user()->name ?? 'Super Admin' }}</div>
+                            <div class="text-[11px] text-slate-400">{{ auth()->user()->role ?? 'Platform Owner' }}</div>
                         </div>
                     </div>
-                    <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-400" :class="bottomMenuOpen ? 'rotate-90' : ''"></i>
+                </div>
+
+                <!-- Bottom Popup Menu -->
+                <div x-show="bottomMenuOpen"
+                     @click.outside="bottomMenuOpen = false"
+                     x-transition
+                     class="mt-2 p-1.5 bg-white border border-slate-200 rounded-xl shadow-lg space-y-1 text-xs">
+                    <button wire:click="setTab('settings')" @click="bottomMenuOpen = false" class="w-full flex items-center gap-2.5 px-3 py-2 text-slate-700 hover:bg-slate-50 rounded-lg text-left">
+                        <i class="fa-solid fa-gear text-slate-400"></i>
+                        <span>Pengaturan Akun</span>
+                    </button>
+                    <button wire:click="logout" class="w-full flex items-center gap-2.5 px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-lg text-left font-medium">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-rose-500"></i>
+                        <span>Keluar (Logout)</span>
+                    </button>
                 </div>
             </div>
         </aside>
@@ -175,11 +191,33 @@
                     </button>
 
                     <!-- User Profile Dropdown -->
-                    <div class="flex items-center gap-2.5 pl-2 border-l border-slate-200">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80"
-                             alt="Admin"
-                             class="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200" />
-                        <span class="hidden md:inline-block text-xs font-semibold text-slate-800">Admin Lokara</span>
+                    <div class="relative" x-data="{ userMenuOpen: false }">
+                        <button @click="userMenuOpen = !userMenuOpen"
+                                class="flex items-center gap-2.5 pl-2 border-l border-slate-200 focus:outline-none">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80"
+                                 alt="Admin"
+                                 class="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200" />
+                            <span class="hidden md:inline-block text-xs font-semibold text-slate-800">{{ auth()->user()->name ?? 'Admin Lokara' }}</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                        </button>
+
+                        <div x-show="userMenuOpen"
+                             @click.outside="userMenuOpen = false"
+                             x-transition
+                             class="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50 text-xs">
+                            <div class="px-4 py-2 border-b border-slate-100">
+                                <div class="font-bold text-slate-900">{{ auth()->user()->name ?? 'Admin Lokara' }}</div>
+                                <div class="text-[11px] text-slate-400 truncate">{{ auth()->user()->email ?? 'admin@lokarapos.id' }}</div>
+                            </div>
+                            <button wire:click="setTab('settings')" @click="userMenuOpen = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-gear text-slate-400"></i>
+                                <span>Pengaturan Platform</span>
+                            </button>
+                            <button wire:click="logout" class="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-600 flex items-center gap-2 font-medium">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-rose-500"></i>
+                                <span>Keluar (Logout)</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
