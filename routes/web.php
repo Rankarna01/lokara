@@ -16,6 +16,10 @@ Route::match(['get', 'post'], '/logout', function () {
     return redirect()->route('login');
 })->name('logout');
 
+// POS Terminal Kasir (Modul 07)
+Route::get('/pos', \App\Livewire\Pos\Terminal::class)->name('pos.terminal');
+Route::get('/app/pos', \App\Livewire\Pos\Terminal::class);
+
 // Super Admin Platform Dashboard (Modul 01)
 Route::middleware(['web'])->group(function () {
     Route::get('/', PlatformDashboard::class)->name('superadmin.dashboard');
