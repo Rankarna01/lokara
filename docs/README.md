@@ -12,6 +12,7 @@ Dokumentasi ini dibagi menjadi dokumen arsitektur global dan 10 dokumen spesifik
 docs/
 ├── 📄 README.md                          ← [Dokumen Ini] Penjelasan Master & Ringkasan Modul
 ├── 📄 01-arsitektur-sistem.md            ← Arsitektur Sistem, Multi-Tenancy, Database & Deployment
+├── 📄 02-arsitektur-flow-tenant-pos.md    ← Arsitektur & Alur Fitur Tenant (Owner & POS Kasir)
 ├── 📄 blueprint-pos-multitenant.md       ← Berkas Blueprint Asal
 └── 📁 modules/
     ├── 📄 01-platform-superadmin.md      ← Modul 01: Platform & SaaS Super Admin
