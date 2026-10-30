@@ -68,15 +68,17 @@
 
     <!-- Bottom Back to Admin / Logout Link -->
     <div class="p-3 border-t border-slate-100 space-y-1">
-        <a href="{{ route('tenant.dashboard') }}"
-           class="w-full flex items-center gap-3 px-3.5 py-2 text-xs text-orange-600 hover:bg-orange-50 rounded-lg transition font-semibold">
-            <i class="fa-solid fa-chart-pie text-sm w-4 text-center"></i>
-            <span>Back Office Toko</span>
-        </a>
+        @if(!auth()->check() || auth()->user()->canAccessBackoffice())
+            <a href="{{ route('tenant.dashboard') }}"
+               class="w-full flex items-center gap-3 px-3.5 py-2 text-xs text-orange-600 hover:bg-orange-50 rounded-lg transition font-semibold">
+                <i class="fa-solid fa-chart-pie text-sm w-4 text-center"></i>
+                <span>Back Office Toko</span>
+            </a>
+        @endif
         <button wire:click="logout"
                 class="w-full flex items-center gap-3 px-3.5 py-2 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition font-medium">
             <i class="fa-solid fa-arrow-right-from-bracket text-sm w-4 text-center"></i>
-            <span>Keluar</span>
+            <span>Keluar / Ganti Akun</span>
         </button>
     </div>
 </aside>

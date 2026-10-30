@@ -81,11 +81,20 @@ class Terminal extends Component
 
     public function mount()
     {
-        $tenant = Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
-        if ($tenant) {
-            $outlet = Outlet::where('tenant_id', $tenant->id)->first();
-            if ($outlet) {
-                $this->selectedOutletId = $outlet->id;
+        $user = Auth::user();
+        if ($user && $user->tenant_id) {
+            $this->selectedOutletId = $user->outlet_id;
+            if (!$this->selectedOutletId) {
+                $firstOutlet = Outlet::where('tenant_id', $user->tenant_id)->first();
+                $this->selectedOutletId = $firstOutlet?->id;
+            }
+        } else {
+            $tenant = Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
+            if ($tenant) {
+                $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+                if ($outlet) {
+                    $this->selectedOutletId = $outlet->id;
+                }
             }
         }
 
@@ -473,8 +482,14 @@ class Terminal extends Component
 
     public function render()
     {
-        $tenant = Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
-        $tenantId = $tenant ? $tenant->id : 1;
+        $user = Auth::user();
+        if ($user && $user->tenant_id) {
+            $tenant = Tenant::find($user->tenant_id);
+            $tenantId = $user->tenant_id;
+        } else {
+            $tenant = Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
+            $tenantId = $tenant ? $tenant->id : 1;
+        }
 
         // Query Products
         $products = Product::where('tenant_id', $tenantId)
@@ -501,6 +516,9 @@ class Terminal extends Component
 
         // Outlets
         $outlets = Outlet::where('tenant_id', $tenantId)->get();
+        if (!$this->selectedOutletId || !$outlets->contains('id', $this->selectedOutletId)) {
+            $this->selectedOutletId = $outlets->first()?->id;
+        }
         $currentOutlet = Outlet::find($this->selectedOutletId) ?? $outlets->first();
 
         // Completed Orders for Transactions modal
@@ -527,6 +545,7 @@ class Terminal extends Component
         $totals = $this->calculateTotals();
 
         return view('livewire.pos.terminal', [
+            'tenant' => $tenant,
             'products' => $products,
             'categories' => $categories,
             'allMenuCount' => $allMenuCount,
@@ -537,6 +556,6 @@ class Terminal extends Component
             'customersList' => $customersList,
             'cashSalesTotal' => $cashSalesTotal,
             'expectedCashDrawer' => $expectedCashDrawer,
-        ])->layout('layouts.app', ['title' => 'POS Terminal - Lokara POS']);
+        ])->layout('layouts.app', ['title' => 'POS Terminal - ' . ($tenant?->name ?? 'Lokara POS')]);
     }
 }

@@ -143,6 +143,18 @@ class PlatformDashboard extends Component
 
     public function mount()
     {
+        // Enforce role separation for authenticated users
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $user = \Illuminate\Support\Facades\Auth::user();
+            if ($user->role !== 'super_admin') {
+                if (in_array($user->role, ['owner', 'manager'])) {
+                    return redirect()->route('tenant.dashboard');
+                } elseif (in_array($user->role, ['cashier', 'staff'])) {
+                    return redirect()->route('pos.terminal');
+                }
+            }
+        }
+
         // Default business type & plan for create modal
         $defaultBt = BusinessType::first();
         if ($defaultBt) {

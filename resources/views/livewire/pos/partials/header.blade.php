@@ -55,15 +55,20 @@
             <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-orange-500"></span>
         </button>
 
-        <!-- Cashier Profile (Dina Putri - Kasir) -->
+        <!-- Cashier Profile -->
         <div class="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80"
-                 alt="Cashier"
-                 class="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200" />
-            <div class="text-left">
-                <div class="text-xs font-bold text-slate-900 leading-tight">Dina Putri</div>
-                <div class="text-[10px] text-slate-400">Kasir</div>
+            <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs ring-1 ring-orange-200 shrink-0">
+                {{ substr(auth()->user()->name ?? 'Dina Putri', 0, 2) }}
             </div>
+            <div class="text-left">
+                <div class="text-xs font-bold text-slate-900 leading-tight">{{ auth()->user()->name ?? 'Dina Putri' }}</div>
+                <div class="text-[10px] text-slate-400 capitalize">
+                    {{ auth()->user()->role ?? 'Kasir' }} • {{ $currentOutlet->name ?? 'Outlet Utama' }}
+                </div>
+            </div>
+            <button wire:click="logout" title="Kunci Kasir / Ganti Akun" class="ml-1 text-slate-400 hover:text-rose-600 transition p-1 rounded-lg hover:bg-rose-50">
+                <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+            </button>
         </div>
     </div>
 </header>

@@ -40,6 +40,20 @@ class TenantBackofficeDemoSeeder extends Seeder
             ]);
         }
 
+        $secondOutlet = Outlet::where('tenant_id', $tenant->id)->where('slug', 'cabang-kemang')->first();
+        if (!$secondOutlet) {
+            $secondOutlet = Outlet::create([
+                'tenant_id' => $tenant->id,
+                'name' => 'Cabang Kemang',
+                'slug' => 'cabang-kemang',
+                'phone' => '081298765432',
+                'address' => 'Jl. Kemang Raya No. 45, Jakarta Selatan',
+                'tax_rate' => 11.00,
+                'service_rate' => 0.00,
+                'is_active' => true,
+            ]);
+        }
+
         // 1. Update Users with tenant_id & outlet_id
         User::where('email', 'rian@kopiruangpagi.id')->update([
             'tenant_id' => $tenant->id,
@@ -48,12 +62,19 @@ class TenantBackofficeDemoSeeder extends Seeder
             'pin_code' => '888888',
         ]);
 
-        User::where('email', 'dina@kopiruangpagi.id')->update([
-            'tenant_id' => $tenant->id,
-            'outlet_id' => $mainOutlet->id,
-            'role' => 'cashier',
-            'pin_code' => '123456',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'dina@kopiruangpagi.id'],
+            [
+                'name' => 'Dina Safitri',
+                'password' => Hash::make('password'),
+                'tenant_id' => $tenant->id,
+                'outlet_id' => $mainOutlet->id,
+                'role' => 'cashier',
+                'phone' => '081234567802',
+                'pin_code' => '123456',
+                'is_active' => true,
+            ]
+        );
 
         User::updateOrCreate(
             ['email' => 'budi@kopiruangpagi.id'],
@@ -63,7 +84,7 @@ class TenantBackofficeDemoSeeder extends Seeder
                 'role' => 'cashier',
                 'phone' => '081234567801',
                 'tenant_id' => $tenant->id,
-                'outlet_id' => $mainOutlet->id,
+                'outlet_id' => $secondOutlet->id,
                 'pin_code' => '654321',
                 'is_active' => true,
             ]

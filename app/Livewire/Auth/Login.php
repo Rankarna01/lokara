@@ -47,9 +47,27 @@ class Login extends Component
         $this->password = 'password';
     }
 
+    public function fillDemoSalonOwner()
+    {
+        $this->email = 'contact@studiorona.id';
+        $this->password = 'password';
+    }
+
     public function fillDemoCashier()
     {
         $this->email = 'dina@kopiruangpagi.id';
+        $this->password = 'password';
+    }
+
+    public function fillDemoCashier2()
+    {
+        $this->email = 'budi@kopiruangpagi.id';
+        $this->password = 'password';
+    }
+
+    public function fillDemoSalonStaff()
+    {
+        $this->email = 'doni.barber@studiorona.id';
         $this->password = 'password';
     }
 
@@ -69,7 +87,7 @@ class Login extends Component
     {
         if ($user && in_array($user->role, ['owner', 'manager'])) {
             return redirect()->route('tenant.dashboard');
-        } elseif ($user && $user->role === 'cashier') {
+        } elseif ($user && in_array($user->role, ['cashier', 'staff'])) {
             return redirect()->route('pos.terminal');
         }
 

@@ -20,28 +20,55 @@
         <div class="bg-white py-8 px-6 sm:px-8 border border-slate-200/80 rounded-2xl shadow-sm space-y-6">
 
             <!-- Quick Demo Login Bar -->
-            <div class="p-3.5 bg-orange-50/60 border border-orange-100 rounded-xl">
-                <div class="flex items-center justify-between text-xs font-semibold text-orange-800 mb-2">
+            <div class="p-3.5 bg-orange-50/60 border border-orange-100 rounded-xl space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold text-orange-800">
                     <span class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt text-orange-500"></i> Akun Demo Siap Pakai:
+                        <i class="fa-solid fa-bolt text-orange-500"></i> Akun Demo Siap Pakai per Role:
                     </span>
-                    <span class="text-[10px] text-orange-600 bg-orange-100/60 px-1.5 py-0.5 rounded">1-Klik Isi</span>
+                    <span class="text-[10px] text-orange-600 bg-orange-100/60 px-1.5 py-0.5 rounded font-mono">1-Klik Isi</span>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5 text-xs">
                     <button type="button" wire:click="fillDemoAdmin"
                             class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900">Super Admin</div>
-                        <div class="text-[9px] text-slate-400 truncate">Platform</div>
+                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
+                            <i class="fa-solid fa-shield text-[10px] text-orange-500"></i> Super Admin
+                        </div>
+                        <div class="text-[9px] text-slate-400 truncate">Platform SaaS</div>
                     </button>
                     <button type="button" wire:click="fillDemoOwner"
                             class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900">Owner Tenant</div>
-                        <div class="text-[9px] text-slate-400 truncate">Admin POS</div>
+                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
+                            <i class="fa-solid fa-store text-[10px] text-amber-500"></i> Owner Tenant
+                        </div>
+                        <div class="text-[9px] text-slate-400 truncate">Kopi Ruang Pagi</div>
+                    </button>
+                    <button type="button" wire:click="fillDemoSalonOwner"
+                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
+                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
+                            <i class="fa-solid fa-scissors text-[10px] text-purple-500"></i> Owner Salon
+                        </div>
+                        <div class="text-[9px] text-slate-400 truncate">Studio Rona</div>
                     </button>
                     <button type="button" wire:click="fillDemoCashier"
                             class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900">Kasir Toko</div>
-                        <div class="text-[9px] text-slate-400 truncate">Layar POS</div>
+                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
+                            <i class="fa-solid fa-cash-register text-[10px] text-emerald-500"></i> Kasir Toko
+                        </div>
+                        <div class="text-[9px] text-slate-400 truncate">Dina • Outlet 1</div>
+                    </button>
+                    <button type="button" wire:click="fillDemoCashier2"
+                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
+                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-[10px] text-blue-500"></i> Kasir Cabang
+                        </div>
+                        <div class="text-[9px] text-slate-400 truncate">Budi • Kemang</div>
+                    </button>
+                    <button type="button" wire:click="fillDemoSalonStaff"
+                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
+                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
+                            <i class="fa-solid fa-user-tie text-[10px] text-rose-500"></i> Kapster
+                        </div>
+                        <div class="text-[9px] text-slate-400 truncate">Doni • Studio Rona</div>
                     </button>
                 </div>
             </div>

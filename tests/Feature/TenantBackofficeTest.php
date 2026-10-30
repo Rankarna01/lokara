@@ -458,4 +458,129 @@ class TenantBackofficeTest extends TestCase
 
         $this->assertFalse($discFixed->fresh()->is_active);
     }
+
+    public function test_can_create_and_edit_outlet_branch()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+
+        // 1. Create New Outlet Branch
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewOutletModal')
+            ->assertSet('showOutletModal', true)
+            ->set('outletName', 'Cabang Bandung Dago')
+            ->set('outletAddress', 'Jl. Ir. H. Juanda No. 102, Dago, Bandung')
+            ->set('outletPhone', '081223344556')
+            ->set('outletTaxRate', 10.0)
+            ->set('outletServiceRate', 5.0)
+            ->set('outletReceiptFooter', 'Hatur nuhun tos sumping ka Kopi Ruang Pagi Dago!')
+            ->call('saveOutlet')
+            ->assertSet('showOutletModal', false);
+
+        $outlet = Outlet::where('tenant_id', $tenant->id)
+            ->where('name', 'Cabang Bandung Dago')
+            ->first();
+
+        $this->assertNotNull($outlet);
+        $this->assertEquals('Jl. Ir. H. Juanda No. 102, Dago, Bandung', $outlet->address);
+        $this->assertEquals(10.0, (float) $outlet->tax_rate);
+        $this->assertEquals(5.0, (float) $outlet->service_rate);
+        $this->assertTrue($outlet->is_active);
+
+        // 2. Edit Outlet Branch
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('editOutlet', $outlet->id)
+            ->assertSet('showOutletModal', true)
+            ->assertSet('outletName', 'Cabang Bandung Dago')
+            ->set('outletPhone', '081299998888')
+            ->call('saveOutlet');
+
+        $this->assertEquals('081299998888', $outlet->fresh()->phone);
+
+        // 3. Toggle Outlet Status
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('toggleOutletStatus', $outlet->id);
+
+        $this->assertFalse($outlet->fresh()->is_active);
+    }
+
+    public function test_can_create_and_manage_staff_cashier_accounts()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+
+        // 1. Create New Cashier Account
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewStaffModal')
+            ->assertSet('showStaffModal', true)
+            ->set('staffName', 'Siti Rahmawati')
+            ->set('staffEmail', 'siti.kasir@kopiruangpagi.id')
+            ->set('staffPassword', 'secret123')
+            ->set('staffRole', 'cashier')
+            ->set('staffOutletId', $outlet->id)
+            ->set('staffPinCode', '345678')
+            ->set('staffPhone', '081288887777')
+            ->call('saveStaff')
+            ->assertSet('showStaffModal', false);
+
+        $staff = User::where('email', 'siti.kasir@kopiruangpagi.id')->first();
+        $this->assertNotNull($staff);
+        $this->assertEquals('Siti Rahmawati', $staff->name);
+        $this->assertEquals('cashier', $staff->role);
+        $this->assertEquals($outlet->id, $staff->outlet_id);
+        $this->assertEquals('345678', $staff->pin_code);
+        $this->assertTrue($staff->is_active);
+
+        // 2. Edit Staff Account
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('editStaff', $staff->id)
+            ->assertSet('showStaffModal', true)
+            ->set('staffRole', 'manager')
+            ->set('staffPinCode', '987654')
+            ->call('saveStaff');
+
+        $staff->refresh();
+        $this->assertEquals('manager', $staff->role);
+        $this->assertEquals('987654', $staff->pin_code);
+
+        // 3. Toggle Staff Status
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('toggleStaffStatus', $staff->id);
+
+        $this->assertFalse($staff->fresh()->is_active);
+
+        // 4. Owner cannot be deactivated or deleted
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('toggleStaffStatus', $owner->id)
+            ->assertSee('Akun Pemilik (Owner) tidak dapat dinonaktifkan')
+            ->call('deleteStaff', $owner->id)
+            ->assertSee('Akun Pemilik (Owner) tidak dapat dihapus');
+
+        $this->assertTrue($owner->fresh()->is_active);
+
+        // 5. Delete Staff
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('deleteStaff', $staff->id);
+
+        $this->assertNull(User::find($staff->id));
+    }
+
+    public function test_cashier_role_cannot_access_backoffice_redirects_to_pos()
+    {
+        $cashier = User::where('role', 'cashier')->first();
+        $this->assertNotNull($cashier);
+
+        Livewire::actingAs($cashier, 'web')
+            ->test(BackofficeDashboard::class)
+            ->assertRedirect(route('pos.terminal'));
+    }
 }

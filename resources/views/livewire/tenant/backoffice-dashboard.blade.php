@@ -1651,82 +1651,234 @@
                     </div>
                 @endif
 
-                <!-- ==================== TAB 9: PENGATURAN OUTLET & STAF KASIR ==================== -->
+                <!-- ==================== TAB 9: PENGATURAN CABANG OUTLET & MANAJEMEN PEGAWAI ==================== -->
                 @if ($activeTab === 'settings')
                     <div class="space-y-6">
+                        <!-- Top Header & Actions -->
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
                             <div>
-                                <h1 class="text-xl font-bold text-slate-900">Pengaturan Outlet & Staf Kasir</h1>
-                                <p class="text-xs text-slate-500 mt-0.5">Konfigurasi struk belanja thermal, persentase pajak PPn 11%, dan manajemen PIN kasir.</p>
+                                <h1 class="text-xl font-bold text-slate-900">Cabang Lokasi & Manajemen Staf Pegawai</h1>
+                                <p class="text-xs text-slate-500 mt-0.5">Kelola cabang lokasi toko, akun login kasir masing-masing cabang, serta hak otorisasi PIN POS.</p>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <button wire:click="openNewOutletModal"
+                                    class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center gap-2">
+                                    <i class="fa-solid fa-store text-orange-500"></i>
+                                    <span>+ Tambah Cabang Baru</span>
+                                </button>
+                                <button wire:click="openNewStaffModal"
+                                    class="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-2">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                    <span>+ Tambah Akun Pegawai</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Left: Outlet Settings Form -->
-                            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                                <h3 class="font-bold text-slate-900 text-base">Profil & Konfigurasi Cabang</h3>
-
-                                <div class="space-y-3">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Outlet</label>
-                                        <input type="text" value="{{ $selectedOutlet->name ?? 'Outlet Utama' }}"
-                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Lengkap</label>
-                                        <textarea rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">{{ $selectedOutlet->address ?? 'Jl. Panglima Polim No. 12, Jakarta Selatan' }}</textarea>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tarif Pajak PPn (%)</label>
-                                            <input type="number" value="{{ (int)$selectedOutlet->tax_rate }}"
-                                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-semibold text-slate-700 mb-1">Service Charge (%)</label>
-                                            <input type="number" value="0"
-                                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1">Pesan Footer Struk Kasir Thermal</label>
-                                        <input type="text" value="Terima kasih atas kunjungan Anda di Kopi Ruang Pagi!"
-                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">
-                                    </div>
-                                    <div class="pt-2">
-                                        <button wire:click="$dispatch('toast', {message: 'Pengaturan outlet berhasil disimpan!'})"
-                                            class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm">
-                                            Simpan Perubahan
-                                        </button>
-                                    </div>
+                        <!-- Stats Row -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-store"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-slate-400 font-medium">Total Cabang Lokasi</div>
+                                    <div class="text-lg font-bold text-slate-900">{{ $outlets->count() }} Cabang</div>
                                 </div>
                             </div>
-
-                            <!-- Right: Cashier Staff & PIN Management -->
-                            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                                <h3 class="font-bold text-slate-900 text-base">Manajemen Staf & PIN Kasir POS</h3>
-                                <p class="text-xs text-slate-500">Staf menggunakan 6 digit PIN untuk login cepat dan otorisasi transaksi pada layar sentuh POS kasir.</p>
-
-                                <div class="space-y-3">
-                                    @foreach($cashiers as $staff)
-                                        <div class="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50 flex items-center justify-between gap-3">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full bg-orange-100 text-orange-600 font-bold flex items-center justify-center text-xs">
-                                                    {{ substr($staff->name, 0, 2) }}
-                                                </div>
-                                                <div>
-                                                    <div class="font-bold text-slate-900 text-sm">{{ $staff->name }}</div>
-                                                    <div class="text-[11px] text-slate-500 capitalize">{{ $staff->role }} • {{ $staff->email }}</div>
-                                                </div>
-                                            </div>
-                                            <div class="text-right">
-                                                <div class="text-xs font-mono font-bold text-slate-700 bg-white px-2 py-1 rounded border border-slate-200">
-                                                    PIN: {{ $staff->pin_code ?? '123456' }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-users"></i>
                                 </div>
+                                <div>
+                                    <div class="text-xs text-slate-400 font-medium">Total Akun Pegawai & Kasir</div>
+                                    <div class="text-lg font-bold text-slate-900">{{ $cashiers->count() }} Staf</div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-slate-400 font-medium">Cabang Aktif Back Office</div>
+                                    <div class="text-lg font-bold text-slate-900 truncate max-w-[180px]">{{ $selectedOutlet->name ?? 'Outlet Utama' }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 1: Daftar Cabang Lokasi (Outlets) -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-store text-orange-500 text-sm"></i>
+                                    <h3 class="font-bold text-slate-900 text-sm">Daftar Cabang Lokasi Toko</h3>
+                                </div>
+                                <span class="text-xs text-slate-400">{{ $outlets->count() }} Cabang Terdaftar</span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
+                                            <th class="py-3 px-4">Nama Cabang & Alamat</th>
+                                            <th class="py-3 px-4">Kontak Cabang</th>
+                                            <th class="py-3 px-4 text-center">Pajak & Service</th>
+                                            <th class="py-3 px-4 text-center">Staf Ditugaskan</th>
+                                            <th class="py-3 px-4 text-center">Status</th>
+                                            <th class="py-3 px-4 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-xs">
+                                        @forelse($outlets as $out)
+                                            <tr class="hover:bg-slate-50/50 transition">
+                                                <td class="py-3 px-4">
+                                                    <div class="flex items-center gap-2.5">
+                                                        <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                                            <i class="fa-solid fa-shop"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-bold text-slate-900 flex items-center gap-2">
+                                                                <span>{{ $out->name }}</span>
+                                                                @if($selectedOutletId === $out->id)
+                                                                    <span class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Aktif Dipilih</span>
+                                                                @endif
+                                                            </div>
+                                                            <div class="text-[11px] text-slate-400 truncate max-w-xs">{{ $out->address ?? 'Alamat belum diisi' }}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-4 text-slate-600 font-medium">
+                                                    {{ $out->phone ?? '-' }}
+                                                </td>
+                                                <td class="py-3 px-4 text-center">
+                                                    <span class="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                                                        PPn {{ (int)$out->tax_rate }}% | Srv {{ (int)$out->service_rate }}%
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-4 text-center font-bold text-slate-700">
+                                                    {{ $out->users_count ?? $out->users()->count() }} Staf
+                                                </td>
+                                                <td class="py-3 px-4 text-center">
+                                                    <button wire:click="toggleOutletStatus({{ $out->id }})"
+                                                        class="text-[11px] font-semibold px-2 py-0.5 rounded-full transition {{ $out->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400' }}">
+                                                        {{ $out->is_active ? '● Buka / Aktif' : '○ Tutup' }}
+                                                    </button>
+                                                </td>
+                                                <td class="py-3 px-4 text-right space-x-1.5">
+                                                    @if($selectedOutletId !== $out->id)
+                                                        <button wire:click="switchOutlet({{ $out->id }})"
+                                                            class="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+                                                            Pilih Cabang
+                                                        </button>
+                                                    @endif
+                                                    <button wire:click="editOutlet({{ $out->id }})"
+                                                        class="p-1.5 text-slate-400 hover:text-orange-600 transition" title="Edit Cabang">
+                                                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="py-8 text-center text-slate-400">Belum ada cabang outlet terdaftar.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Daftar Akun Staf & Kasir Masing-Masing Cabang -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-users-gear text-orange-500 text-sm"></i>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-sm">Daftar Akun Pegawai, Kasir & Hak Akses</h3>
+                                        <p class="text-[11px] text-slate-400">Setiap pegawai memiliki akun login sendiri dengan batasan wewenang sesuai role dan cabang penugasan.</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-slate-400">{{ $cashiers->count() }} Pengguna</span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
+                                            <th class="py-3 px-4">Nama Pegawai & Email Login</th>
+                                            <th class="py-3 px-4">Peran (Role)</th>
+                                            <th class="py-3 px-4">Cabang Penugasan</th>
+                                            <th class="py-3 px-4 text-center">PIN Kasir POS</th>
+                                            <th class="py-3 px-4 text-center">Status</th>
+                                            <th class="py-3 px-4 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-xs">
+                                        @forelse($cashiers as $staff)
+                                            <tr class="hover:bg-slate-50/50 transition">
+                                                <td class="py-3 px-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">
+                                                            {{ substr($staff->name, 0, 2) }}
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-bold text-slate-900">{{ $staff->name }}</div>
+                                                            <div class="text-[11px] text-slate-400 flex items-center gap-2">
+                                                                <span><i class="fa-regular fa-envelope text-[10px]"></i> {{ $staff->email }}</span>
+                                                                @if($staff->phone)
+                                                                    <span>• <i class="fa-solid fa-phone text-[10px]"></i> {{ $staff->phone }}</span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    @if($staff->role === 'owner')
+                                                        <span class="text-[11px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">👑 Owner (Pemilik)</span>
+                                                    @elseif($staff->role === 'manager')
+                                                        <span class="text-[11px] font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">👔 Manajer Cabang</span>
+                                                    @elseif($staff->role === 'cashier')
+                                                        <span class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">🖥️ Kasir POS</span>
+                                                    @else
+                                                        <span class="text-[11px] font-bold bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">✂️ Pegawai / Staf</span>
+                                                    @endif
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-location-dot text-slate-400 text-xs"></i>
+                                                        {{ $staff->outlet->name ?? 'Semua Cabang' }}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-4 text-center">
+                                                    <span class="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                                                        {{ $staff->pin_code ?? '------' }}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-4 text-center">
+                                                    <button wire:click="toggleStaffStatus({{ $staff->id }})"
+                                                        class="text-[11px] font-semibold px-2 py-0.5 rounded-full transition {{ $staff->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400' }}">
+                                                        {{ $staff->is_active ? '● Aktif' : '○ Non-Aktif' }}
+                                                    </button>
+                                                </td>
+                                                <td class="py-3 px-4 text-right space-x-1.5">
+                                                    <button wire:click="editStaff({{ $staff->id }})"
+                                                        class="p-1.5 text-slate-400 hover:text-orange-600 transition" title="Edit Staf">
+                                                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                    </button>
+                                                    @if($staff->role !== 'owner')
+                                                        <button wire:click="deleteStaff({{ $staff->id }})"
+                                                            wire:confirm="Yakin ingin menghapus akun staf {{ $staff->name }}?"
+                                                            class="p-1.5 text-slate-400 hover:text-rose-600 transition" title="Hapus Staf">
+                                                            <i class="fa-regular fa-trash-can text-xs"></i>
+                                                        </button>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="py-8 text-center text-slate-400">Belum ada akun pegawai terdaftar.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -2676,6 +2828,182 @@
                             <span>{{ $editingDiscountId ? 'Simpan Perubahan' : 'Buat Diskon' }}</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- 12. Modal Tambah / Edit Cabang Outlet -->
+    @if ($showOutletModal)
+        <div class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-store"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-base">{{ $editingOutletId ? 'Edit Konfigurasi Cabang' : 'Tambah Cabang Lokasi Baru' }}</h3>
+                    </div>
+                    <button wire:click="$set('showOutletModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Cabang / Outlet</label>
+                        <input type="text" wire:model="outletName" placeholder="Contoh: Cabang Kemang / Cabang Dago"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        @error('outletName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Lengkap</label>
+                        <textarea rows="2" wire:model="outletAddress" placeholder="Jl. Kemang Raya No. 45, Jakarta Selatan"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"></textarea>
+                        @error('outletAddress') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Telepon Cabang</label>
+                        <input type="text" wire:model="outletPhone" placeholder="081298765432"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tarif Pajak PPn (%)</label>
+                            <input type="number" wire:model="outletTaxRate"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-semibold">
+                            @error('outletTaxRate') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Service Charge (%)</label>
+                            <input type="number" wire:model="outletServiceRate"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-semibold">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Pesan Footer Struk Kasir</label>
+                        <input type="text" wire:model="outletReceiptFooter" placeholder="Terima kasih atas kunjungan Anda!"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                            <input type="checkbox" wire:model="outletIsActive" class="rounded text-orange-500 focus:ring-orange-500">
+                            <span>Cabang ini aktif beroperasi dan dapat dipilih oleh kasir</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button" wire:click="$set('showOutletModal', false)"
+                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">Batal</button>
+                    <button type="button" wire:click="saveOutlet"
+                        class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i>
+                        <span>{{ $editingOutletId ? 'Simpan Perubahan' : 'Buat Cabang' }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- 13. Modal Tambah / Edit Akun Pegawai & Kasir -->
+    @if ($showStaffModal)
+        <div class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-base">{{ $editingStaffId ? 'Edit Akun Pegawai / Kasir' : 'Tambah Akun Pegawai Baru' }}</h3>
+                    </div>
+                    <button wire:click="$set('showStaffModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap Pegawai</label>
+                        <input type="text" wire:model="staffName" placeholder="Contoh: Siti Rahmawati"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        @error('staffName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Email Login</label>
+                            <input type="email" wire:model="staffEmail" placeholder="siti@kopiruangpagi.id"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            @error('staffEmail') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">No. Handphone / WhatsApp</label>
+                            <input type="text" wire:model="staffPhone" placeholder="08123456789"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Peran (Role Akses)</label>
+                            <select wire:model="staffRole"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">
+                                <option value="cashier">Kasir POS (Hanya Layar Kasir)</option>
+                                <option value="manager">Manajer Cabang (Kasir + Back Office)</option>
+                                <option value="staff">Staf Layanan / Kitchen / Kapster</option>
+                            </select>
+                            @error('staffRole') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Cabang Penugasan</label>
+                            <select wire:model="staffOutletId"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">
+                                @foreach($outlets as $out)
+                                    <option value="{{ $out->id }}">{{ $out->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('staffOutletId') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">6-Digit PIN Kasir POS</label>
+                            <input type="text" wire:model="staffPinCode" maxlength="6" placeholder="123456"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-mono font-bold tracking-widest text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <span class="text-[10px] text-slate-400">Untuk otorisasi cepat di layar POS</span>
+                            @error('staffPinCode') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kata Sandi (Password)</label>
+                            <input type="password" wire:model="staffPassword" placeholder="{{ $editingStaffId ? 'Kosongkan jika tak diubah' : 'Default: password' }}"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <span class="text-[10px] text-slate-400">Digunakan untuk login ke sistem</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                            <input type="checkbox" wire:model="staffIsActive" class="rounded text-orange-500 focus:ring-orange-500">
+                            <span>Akun aktif dan diizinkan masuk ke sistem Lokara POS</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button" wire:click="$set('showStaffModal', false)"
+                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">Batal</button>
+                    <button type="button" wire:click="saveStaff"
+                        class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i>
+                        <span>{{ $editingStaffId ? 'Simpan Perubahan' : 'Buat Akun Pegawai' }}</span>
+                    </button>
                 </div>
             </div>
         </div>

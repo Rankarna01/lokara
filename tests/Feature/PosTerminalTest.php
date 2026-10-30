@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Livewire\Pos\Terminal;
+use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -96,6 +98,21 @@ class PosTerminalTest extends TestCase
             ->call('holdOrder')
             ->assertCount('cart', 0)
             ->assertCount('heldOrders', 1);
+    }
+
+    public function test_pos_terminal_binds_to_authenticated_cashier_and_outlet()
+    {
+        $budi = User::where('email', 'budi@kopiruangpagi.id')->first();
+        $this->assertNotNull($budi);
+        $outletKemang = Outlet::where('slug', 'cabang-kemang')->first();
+        $this->assertNotNull($outletKemang);
+
+        Livewire::actingAs($budi, 'web')
+            ->test(Terminal::class)
+            ->assertSet('selectedOutletId', $outletKemang->id)
+            ->assertSee('Budi Santoso')
+            ->assertSee('Cabang Kemang')
+            ->assertDontSee('Back Office Toko'); // Cashiers cannot access Back Office link
     }
 }
 

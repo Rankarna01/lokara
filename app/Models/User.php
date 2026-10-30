@@ -40,4 +40,39 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Outlet::class);
     }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->role === 'owner';
+    }
+
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->role === 'cashier';
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff';
+    }
+
+    public function canAccessBackoffice(): bool
+    {
+        return in_array($this->role, ['owner', 'manager', 'super_admin']);
+    }
+
+    public function canAccessPos(): bool
+    {
+        return in_array($this->role, ['cashier', 'staff', 'manager', 'owner', 'super_admin']);
+    }
 }
