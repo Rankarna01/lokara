@@ -1,0 +1,10 @@
+<!-- ================= SUPER ADMIN MODALS ================= -->
+@include('livewire.super-admin.partials.modals.create-tenant')
+@include('livewire.super-admin.partials.modals.reset-password')
+@include('livewire.super-admin.partials.modals.create-user')
+@include('livewire.super-admin.partials.modals.edit-plan')
+@include('livewire.super-admin.partials.modals.manage-features')
+@include('livewire.super-admin.partials.modals.edit-feature')
+@include('livewire.super-admin.partials.modals.create-plan')
+@include('livewire.super-admin.partials.modals.edit-preset')
+@include('livewire.super-admin.partials.modals.create-business-type')
