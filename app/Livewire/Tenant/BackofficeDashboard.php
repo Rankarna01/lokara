@@ -82,6 +82,7 @@ class BackofficeDashboard extends Component
     public float $productBasePrice = 0;
     public float $productCostPrice = 0;
     public string $productImageUrl = '';
+    public $productImageFile = null;
     public bool $productIsActive = true;
     public bool $productIsAvailable = true;
 
@@ -288,9 +289,16 @@ class BackofficeDashboard extends Component
         $this->productBasePrice = (float) $product->base_price;
         $this->productCostPrice = (float) $product->cost_price;
         $this->productImageUrl = $product->image_url ?? '';
+        $this->productImageFile = null;
         $this->productIsActive = (bool) $product->is_active;
         $this->productIsAvailable = (bool) $product->is_available;
         $this->showProductModal = true;
+    }
+
+    public function removeProductImage()
+    {
+        $this->productImageFile = null;
+        $this->productImageUrl = '';
     }
 
     public function saveProduct()
@@ -299,7 +307,13 @@ class BackofficeDashboard extends Component
             'productName' => 'required|min:2',
             'productBasePrice' => 'required|numeric|min:0',
             'productCostPrice' => 'nullable|numeric|min:0',
+            'productImageFile' => 'nullable|image|max:3072',
         ]);
+
+        if ($this->productImageFile) {
+            $path = $this->productImageFile->store('products', 'public');
+            $this->productImageUrl = '/storage/' . $path;
+        }
 
         if ($this->editingProductId) {
             $product = Product::where('tenant_id', $this->tenantId)->findOrFail($this->editingProductId);
@@ -354,6 +368,7 @@ class BackofficeDashboard extends Component
         $this->productCategoryTag = 'Kopi • Ice';
         $this->productBasePrice = 20000;
         $this->productCostPrice = 7000;
+        $this->productImageFile = null;
         $this->productImageUrl = '';
         $this->productIsActive = true;
         $this->productIsAvailable = true;
@@ -526,12 +541,14 @@ class BackofficeDashboard extends Component
             'serviceName' => 'required|min:2',
             'servicePrice' => 'required|numeric|min:0',
             'serviceDuration' => 'required|integer|min:5',
-            'serviceCommissionValue' => 'required|numeric|min:0',
+            'serviceCommissionValue' => 'nullable|numeric|min:0',
             'serviceCostPrice' => 'nullable|numeric|min:0',
             'serviceImageFile' => 'nullable|image|max:3072',
         ]);
 
-        if ($this->serviceCommissionType === 'percentage' && $this->serviceCommissionValue > 100) {
+        $commissionVal = (float) ($this->serviceCommissionValue ?? 0);
+
+        if ($this->serviceCommissionType === 'percentage' && $commissionVal > 100) {
             $this->addError('serviceCommissionValue', 'Komisi persentase tidak boleh melebihi 100%.');
             return;
         }
@@ -546,12 +563,12 @@ class BackofficeDashboard extends Component
             $service->update([
                 'name' => $this->serviceName,
                 'category_id' => $this->serviceCategoryId,
-                'category_tag' => $this->serviceCategoryTag,
+                'category_tag' => $this->serviceCategoryTag ?: 'Layanan Salon',
                 'base_price' => $this->servicePrice,
                 'cost_price' => $this->serviceCostPrice,
                 'duration_minutes' => $this->serviceDuration,
                 'commission_type' => $this->serviceCommissionType,
-                'commission_value' => $this->serviceCommissionValue,
+                'commission_value' => $commissionVal,
                 'image_url' => $this->serviceImageUrl ?: null,
                 'is_available' => $this->serviceIsAvailable,
             ]);
@@ -561,7 +578,7 @@ class BackofficeDashboard extends Component
                 'tenant_id' => $this->tenantId,
                 'type' => 'service',
                 'category_id' => $this->serviceCategoryId,
-                'category_tag' => $this->serviceCategoryTag,
+                'category_tag' => $this->serviceCategoryTag ?: 'Layanan Salon',
                 'name' => $this->serviceName,
                 'slug' => Str::slug($this->serviceName) . '-' . rand(100, 999),
                 'sku' => 'SRV-' . strtoupper(Str::random(5)),
@@ -569,7 +586,7 @@ class BackofficeDashboard extends Component
                 'cost_price' => $this->serviceCostPrice,
                 'duration_minutes' => $this->serviceDuration,
                 'commission_type' => $this->serviceCommissionType,
-                'commission_value' => $this->serviceCommissionValue,
+                'commission_value' => $commissionVal,
                 'image_url' => $this->serviceImageUrl ?: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=300&h=300&q=80',
                 'is_active' => true,
                 'is_available' => $this->serviceIsAvailable,
