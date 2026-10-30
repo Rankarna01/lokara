@@ -94,6 +94,50 @@ class TenantBackofficeTest extends TestCase
         $this->assertFalse($product->fresh()->is_available);
     }
 
+    public function test_can_upload_product_image_file_and_remove_image()
+    {
+        Storage::fake('public');
+
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+        $cat = Category::where('tenant_id', $tenant->id)->first();
+
+        $fakeProductImage = UploadedFile::fake()->image('iced_latte.jpg', 400, 400);
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewProductModal')
+            ->assertSet('showProductModal', true)
+            ->set('productName', 'Iced Spanish Latte')
+            ->set('productCategoryId', $cat->id)
+            ->set('productBasePrice', 32000)
+            ->set('productCostPrice', 11000)
+            ->set('productImageFile', $fakeProductImage)
+            ->call('saveProduct')
+            ->assertSet('showProductModal', false);
+
+        $product = Product::where('name', 'Iced Spanish Latte')->first();
+        $this->assertNotNull($product);
+        $this->assertNotNull($product->image_url);
+        $this->assertStringStartsWith('/storage/products/', $product->image_url);
+
+        // Verify stored in public disk
+        $relativeDiskPath = str_replace('/storage/', '', $product->image_url);
+        Storage::disk('public')->assertExists($relativeDiskPath);
+
+        // Test removeProductImage method
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('editProduct', $product->id)
+            ->assertSet('productImageUrl', $product->image_url)
+            ->call('removeProductImage')
+            ->assertSet('productImageFile', null)
+            ->assertSet('productImageUrl', '')
+            ->call('saveProduct');
+
+        $this->assertNull($product->fresh()->image_url);
+    }
+
     public function test_can_add_raw_material_and_recipe_recalculates_hpp()
     {
         $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
