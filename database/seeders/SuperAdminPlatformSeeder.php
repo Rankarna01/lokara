@@ -7,6 +7,7 @@ use App\Models\BusinessType;
 use App\Models\Invoice;
 use App\Models\Plan;
 use App\Models\PlatformActivityLog;
+use App\Models\PlatformFeature;
 use App\Models\PlatformSetting;
 use App\Models\Subscription;
 use App\Models\Tenant;
@@ -28,7 +29,15 @@ class SuperAdminPlatformSeeder extends Seeder
                     'has_recipes' => true,
                     'has_tables' => true,
                     'has_modifiers' => true,
+                    'has_shifts' => true,
                     'default_units' => ['gram', 'ml', 'cup', 'porsi', 'pcs'],
+                    'preset_modules' => [
+                        'Resep & Bill of Materials (BOM) Gram/ml',
+                        'Manajemen Meja & Cetak Dapur/Bar',
+                        'Peringatan Bahan Kedaluwarsa',
+                        'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
+                        'Integrasi Thermal Printer (Bluetooth/USB/RawBT)',
+                    ],
                 ],
                 'is_active' => true,
             ]
@@ -43,7 +52,15 @@ class SuperAdminPlatformSeeder extends Seeder
                 'default_settings' => [
                     'has_barcode' => true,
                     'has_variants' => true,
+                    'has_shifts' => true,
                     'default_units' => ['pcs', 'pack', 'dus', 'lusin'],
+                    'preset_modules' => [
+                        'Barcode Scanning Cepat (EAN-13)',
+                        'Varian Ukuran & Warna',
+                        'Multi-Gudang & Grosir',
+                        'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
+                        'Integrasi Thermal Printer (Bluetooth/USB/RawBT)',
+                    ],
                 ],
                 'is_active' => true,
             ]
@@ -59,11 +76,14 @@ class SuperAdminPlatformSeeder extends Seeder
                     'has_products' => true,
                     'has_services' => true,
                     'has_commissions' => true,
+                    'has_shifts' => true,
                     'default_units' => ['pcs', 'botol', 'tube', 'pot'],
                     'preset_modules' => [
                         'Master Produk & Penjualan Retail',
                         'Layanan Jasa & Perawatan',
                         'Komisi Pegawai / Kapster',
+                        'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
+                        'Integrasi Thermal Printer (Bluetooth/USB/RawBT)',
                     ],
                 ],
                 'is_active' => true,
@@ -150,6 +170,16 @@ class SuperAdminPlatformSeeder extends Seeder
                 'features' => ['Semua Fitur Pro', 'Unlimited Outlet & Kasir', 'API Terbuka & Webhook', 'Custom Domain', 'Support WhatsApp Khusus 24/7'],
                 'is_active' => true,
             ]
+        );
+
+        // Platform Features (Module Highlights)
+        PlatformFeature::updateOrCreate(
+            ['name' => 'Buka / Tutup Shift & Rekonsiliasi Kas Laci'],
+            ['category' => 'Kasir & Transaksi', 'description' => 'Buka/tutup shift kasir, hitung modal awal laci uang, dan rekonsiliasi kas.', 'is_active' => true, 'sort_order' => 17]
+        );
+        PlatformFeature::updateOrCreate(
+            ['name' => 'Integrasi Printer Thermal (Bluetooth, USB & RawBT)'],
+            ['category' => 'Kasir & Transaksi', 'description' => 'Cetak struk belanja ke printer thermal 58mm/80mm via Bluetooth, USB Driver, atau RawBT.', 'is_active' => true, 'sort_order' => 18]
         );
 
         // 3. Tenants (Matching Image 1 & 2)

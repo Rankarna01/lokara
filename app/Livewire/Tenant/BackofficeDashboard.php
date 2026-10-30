@@ -193,12 +193,21 @@ class BackofficeDashboard extends Component
 
     public function switchOutlet(int $outletId)
     {
-        $this->selectedOutletId = $outletId;
-        $this->showToast('Outlet aktif diubah.', 'info');
+        $outlet = Outlet::where('tenant_id', $this->tenantId)->find($outletId);
+        if ($outlet) {
+            $this->selectedOutletId = $outlet->id;
+            $this->showToast("Outlet aktif dialihkan ke '{$outlet->name}'.", 'info');
+        }
     }
 
     public function switchTenant(int $tenantId)
     {
+        // Security check: Only Super Admin can switch between tenants in Back Office
+        if (Auth::check() && !Auth::user()->isSuperAdmin()) {
+            $this->showToast('Akses ditolak: Anda hanya dapat mengelola bisnis Anda sendiri.', 'error');
+            return;
+        }
+
         $tenant = Tenant::with('businessType')->findOrFail($tenantId);
         $this->tenantId = $tenant->id;
         $firstOutlet = Outlet::where('tenant_id', $tenant->id)->first();
@@ -210,7 +219,7 @@ class BackofficeDashboard extends Component
             $this->activeTab = 'services';
         }
 
-        $this->showToast("Tenant aktif beralih ke '{$tenant->name}' ({$tenant->businessType?->name}).", 'info');
+        $this->showToast("Mode Super Admin: Menampilkan tenant '{$tenant->name}' ({$tenant->businessType?->name}).", 'info');
     }
 
     // --- PRODUCT MANAGEMENT ---
@@ -1073,7 +1082,8 @@ class BackofficeDashboard extends Component
     public function render()
     {
         $tenant = Tenant::with('businessType')->find($this->tenantId);
-        $allTenants = Tenant::with('businessType')->get();
+        $isSuperAdmin = Auth::check() && Auth::user()->isSuperAdmin();
+        $allTenants = $isSuperAdmin ? Tenant::with('businessType')->get() : collect($tenant ? [$tenant] : []);
         $outlets = Outlet::withCount('users')->where('tenant_id', $this->tenantId)->get();
         $selectedOutlet = Outlet::find($this->selectedOutletId) ?? $outlets->first();
 

@@ -29,16 +29,22 @@ class BusinessType extends Model
                 'Resep & Bill of Materials (BOM) Gram/ml',
                 'Manajemen Meja & Cetak Dapur/Bar',
                 'Peringatan Bahan Kedaluwarsa',
+                'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
+                'Integrasi Thermal Printer (Bluetooth/USB/RawBT)',
             ],
             'retail' => [
                 'Barcode Scanning Cepat (EAN-13)',
                 'Varian Ukuran & Warna',
                 'Multi-Gudang & Grosir',
+                'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
+                'Integrasi Thermal Printer (Bluetooth/USB/RawBT)',
             ],
             'salon' => [
                 'Master Produk & Penjualan Retail',
                 'Layanan Jasa & Perawatan',
                 'Komisi Pegawai / Kapster',
+                'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
+                'Integrasi Thermal Printer (Bluetooth/USB/RawBT)',
             ],
             'laundry' => [
                 'Layanan Kiloan & Satuan',

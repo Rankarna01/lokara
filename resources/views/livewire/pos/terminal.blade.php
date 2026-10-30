@@ -23,10 +23,14 @@
         <!-- 1. LEFT SIDEBAR (POS SPECIFIC NAVIGATION) -->
         @include('livewire.pos.partials.sidebar')
 
-        <!-- 2. CENTER SECTION: CATALOG & PRODUCT GRID -->
+        <!-- 2. CENTER SECTION: CATALOG & PRODUCT GRID / ORDERS VIEW -->
         <main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
             @include('livewire.pos.partials.header')
-            @include('livewire.pos.partials.catalog')
+            @if ($activeNav === 'pesanan')
+                @include('livewire.pos.partials.orders-view')
+            @else
+                @include('livewire.pos.partials.catalog')
+            @endif
         </main>
 
         <!-- 3. RIGHT PANEL: ORDER CART (PESANAN BARU) -->
@@ -34,6 +38,8 @@
     </div>
 
     <!-- ================= MODALS ================= -->
+    @include('livewire.pos.partials.open-shift-modal')
+    @include('livewire.pos.partials.printer-modal')
     @include('livewire.pos.partials.payment-modal')
     @include('livewire.pos.partials.success-modal')
     @include('livewire.pos.partials.variant-modal')

@@ -7,22 +7,49 @@
         <span class="text-slate-800 font-semibold capitalize">{{ $activeNav }}</span>
     </div>
 
-    <!-- Center: Search Input with Barcode Icon -->
-    <div class="relative w-80 lg:w-96">
-        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-        <input type="text"
-               wire:model.live.debounce.250ms="search"
-               placeholder="Cari nama menu atau scan barcode..."
-               class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-9 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:bg-white transition" />
-        <button wire:click="$set('showBarcodeModal', true)"
-                title="Scan Barcode"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-600 transition">
-            <i class="fa-solid fa-barcode text-sm"></i>
-        </button>
+    <!-- Center: Search Input with Barcode Icon & Shift Badge -->
+    <div class="flex items-center gap-3">
+        <div class="relative w-72 lg:w-84">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text"
+                   wire:model.live.debounce.250ms="search"
+                   placeholder="Cari menu / scan barcode..."
+                   class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-9 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:bg-white transition" />
+            <button wire:click="$set('showBarcodeModal', true)"
+                    title="Scan Barcode"
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-600 transition">
+                <i class="fa-solid fa-barcode text-sm"></i>
+            </button>
+        </div>
+
+        <!-- Shift Status Pill -->
+        @if ($activeShiftId)
+            <button wire:click="openShiftManagement"
+                    title="Lihat status shift & kas laci"
+                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold hover:bg-emerald-100 transition">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Shift Aktif: Rp{{ number_format($shiftStartingCash, 0, ',', '.') }}</span>
+            </button>
+        @else
+            <button wire:click="$set('showOpenShiftModal', true)"
+                    title="Mulai shift kasir & isi modal awal"
+                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold hover:bg-amber-100 transition">
+                <i class="fa-solid fa-lock text-amber-600 text-[10px]"></i>
+                <span>Buka Kasir Baru</span>
+            </button>
+        @endif
     </div>
 
-    <!-- Right: Outlet Selector, Bell, Cashier Profile -->
-    <div class="flex items-center gap-4">
+    <!-- Right: Outlet Selector, Printer, Bell, Cashier Profile -->
+    <div class="flex items-center gap-3">
+        <!-- Thermal Printer Quick Action -->
+        <button wire:click="$set('showPrinterModal', true)"
+                title="Pengaturan Printer Thermal ({{ ucfirst($printerConnectionType) }})"
+                class="relative p-2 text-slate-500 hover:text-orange-600 hover:bg-slate-50 rounded-lg transition">
+            <i class="fa-solid fa-print text-sm"></i>
+            <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+        </button>
+
         <!-- Outlet Dropdown -->
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open"

@@ -24,9 +24,9 @@
             </button>
 
             <!-- Pesanan -->
-            <button wire:click="$set('showHoldModal', true)"
+            <button wire:click="$set('activeNav', 'pesanan')"
                     class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'pesanan' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
-                <i class="fa-solid fa-clipboard-list text-sm w-4 text-center text-slate-400"></i>
+                <i class="fa-solid fa-clipboard-list text-sm w-4 text-center {{ $activeNav === 'pesanan' ? 'text-orange-500' : 'text-slate-400' }}"></i>
                 <span>Pesanan</span>
                 @if (count($heldOrders) > 0)
                     <span class="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">{{ count($heldOrders) }}</span>
@@ -34,22 +34,27 @@
             </button>
 
             <!-- Shift & Kas -->
-            <button wire:click="$set('showShiftModal', true)"
-                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'shift' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+            <button wire:click="openShiftManagement"
+                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                 <i class="fa-solid fa-cash-register text-sm w-4 text-center text-slate-400"></i>
                 <span>Shift & Kas</span>
+                @if ($activeShiftId)
+                    <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500" title="Shift Aktif"></span>
+                @else
+                    <span class="ml-auto text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.2 rounded font-bold">Buka</span>
+                @endif
             </button>
 
             <!-- Transaksi -->
             <button wire:click="$set('showTransactionsModal', true)"
-                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'transaksi' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                 <i class="fa-solid fa-receipt text-sm w-4 text-center text-slate-400"></i>
                 <span>Transaksi</span>
             </button>
 
             <!-- Pelanggan -->
             <button wire:click="$set('showCustomerModal', true)"
-                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'pelanggan' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                 <i class="fa-solid fa-user-group text-sm w-4 text-center text-slate-400"></i>
                 <span>Pelanggan</span>
                 @if ($selectedCustomer)
@@ -57,9 +62,19 @@
                 @endif
             </button>
 
+            <!-- Printer Struk Thermal -->
+            <button wire:click="$set('showPrinterModal', true)"
+                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left text-slate-600 hover:text-slate-900 hover:bg-slate-50">
+                <i class="fa-solid fa-print text-sm w-4 text-center text-slate-400"></i>
+                <span>Printer Struk</span>
+                <span class="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded {{ $printerConnectionType === 'bluetooth' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600' }}">
+                    {{ $printerConnectionType }}
+                </span>
+            </button>
+
             <!-- Bantuan -->
             <button wire:click="$set('showHelpModal', true)"
-                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left {{ $activeNav === 'bantuan' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                    class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-medium transition-colors text-left text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                 <i class="fa-regular fa-circle-question text-sm w-4 text-center text-slate-400"></i>
                 <span>Bantuan</span>
             </button>

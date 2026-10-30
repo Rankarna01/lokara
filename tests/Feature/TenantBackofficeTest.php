@@ -326,7 +326,20 @@ class TenantBackofficeTest extends TestCase
             ->assertSee('CUKUR15K');
     }
 
-    public function test_can_switch_tenant_in_backoffice()
+    public function test_super_admin_can_switch_tenant_in_backoffice()
+    {
+        $superAdmin = User::where('role', 'super_admin')->first();
+        $fnbTenant = Tenant::where('slug', 'kopiruangpagi')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+
+        Livewire::actingAs($superAdmin, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTenant', $salonTenant->id)
+            ->assertSet('tenantId', $salonTenant->id)
+            ->assertSee('Studio Rona');
+    }
+
+    public function test_tenant_owner_cannot_switch_to_another_business()
     {
         $fnbOwner = User::where('email', 'rian@kopiruangpagi.id')->first();
         $fnbTenant = Tenant::where('slug', 'kopiruangpagi')->first();
@@ -335,9 +348,10 @@ class TenantBackofficeTest extends TestCase
         Livewire::actingAs($fnbOwner, 'web')
             ->test(BackofficeDashboard::class)
             ->assertSet('tenantId', $fnbTenant->id)
+            ->assertDontSee('Super Admin View:')
             ->call('switchTenant', $salonTenant->id)
-            ->assertSet('tenantId', $salonTenant->id)
-            ->assertSee('Studio Rona');
+            ->assertSet('tenantId', $fnbTenant->id) // Tetap terkunci di tenant pemiliknya
+            ->assertDontSee('Studio Rona (Salon & Barbershop)');
     }
 
     public function test_can_create_and_edit_service_in_salon()

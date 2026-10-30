@@ -11,57 +11,22 @@
             </div>
             <div>
                 <div class="font-bold text-xs {{ $selectedCategory === 'all' ? 'text-orange-600' : 'text-slate-800' }}">Semua Menu</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">{{ $allMenuCount }} menu</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">{{ $allMenuCount }} item</div>
             </div>
         </button>
 
-        <!-- Tab: Kopi -->
-        <button wire:click="setCategory('kopi')"
-                class="p-3.5 rounded-xl border text-left transition flex items-center gap-3.5 {{ $selectedCategory === 'kopi' ? 'bg-white border-orange-500 ring-1 ring-orange-500 shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300' }}">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $selectedCategory === 'kopi' ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600' }}">
-                <i class="fa-solid fa-mug-hot text-base"></i>
-            </div>
-            <div>
-                <div class="font-bold text-xs {{ $selectedCategory === 'kopi' ? 'text-orange-600' : 'text-slate-800' }}">Kopi</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">12 menu</div>
-            </div>
-        </button>
-
-        <!-- Tab: Non-Kopi -->
-        <button wire:click="setCategory('non-kopi')"
-                class="p-3.5 rounded-xl border text-left transition flex items-center gap-3.5 {{ $selectedCategory === 'non-kopi' ? 'bg-white border-orange-500 ring-1 ring-orange-500 shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300' }}">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $selectedCategory === 'non-kopi' ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600' }}">
-                <i class="fa-solid fa-glass-water text-base"></i>
-            </div>
-            <div>
-                <div class="font-bold text-xs {{ $selectedCategory === 'non-kopi' ? 'text-orange-600' : 'text-slate-800' }}">Non-Kopi</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">10 menu</div>
-            </div>
-        </button>
-
-        <!-- Tab: Makanan -->
-        <button wire:click="setCategory('makanan')"
-                class="p-3.5 rounded-xl border text-left transition flex items-center gap-3.5 {{ $selectedCategory === 'makanan' ? 'bg-white border-orange-500 ring-1 ring-orange-500 shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300' }}">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $selectedCategory === 'makanan' ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600' }}">
-                <i class="fa-solid fa-utensils text-base"></i>
-            </div>
-            <div>
-                <div class="font-bold text-xs {{ $selectedCategory === 'makanan' ? 'text-orange-600' : 'text-slate-800' }}">Makanan</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">12 menu</div>
-            </div>
-        </button>
-
-        <!-- Tab: Snack -->
-        <button wire:click="setCategory('snack')"
-                class="p-3.5 rounded-xl border text-left transition flex items-center gap-3.5 {{ $selectedCategory === 'snack' ? 'bg-white border-orange-500 ring-1 ring-orange-500 shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300' }}">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $selectedCategory === 'snack' ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600' }}">
-                <i class="fa-solid fa-cookie-bite text-base"></i>
-            </div>
-            <div>
-                <div class="font-bold text-xs {{ $selectedCategory === 'snack' ? 'text-orange-600' : 'text-slate-800' }}">Snack</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">8 menu</div>
-            </div>
-        </button>
+        @foreach ($categories as $cat)
+            <button wire:click="setCategory('{{ $cat->slug }}')"
+                    class="p-3.5 rounded-xl border text-left transition flex items-center gap-3.5 {{ $selectedCategory === $cat->slug ? 'bg-white border-orange-500 ring-1 ring-orange-500 shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300' }}">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $selectedCategory === $cat->slug ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600' }}">
+                    <i class="fa-solid {{ $cat->icon ?: 'fa-tag' }} text-base"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-xs {{ $selectedCategory === $cat->slug ? 'text-orange-600' : 'text-slate-800' }}">{{ $cat->name }}</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">{{ $cat->products_count }} item</div>
+                </div>
+            </button>
+        @endforeach
     </div>
 
     <!-- 2. Section Header: Title & Scan Barcode Button -->
