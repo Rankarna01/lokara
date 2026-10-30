@@ -55,12 +55,12 @@
                         </button>
                     @endif
 
-                    <!-- Master Produk / Retail -->
+                    <!-- Master Produk (Barang & Retail) -->
                     <button wire:click="switchTab('products')"
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'products' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-boxes-stacked w-5 text-center {{ $activeTab === 'products' ? 'text-orange-500' : 'text-slate-400' }}"></i>
-                            <span>{{ $tenant?->isSalon() ? 'Produk Retail' : 'Master Produk' }}</span>
+                            <span>Master Produk</span>
                         </div>
                         <span class="text-xs px-2 py-0.5 rounded-full {{ $activeTab === 'products' ? 'bg-orange-200/60 text-orange-700' : 'bg-slate-100 text-slate-500' }}">{{ $products->count() }}</span>
                     </button>
@@ -259,10 +259,21 @@
                                 <p class="text-sm text-slate-500 mt-0.5">Berikut adalah ringkasan performa penjualan dan operasional outlet Anda hari ini.</p>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button wire:click="openNewProductModal" class="px-3.5 py-2 text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl transition flex items-center gap-1.5">
-                                    <i class="fa-solid fa-plus text-slate-500"></i>
-                                    <span>Tambah Menu</span>
-                                </button>
+                                @if($tenant?->isSalon() || $tenant?->hasFeature('has_services'))
+                                    <button wire:click="openNewProductModal" class="px-3.5 py-2 text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-boxes-stacked text-slate-500"></i>
+                                        <span>Tambah Produk</span>
+                                    </button>
+                                    <button wire:click="openNewServiceModal" class="px-3.5 py-2 text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-scissors text-indigo-500"></i>
+                                        <span>Tambah Layanan</span>
+                                    </button>
+                                @else
+                                    <button wire:click="openNewProductModal" class="px-3.5 py-2 text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-plus text-slate-500"></i>
+                                        <span>Tambah Menu</span>
+                                    </button>
+                                @endif
                                 <button wire:click="openExpenseModal" class="px-3.5 py-2 text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl transition flex items-center gap-1.5">
                                     <i class="fa-solid fa-wallet text-slate-500"></i>
                                     <span>Catat Biaya</span>
@@ -523,10 +534,26 @@
                         <!-- Top Header & Filter Controls -->
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
                             <div>
-                                <h1 class="text-xl font-bold text-slate-900">Katalog & Master Produk</h1>
-                                <p class="text-xs text-slate-500 mt-0.5">Kelola menu, harga jual cabang, HPP modal, dan ketersediaan stok.</p>
+                                <div class="flex items-center gap-2">
+                                    <h1 class="text-xl font-bold text-slate-900">Katalog & Master Produk</h1>
+                                    @if($tenant?->isSalon() || $tenant?->hasFeature('has_services'))
+                                        <span class="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                            Produk Fisik & Retail
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    {{ $tenant?->isSalon() ? 'Kelola produk retail perawatan, pomade, shampoo, harga jual, dan stok barang.' : 'Kelola menu, harga jual cabang, HPP modal, dan ketersediaan stok.' }}
+                                </p>
                             </div>
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2.5">
+                                @if($tenant?->isSalon() || $tenant?->hasFeature('has_services'))
+                                    <button wire:click="switchTab('services')"
+                                        class="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-xs rounded-xl shadow-xs flex items-center gap-2 transition">
+                                        <i class="fa-solid fa-scissors"></i>
+                                        <span>Ke Master Layanan ({{ $services->count() }})</span>
+                                    </button>
+                                @endif
                                 <button wire:click="openNewProductModal"
                                     class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition">
                                     <i class="fa-solid fa-plus"></i>
@@ -693,7 +720,12 @@
                                 </div>
                                 <p class="text-xs text-slate-500 mt-0.5">Kelola tarif potong rambut, perawatan spa, durasi waktu pengerjaan, dan skema komisi kapster/stylist.</p>
                             </div>
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <button wire:click="switchTab('products')"
+                                    class="px-3.5 py-2.5 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 font-semibold text-xs rounded-xl shadow-xs flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-boxes-stacked"></i>
+                                    <span>Ke Master Produk ({{ $products->count() }})</span>
+                                </button>
                                 <button wire:click="openNewServiceModal"
                                     class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition">
                                     <i class="fa-solid fa-scissors"></i>
@@ -749,10 +781,10 @@
                                     class="px-3 py-1.5 text-xs font-semibold rounded-lg transition {{ $selectedServiceCategoryFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
                                     Semua Kategori ({{ $services->count() }})
                                 </button>
-                                @foreach($categories as $cat)
+                                @foreach($serviceCategories ?? $categories as $cat)
                                     <button wire:click="$set('selectedServiceCategoryFilter', {{ $cat->id }})"
                                         class="px-3 py-1.5 text-xs font-semibold rounded-lg transition whitespace-nowrap {{ $selectedServiceCategoryFilter == $cat->id ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
-                                        {{ $cat->name }}
+                                        {{ $cat->name }} ({{ $cat->products_count }})
                                     </button>
                                 @endforeach
                             </div>
