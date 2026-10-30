@@ -350,11 +350,14 @@ class BackofficeDashboard extends Component
 
             $this->showToast("Kategori '{$this->categoryName}' berhasil ditambahkan!");
 
-            // If product modal is open, auto-select this new category
-            if ($this->showProductModal) {
+            // Auto-select this new category in whichever modal is currently open
+            if ($this->showServiceModal) {
+                $this->serviceCategoryId = $category->id;
+            } elseif ($this->showProductModal) {
                 $this->productCategoryId = $category->id;
             } else {
                 $this->selectedCategoryFilter = (string) $category->id;
+                $this->selectedServiceCategoryFilter = (string) $category->id;
             }
         }
 
@@ -375,8 +378,16 @@ class BackofficeDashboard extends Component
             $this->selectedCategoryFilter = 'all';
         }
 
+        if ($this->selectedServiceCategoryFilter == (string) $id) {
+            $this->selectedServiceCategoryFilter = 'all';
+        }
+
         if ($this->productCategoryId == $id) {
             $this->productCategoryId = Category::where('tenant_id', $this->tenantId)->first()?->id;
+        }
+
+        if ($this->serviceCategoryId == $id) {
+            $this->serviceCategoryId = Category::where('tenant_id', $this->tenantId)->first()?->id;
         }
 
         $this->showToast("Kategori '{$name}' berhasil dihapus.");

@@ -383,6 +383,29 @@ class TenantBackofficeTest extends TestCase
         $this->assertEquals(135000, $service->fresh()->base_price);
     }
 
+    public function test_can_create_new_category_from_inside_service_modal()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+
+        $component = Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewServiceModal')
+            ->assertSet('showServiceModal', true)
+            ->call('openNewCategoryModal')
+            ->assertSet('showCategoryModal', true)
+            ->set('categoryName', 'Kuku & Nail Art')
+            ->set('categoryIcon', 'fa-hand-sparkles')
+            ->set('categorySortOrder', 9)
+            ->call('saveCategory')
+            ->assertSet('showCategoryModal', false)
+            ->assertSet('showServiceModal', true);
+
+        $newCat = Category::where('tenant_id', $salonTenant->id)->where('name', 'Kuku & Nail Art')->first();
+        $this->assertNotNull($newCat);
+        $component->assertSet('serviceCategoryId', $newCat->id);
+    }
+
     public function test_can_create_and_manage_discounts_percentage_and_fixed()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();

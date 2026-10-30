@@ -777,16 +777,45 @@
                         <!-- Search & Category Filters -->
                         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
                             <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+                                <!-- Filter Semua Kategori -->
                                 <button wire:click="$set('selectedServiceCategoryFilter', 'all')"
-                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition {{ $selectedServiceCategoryFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition shrink-0 {{ $selectedServiceCategoryFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
                                     Semua Kategori ({{ $services->count() }})
                                 </button>
+
+                                <!-- Pill Kategori + Tombol Edit Langsung -->
                                 @foreach($serviceCategories ?? $categories as $cat)
-                                    <button wire:click="$set('selectedServiceCategoryFilter', {{ $cat->id }})"
-                                        class="px-3 py-1.5 text-xs font-semibold rounded-lg transition whitespace-nowrap {{ $selectedServiceCategoryFilter == $cat->id ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
-                                        {{ $cat->name }} ({{ $cat->products_count }})
-                                    </button>
+                                    <div class="inline-flex items-center rounded-lg border transition shrink-0 {{ $selectedServiceCategoryFilter == $cat->id ? 'bg-orange-500 border-orange-500 text-white shadow-sm' : 'bg-slate-100 border-transparent text-slate-600 hover:bg-slate-200' }}">
+                                        <button wire:click="$set('selectedServiceCategoryFilter', {{ $cat->id }})"
+                                            class="px-3 py-1.5 text-xs font-semibold whitespace-nowrap flex items-center gap-1.5">
+                                            @if($cat->icon)
+                                                <i class="fa-solid {{ $cat->icon }} text-[10px] {{ $selectedServiceCategoryFilter == $cat->id ? 'text-white' : 'text-slate-400' }}"></i>
+                                            @endif
+                                            <span>{{ $cat->name }} ({{ $cat->products_count }})</span>
+                                        </button>
+                                        <button wire:click="openEditCategoryModal({{ $cat->id }})"
+                                            title="Edit Kategori: {{ $cat->name }}"
+                                            class="pr-2 pl-0.5 py-1.5 text-[10px] {{ $selectedServiceCategoryFilter == $cat->id ? 'text-orange-200 hover:text-white' : 'text-slate-400 hover:text-slate-700' }} transition">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                    </div>
                                 @endforeach
+
+                                <!-- Tombol Tambah Kategori Langsung di Samping Kategori -->
+                                <button wire:click="openNewCategoryModal"
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-dashed border-orange-400 bg-orange-50 text-orange-600 hover:bg-orange-100 hover:border-orange-500 transition flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs cursor-pointer"
+                                    title="Tambah Kategori Layanan Baru">
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                    <span>Tambah Kategori</span>
+                                </button>
+
+                                <!-- Tombol Kelola Semua Kategori -->
+                                <button wire:click="openManageCategoriesModal"
+                                    class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                                    title="Kelola & Atur Urutan Kategori">
+                                    <i class="fa-solid fa-sliders text-[11px] text-slate-500"></i>
+                                    <span class="hidden sm:inline">Kelola Kategori</span>
+                                </button>
                             </div>
 
                             <div class="relative w-full sm:w-64">
@@ -2116,7 +2145,7 @@
 
     <!-- 8. Modal Tambah / Edit Kategori Menu -->
     @if ($showCategoryModal)
-        <div class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                     <div>
@@ -2229,7 +2258,7 @@
 
     <!-- 9. Modal Kelola Semua Kategori Menu -->
     @if ($showManageCategoriesModal)
-        <div class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="fixed inset-0 z-[75] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
                     <div>
