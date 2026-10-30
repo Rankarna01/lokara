@@ -5,6 +5,7 @@ namespace App\Livewire\SuperAdmin;
 use App\Models\Announcement;
 use App\Models\BusinessType;
 use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\Plan;
 use App\Models\PlatformActivityLog;
 use App\Models\PlatformFeature;
@@ -26,6 +27,7 @@ class PlatformDashboard extends Component
     public string $searchQuery = '';
     public string $dateFilter = '30_days'; // '7_days', '30_days', '90_days', 'this_year'
     public string $tenantStatusFilter = 'all';
+    public string $invoiceStatusFilter = 'all';
 
     // Modal State
     public bool $showCreateTenantModal = false;
@@ -1098,24 +1100,101 @@ class PlatformDashboard extends Component
 
     public function render()
     {
-        // Dashboard Stats (Matching Image 1 values)
-        $totalTenantCount = 1284;
-        $activeTenantCount = 1102;
-        $trialTenantCount = 96;
-        $suspendedTenantCount = 28;
-        $expiredTenantCount = 58;
+        $now = Carbon::now();
 
-        $mrrValue = 'Rp 48,6 jt';
-        $totalTransactions = '86.420';
-        $attentionCount = 12;
+        // 1. Dynamic Date Filter Range
+        $dateStart = match ($this->dateFilter) {
+            '7_days' => $now->copy()->subDays(7)->startOfDay(),
+            '30_days' => $now->copy()->subDays(30)->startOfDay(),
+            '90_days' => $now->copy()->subDays(90)->startOfDay(),
+            'this_year' => $now->copy()->startOfYear(),
+            default => $now->copy()->subDays(30)->startOfDay(),
+        };
 
-        // Query Tenants for Recent List
+        $dateFilterLabel = match ($this->dateFilter) {
+            '7_days' => '7 hari terakhir',
+            '30_days' => '30 hari terakhir',
+            '90_days' => '90 hari terakhir',
+            'this_year' => 'Tahun ' . $now->year,
+            default => '30 hari terakhir',
+        };
+
+        // 2. Dynamic Real Tenant Status Counts
+        $totalTenantCount = Tenant::count();
+        $activeTenantCount = Tenant::where('status', 'active')->count();
+        $trialTenantCount = Tenant::where('status', 'trial')->count();
+        $suspendedTenantCount = Tenant::where('status', 'suspended')->count();
+        $expiredTenantCount = Tenant::where('status', 'expired')->count();
+
+        // 3. Dynamic MRR Calculation (Active Tenants * Subscription Monthly Price)
+        $activeTenantsWithPlan = Tenant::where('status', 'active')->with('plan')->get();
+        $rawMrr = $activeTenantsWithPlan->sum(function ($t) {
+            return (float) ($t->plan?->price_monthly ?? 0);
+        });
+
+        if ($rawMrr >= 1000000000) {
+            $mrrValue = 'Rp ' . number_format($rawMrr / 1000000000, 1, ',', '.') . ' M';
+        } elseif ($rawMrr >= 1000000) {
+            $mrrValue = 'Rp ' . number_format($rawMrr / 1000000, 1, ',', '.') . ' jt';
+        } else {
+            $mrrValue = 'Rp ' . number_format($rawMrr, 0, ',', '.');
+        }
+
+        // 4. Dynamic Platform Transactions based on dateFilter
+        $orderQuery = Order::where('created_at', '>=', $dateStart);
+        $totalTransactionsCount = $orderQuery->count();
+        $totalTransactionsAmount = $orderQuery->sum('total_amount');
+
+        $paidInvoicesAmount = Invoice::where('status', 'paid')
+            ->where('created_at', '>=', $dateStart)
+            ->sum('amount');
+
+        $totalTransactions = number_format($totalTransactionsCount, 0, ',', '.');
+        $totalVolumeFormatted = 'Rp ' . number_format($totalTransactionsAmount + $paidInvoicesAmount, 0, ',', '.');
+
+        // 5. Dynamic Attention Count (Expiring trials, expiring subs, overdue invoices, expired tenants)
+        $expiringTrials = Tenant::where('status', 'trial')
+            ->where(function ($q) use ($now) {
+                $q->whereNull('trial_ends_at')
+                  ->orWhere('trial_ends_at', '<=', $now->copy()->addDays(7));
+            })->count();
+
+        $expiringSubscriptions = Tenant::where('status', 'active')
+            ->whereNotNull('subscription_ends_at')
+            ->where('subscription_ends_at', '<=', $now->copy()->addDays(14))
+            ->count();
+
+        $overdueInvoices = Invoice::where('status', 'overdue')
+            ->orWhere(function ($q) use ($now) {
+                $q->where('status', 'unpaid')->where('due_date', '<', $now->toDateString());
+            })->count();
+
+        $attentionCount = $expiringTrials + $expiringSubscriptions + $expiredTenantCount + $overdueInvoices;
+
+        // 6. Donut Chart Data Array
+        $donutChartData = [
+            $activeTenantCount,
+            $trialTenantCount,
+            $suspendedTenantCount,
+            $expiredTenantCount,
+        ];
+
+        // 7. Dynamic Growth Chart Data (Last 6 Months)
+        $growthLabels = [];
+        $growthData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthDate = $now->copy()->subMonths($i);
+            $growthLabels[] = $monthDate->translatedFormat('M');
+            $growthData[] = Tenant::where('created_at', '<=', $monthDate->endOfMonth())->count();
+        }
+
+        // 8. Query Tenants for Recent List
         $recentTenants = Tenant::with(['businessType', 'plan'])
             ->orderBy('id', 'asc')
             ->take(5)
             ->get();
 
-        // Query All Tenants with search & filter
+        // 9. Query All Tenants with search & filter
         $allTenantsQuery = Tenant::with(['businessType', 'plan'])
             ->when($this->searchQuery, function ($q) {
                 $q->where('name', 'like', "%{$this->searchQuery}%")
@@ -1129,8 +1208,16 @@ class PlatformDashboard extends Component
 
         $allTenants = $allTenantsQuery->paginate(8);
 
-        // Invoices
+        // 10. Invoices with status filter
+        $invoiceTotalCount = Invoice::count();
+        $invoicePaidCount = Invoice::where('status', 'paid')->count();
+        $invoiceUnpaidCount = Invoice::where('status', 'unpaid')->count();
+        $invoiceOverdueCount = Invoice::where('status', 'overdue')->count();
+
         $invoices = Invoice::with('tenant')
+            ->when($this->invoiceStatusFilter !== 'all', function ($q) {
+                $q->where('status', $this->invoiceStatusFilter);
+            })
             ->orderBy('id', 'desc')
             ->paginate(8);
 
@@ -1168,11 +1255,23 @@ class PlatformDashboard extends Component
             'suspendedTenantCount' => $suspendedTenantCount,
             'expiredTenantCount' => $expiredTenantCount,
             'mrrValue' => $mrrValue,
+            'rawMrr' => $rawMrr,
             'totalTransactions' => $totalTransactions,
+            'totalTransactionsCount' => $totalTransactionsCount,
+            'totalTransactionsAmount' => $totalTransactionsAmount,
+            'totalVolumeFormatted' => $totalVolumeFormatted,
+            'dateFilterLabel' => $dateFilterLabel,
             'attentionCount' => $attentionCount,
+            'donutChartData' => $donutChartData,
+            'growthLabels' => $growthLabels,
+            'growthData' => $growthData,
             'recentTenants' => $recentTenants,
             'allTenants' => $allTenants,
             'invoices' => $invoices,
+            'invoiceTotalCount' => $invoiceTotalCount,
+            'invoicePaidCount' => $invoicePaidCount,
+            'invoiceUnpaidCount' => $invoiceUnpaidCount,
+            'invoiceOverdueCount' => $invoiceOverdueCount,
             'plans' => $plans,
             'allPlatformFeatures' => $allPlatformFeatures,
             'featurePlanUsage' => $featurePlanUsage,

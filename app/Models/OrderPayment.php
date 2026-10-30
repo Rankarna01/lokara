@@ -22,5 +22,10 @@ class OrderPayment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 }
 

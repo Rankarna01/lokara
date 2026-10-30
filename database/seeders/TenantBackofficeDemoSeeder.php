@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\Discount;
 use App\Models\Expense;
 use App\Models\Ingredient;
 use App\Models\Outlet;
@@ -333,24 +335,279 @@ class TenantBackofficeDemoSeeder extends Seeder
             );
         }
 
-        // 8. Stock Movement sample ledger
-        if (isset($ingredientModels['Biji Kopi Espresso Blend'])) {
-            StockMovement::updateOrCreate(
-                ['tenant_id' => $tenant->id, 'ingredient_id' => $ingredientModels['Biji Kopi Espresso Blend']->id, 'type' => 'purchase'],
+        // 9. Discounts for Kopi Ruang Pagi
+        Discount::updateOrCreate(
+            ['tenant_id' => $tenant->id, 'name' => 'Promo Diskon Pelajar & Mahasiswa 15%'],
+            [
+                'code' => 'STUDENT15',
+                'type' => 'percentage',
+                'value' => 15,
+                'min_purchase' => 30000,
+                'max_discount' => 15000,
+                'applicable_to' => 'all',
+                'start_date' => now()->startOfMonth()->toDateString(),
+                'end_date' => now()->endOfMonth()->addMonths(2)->toDateString(),
+                'is_active' => true,
+                'max_usage' => 200,
+                'usage_count' => 34,
+                'notes' => 'Tunjukkan kartu tanda mahasiswa/pelajar saat pembayaran',
+            ]
+        );
+
+        Discount::updateOrCreate(
+            ['tenant_id' => $tenant->id, 'name' => 'Potongan Langsung Rp 10.000'],
+            [
+                'code' => 'HEMAT10K',
+                'type' => 'fixed',
+                'value' => 10000,
+                'min_purchase' => 50000,
+                'applicable_to' => 'all',
+                'start_date' => now()->startOfMonth()->toDateString(),
+                'end_date' => now()->endOfMonth()->addMonth()->toDateString(),
+                'is_active' => true,
+                'max_usage' => 100,
+                'usage_count' => 18,
+                'notes' => 'Minimal belanja 50 ribu',
+            ]
+        );
+
+        // 10. Seed Demo Data for Studio Rona (Salon & Barbershop)
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        if ($salonTenant) {
+            $salonOutlet = Outlet::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'slug' => 'studio-rona-gubeng'],
                 [
-                    'outlet_id' => $mainOutlet->id,
-                    'qty' => 10000,
-                    'balance_after' => 10000,
-                    'reference_note' => 'Penerimaan PO-202610-001 dari PT Kopi Nusantara',
+                    'name' => 'Studio Rona - Gubeng',
+                    'phone' => '081377889901',
+                    'address' => 'Jl. Raya Gubeng No. 88, Surabaya',
+                    'tax_rate' => 11.00,
+                    'service_rate' => 5.00,
+                    'is_active' => true,
                 ]
             );
-            StockMovement::updateOrCreate(
-                ['tenant_id' => $tenant->id, 'ingredient_id' => $ingredientModels['Biji Kopi Espresso Blend']->id, 'type' => 'sale_pos'],
+
+            // Salon Owner User
+            User::updateOrCreate(
+                ['email' => 'contact@studiorona.id'],
                 [
-                    'outlet_id' => $mainOutlet->id,
-                    'qty' => -1500,
-                    'balance_after' => 8500,
-                    'reference_note' => 'Penjualan POS harian akumulasi',
+                    'name' => 'Rona Melinda',
+                    'password' => Hash::make('password'),
+                    'role' => 'owner',
+                    'phone' => '081377889900',
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'pin_code' => '999999',
+                    'is_active' => true,
+                ]
+            );
+
+            // Salon Kapster / Stylist
+            User::updateOrCreate(
+                ['email' => 'doni.barber@studiorona.id'],
+                [
+                    'name' => 'Doni Barber (Senior Kapster)',
+                    'password' => Hash::make('password'),
+                    'role' => 'cashier',
+                    'phone' => '081377889911',
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'pin_code' => '111111',
+                    'is_active' => true,
+                ]
+            );
+
+            // Categories
+            $catCut = Category::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'slug' => 'haircut-shaving'],
+                ['name' => 'Haircut & Shaving', 'icon' => 'fa-scissors', 'sort_order' => 1]
+            );
+
+            $catTreatment = Category::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'slug' => 'treatment-spa'],
+                ['name' => 'Treatment & Spa', 'icon' => 'fa-spa', 'sort_order' => 2]
+            );
+
+            $catColoring = Category::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'slug' => 'coloring-styling'],
+                ['name' => 'Coloring & Styling', 'icon' => 'fa-paintbrush', 'sort_order' => 3]
+            );
+
+            $catRetail = Category::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'slug' => 'produk-perawatan'],
+                ['name' => 'Produk Retail', 'icon' => 'fa-bottle-droplet', 'sort_order' => 4]
+            );
+
+            // Services
+            $servicesData = [
+                [
+                    'name' => 'Gentleman Haircut & Styling',
+                    'category_id' => $catCut->id,
+                    'category_tag' => 'Haircut • Pria',
+                    'base_price' => 60000,
+                    'cost_price' => 5000,
+                    'duration_minutes' => 40,
+                    'commission_type' => 'fixed',
+                    'commission_value' => 20000,
+                    'image_url' => 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=300&h=300&q=80',
+                ],
+                [
+                    'name' => 'Kids Haircut (Balita & Anak)',
+                    'category_id' => $catCut->id,
+                    'category_tag' => 'Haircut • Anak',
+                    'base_price' => 45000,
+                    'cost_price' => 3000,
+                    'duration_minutes' => 30,
+                    'commission_type' => 'percentage',
+                    'commission_value' => 30, // 30%
+                    'image_url' => 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=300&h=300&q=80',
+                ],
+                [
+                    'name' => 'Beard Shaving & Hot Towel Massage',
+                    'category_id' => $catCut->id,
+                    'category_tag' => 'Shaving • Grooming',
+                    'base_price' => 35000,
+                    'cost_price' => 4000,
+                    'duration_minutes' => 25,
+                    'commission_type' => 'fixed',
+                    'commission_value' => 12000,
+                    'image_url' => 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=300&h=300&q=80',
+                ],
+                [
+                    'name' => 'Creambath Spa & Head Massage',
+                    'category_id' => $catTreatment->id,
+                    'category_tag' => 'Treatment • Relaksasi',
+                    'base_price' => 85000,
+                    'cost_price' => 15000,
+                    'duration_minutes' => 60,
+                    'commission_type' => 'percentage',
+                    'commission_value' => 25, // 25%
+                    'image_url' => 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=300&h=300&q=80',
+                ],
+                [
+                    'name' => 'Hair Coloring Premium Black / Brown',
+                    'category_id' => $catColoring->id,
+                    'category_tag' => 'Coloring • Fashion',
+                    'base_price' => 150000,
+                    'cost_price' => 35000,
+                    'duration_minutes' => 90,
+                    'commission_type' => 'percentage',
+                    'commission_value' => 30, // 30%
+                    'image_url' => 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=300&h=300&q=80',
+                ],
+            ];
+
+            foreach ($servicesData as $srv) {
+                Product::updateOrCreate(
+                    ['tenant_id' => $salonTenant->id, 'name' => $srv['name']],
+                    array_merge($srv, [
+                        'tenant_id' => $salonTenant->id,
+                        'type' => 'service',
+                        'slug' => \Illuminate\Support\Str::slug($srv['name']),
+                        'sku' => 'SRV-' . strtoupper(\Illuminate\Support\Str::random(4)),
+                        'is_active' => true,
+                        'is_available' => true,
+                    ])
+                );
+            }
+
+            // Retail Items in Salon
+            Product::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'Pomade Strong Matte Clay 100g'],
+                [
+                    'category_id' => $catRetail->id,
+                    'category_tag' => 'Produk • Styling',
+                    'type' => 'item',
+                    'slug' => 'pomade-matte-clay-100g',
+                    'sku' => 'PRD-POMADE',
+                    'base_price' => 85000,
+                    'cost_price' => 45000,
+                    'image_url' => 'https://images.unsplash.com/photo-1597354984706-aec992b7d526?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
+            Product::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'Tonic Hair & Scalp Refresher 100ml'],
+                [
+                    'category_id' => $catRetail->id,
+                    'category_tag' => 'Produk • Perawatan',
+                    'type' => 'item',
+                    'slug' => 'tonic-hair-refresher-100ml',
+                    'sku' => 'PRD-TONIC',
+                    'base_price' => 65000,
+                    'cost_price' => 30000,
+                    'image_url' => 'https://images.unsplash.com/photo-1608248597359-5975e533037f?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
+            Product::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'Shampoo Anti-Dandruff Professional 500ml'],
+                [
+                    'category_id' => $catRetail->id,
+                    'category_tag' => 'Produk • Perawatan',
+                    'type' => 'item',
+                    'slug' => 'shampoo-anti-dandruff-pro-500ml',
+                    'sku' => 'PRD-SHAMPOO',
+                    'base_price' => 110000,
+                    'cost_price' => 55000,
+                    'image_url' => 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
+            Product::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'Serum Keratin Hair Repair 50ml'],
+                [
+                    'category_id' => $catRetail->id,
+                    'category_tag' => 'Produk • Treatment',
+                    'type' => 'item',
+                    'slug' => 'serum-keratin-hair-repair-50ml',
+                    'sku' => 'PRD-SERUM',
+                    'base_price' => 95000,
+                    'cost_price' => 48000,
+                    'image_url' => 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
+            // Salon Discounts
+            Discount::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'Promo Diskon Grand Opening 20%'],
+                [
+                    'code' => 'OPENING20',
+                    'type' => 'percentage',
+                    'value' => 20,
+                    'min_purchase' => 50000,
+                    'max_discount' => 25000,
+                    'applicable_to' => 'services',
+                    'start_date' => now()->startOfMonth()->toDateString(),
+                    'end_date' => now()->endOfMonth()->addMonths(1)->toDateString(),
+                    'is_active' => true,
+                    'max_usage' => 150,
+                    'usage_count' => 42,
+                    'notes' => 'Khusus layanan potong rambut dan treatment',
+                ]
+            );
+
+            Discount::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'Potongan Langsung Haircut Rp 15.000'],
+                [
+                    'code' => 'CUKUR15K',
+                    'type' => 'fixed',
+                    'value' => 15000,
+                    'min_purchase' => 60000,
+                    'applicable_to' => 'services',
+                    'start_date' => now()->startOfMonth()->toDateString(),
+                    'end_date' => now()->endOfMonth()->addMonths(2)->toDateString(),
+                    'is_active' => true,
+                    'max_usage' => 80,
+                    'usage_count' => 19,
+                    'notes' => 'Potongan Rp 15.000 untuk paket Gentleman Cut',
                 ]
             );
         }

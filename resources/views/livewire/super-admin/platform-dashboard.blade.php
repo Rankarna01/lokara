@@ -286,7 +286,7 @@
                             </div>
                             <div class="mt-4">
                                 <div class="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{{ $mrrValue }}</div>
-                                <div class="text-xs text-slate-400 mt-1">MRR saat ini</div>
+                                <div class="text-xs text-slate-400 mt-1">MRR dari {{ $activeTenantCount }} tenant aktif</div>
                             </div>
                         </div>
 
@@ -300,7 +300,7 @@
                             </div>
                             <div class="mt-4">
                                 <div class="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{{ $totalTransactions }}</div>
-                                <div class="text-xs text-slate-400 mt-1">30 hari terakhir</div>
+                                <div class="text-xs text-slate-400 mt-1">{{ $dateFilterLabel }} • {{ $totalVolumeFormatted }}</div>
                             </div>
                         </div>
 
@@ -314,7 +314,7 @@
                             </div>
                             <div class="mt-4">
                                 <div class="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{{ $attentionCount }}</div>
-                                <div class="text-xs text-slate-400 mt-1">Tenant segera berakhir</div>
+                                <div class="text-xs text-slate-400 mt-1">Tenant & tagihan butuh tindakan</div>
                             </div>
                         </div>
                     </div>
@@ -342,7 +342,7 @@
                                 <div class="w-44 h-44 relative flex items-center justify-center">
                                     <canvas id="subscriptionDonutChart"></canvas>
                                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span class="text-xl font-bold text-slate-900">1.284</span>
+                                        <span class="text-xl font-bold text-slate-900">{{ number_format($totalTenantCount, 0, ',', '.') }}</span>
                                         <span class="text-[11px] text-slate-400">Total Tenant</span>
                                     </div>
                                 </div>
@@ -355,28 +355,28 @@
                                         <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
                                         <span class="text-slate-600">Active</span>
                                     </div>
-                                    <span class="font-semibold text-slate-900">1.102</span>
+                                    <span class="font-semibold text-slate-900">{{ number_format($activeTenantCount, 0, ',', '.') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <span class="w-2.5 h-2.5 rounded-full bg-sky-300"></span>
                                         <span class="text-slate-600">Trial</span>
                                     </div>
-                                    <span class="font-semibold text-slate-900">96</span>
+                                    <span class="font-semibold text-slate-900">{{ number_format($trialTenantCount, 0, ',', '.') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
                                         <span class="text-slate-600">Suspended</span>
                                     </div>
-                                    <span class="font-semibold text-slate-900">28</span>
+                                    <span class="font-semibold text-slate-900">{{ number_format($suspendedTenantCount, 0, ',', '.') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <span class="w-2.5 h-2.5 rounded-full bg-slate-800"></span>
                                         <span class="text-slate-600">Expired</span>
                                     </div>
-                                    <span class="font-semibold text-slate-900">58</span>
+                                    <span class="font-semibold text-slate-900">{{ number_format($expiredTenantCount, 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -747,6 +747,14 @@
                             <button wire:click="notify('Proses penerbitan invoice H-7 otomatis berjalan via scheduler')" class="px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
                                 <i class="fa-solid fa-arrows-rotate mr-1 text-slate-400"></i> Sinkronisasi Tagihan
                             </button>
+                        </div>
+
+                        <!-- Filter Status Invoices Pills -->
+                        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                            <button wire:click="$set('invoiceStatusFilter', 'all')" class="px-3.5 py-1.5 rounded-lg font-medium transition {{ $invoiceStatusFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">Semua Tagihan ({{ $invoiceTotalCount }})</button>
+                            <button wire:click="$set('invoiceStatusFilter', 'paid')" class="px-3.5 py-1.5 rounded-lg font-medium transition {{ $invoiceStatusFilter === 'paid' ? 'bg-orange-500 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">Lunas ({{ $invoicePaidCount }})</button>
+                            <button wire:click="$set('invoiceStatusFilter', 'unpaid')" class="px-3.5 py-1.5 rounded-lg font-medium transition {{ $invoiceStatusFilter === 'unpaid' ? 'bg-orange-500 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">Belum Bayar ({{ $invoiceUnpaidCount }})</button>
+                            <button wire:click="$set('invoiceStatusFilter', 'overdue')" class="px-3.5 py-1.5 rounded-lg font-medium transition {{ $invoiceStatusFilter === 'overdue' ? 'bg-orange-500 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">Terlambat ({{ $invoiceOverdueCount }})</button>
                         </div>
 
                         <div class="bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden">
@@ -2583,6 +2591,9 @@
 <!-- Chart.js Scripts Initialization -->
 @push('scripts')
 <script>
+    let growthChartInstance = null;
+    let donutChartInstance = null;
+
     document.addEventListener('DOMContentLoaded', function () {
         initCharts();
     });
@@ -2591,24 +2602,38 @@
         initCharts();
     });
 
+    document.addEventListener('dateFilterChanged', function () {
+        setTimeout(initCharts, 100);
+    });
+
     function initCharts() {
-        // 1. Line Chart: Pertumbuhan Tenant (Matching Image 1)
+        const growthLabels = @json($growthLabels);
+        const growthData = @json($growthData);
+        const donutData = @json($donutChartData);
+
+        // 1. Line Chart: Pertumbuhan Tenant
         const growthCanvas = document.getElementById('growthChart');
         if (growthCanvas) {
+            if (growthChartInstance) {
+                growthChartInstance.destroy();
+                growthChartInstance = null;
+            }
+
             const ctxGrowth = growthCanvas.getContext('2d');
-            
-            // Subtle Orange Gradient
             const gradientOrange = ctxGrowth.createLinearGradient(0, 0, 0, 240);
-            gradientOrange.addColorStop(0, 'rgba(249, 115, 22, 0.16)');
+            gradientOrange.addColorStop(0, 'rgba(249, 115, 22, 0.20)');
             gradientOrange.addColorStop(1, 'rgba(249, 115, 22, 0.00)');
 
-            new Chart(ctxGrowth, {
+            const maxVal = Math.max(...growthData, 5);
+            const yMax = Math.ceil(maxVal * 1.3);
+
+            growthChartInstance = new Chart(ctxGrowth, {
                 type: 'line',
                 data: {
-                    labels: ['Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep'],
+                    labels: growthLabels,
                     datasets: [{
                         label: 'Tenant Terdaftar',
-                        data: [800, 950, 1050, 1200, 1350, 1450],
+                        data: growthData,
                         borderColor: '#F97316',
                         backgroundColor: gradientOrange,
                         borderWidth: 2.5,
@@ -2645,13 +2670,13 @@
                         },
                         y: {
                             min: 0,
-                            max: 1600,
+                            suggestedMax: yMax,
                             ticks: {
-                                stepSize: 400,
+                                precision: 0,
                                 font: { family: 'Inter', size: 11 },
                                 color: '#94A3B8',
                                 callback: function(value) {
-                                    return value === 0 ? '0' : (value / 1000 >= 1 ? (value / 1000).toFixed(3).replace('.', '.') : value);
+                                    return value === 0 ? '0' : (value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value);
                                 }
                             },
                             grid: {
@@ -2664,16 +2689,21 @@
             });
         }
 
-        // 2. Donut Chart: Status Langganan (Matching Image 1)
+        // 2. Donut Chart: Status Langganan
         const donutCanvas = document.getElementById('subscriptionDonutChart');
         if (donutCanvas) {
+            if (donutChartInstance) {
+                donutChartInstance.destroy();
+                donutChartInstance = null;
+            }
+
             const ctxDonut = donutCanvas.getContext('2d');
-            new Chart(ctxDonut, {
+            donutChartInstance = new Chart(ctxDonut, {
                 type: 'doughnut',
                 data: {
                     labels: ['Active', 'Trial', 'Suspended', 'Expired'],
                     datasets: [{
-                        data: [1102, 96, 28, 58],
+                        data: donutData,
                         backgroundColor: [
                             '#F97316', // Active Orange
                             '#BAE6FD', // Trial Soft Sky Blue

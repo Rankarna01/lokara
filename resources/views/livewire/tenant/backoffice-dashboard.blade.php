@@ -43,27 +43,41 @@
                         </div>
                     </button>
 
-                    <!-- Master Produk -->
+                    <!-- Master Layanan (Khusus Modul Salon & Barbershop) -->
+                    @if ($tenant?->isSalon() || $tenant?->hasFeature('has_services'))
+                        <button wire:click="switchTab('services')"
+                            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'services' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-scissors w-5 text-center {{ $activeTab === 'services' ? 'text-orange-500' : 'text-slate-400' }}"></i>
+                                <span>Master Layanan</span>
+                            </div>
+                            <span class="text-xs px-2 py-0.5 rounded-full {{ $activeTab === 'services' ? 'bg-orange-200/60 text-orange-700' : 'bg-slate-100 text-slate-500' }}">{{ $services->count() }}</span>
+                        </button>
+                    @endif
+
+                    <!-- Master Produk / Retail -->
                     <button wire:click="switchTab('products')"
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'products' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-boxes-stacked w-5 text-center {{ $activeTab === 'products' ? 'text-orange-500' : 'text-slate-400' }}"></i>
-                            <span>Master Produk</span>
+                            <span>{{ $tenant?->isSalon() ? 'Produk Retail' : 'Master Produk' }}</span>
                         </div>
                         <span class="text-xs px-2 py-0.5 rounded-full {{ $activeTab === 'products' ? 'bg-orange-200/60 text-orange-700' : 'bg-slate-100 text-slate-500' }}">{{ $products->count() }}</span>
                     </button>
 
-                    <!-- Bahan Baku & Resep BOM -->
-                    <button wire:click="switchTab('recipes')"
-                        class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'recipes' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-mortar-pestle w-5 text-center {{ $activeTab === 'recipes' ? 'text-orange-500' : 'text-slate-400' }}"></i>
-                            <span>Bahan Baku & HPP</span>
-                        </div>
-                        @if($lowStockIngredients->count() > 0)
-                            <span class="text-[10px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full font-bold">!</span>
-                        @endif
-                    </button>
+                    <!-- Bahan Baku & Resep BOM (Hanya untuk F&B atau yang memiliki fitur resep) -->
+                    @if (!$tenant?->isSalon() || $tenant?->hasFeature('has_recipes'))
+                        <button wire:click="switchTab('recipes')"
+                            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'recipes' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-mortar-pestle w-5 text-center {{ $activeTab === 'recipes' ? 'text-orange-500' : 'text-slate-400' }}"></i>
+                                <span>Bahan Baku & HPP</span>
+                            </div>
+                            @if($lowStockIngredients->count() > 0)
+                                <span class="text-[10px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full font-bold">!</span>
+                            @endif
+                        </button>
+                    @endif
 
                     <!-- Stok & Gudang -->
                     <button wire:click="switchTab('stock')"
@@ -92,6 +106,16 @@
                             <i class="fa-solid fa-receipt w-5 text-center {{ $activeTab === 'transactions' ? 'text-orange-500' : 'text-slate-400' }}"></i>
                             <span>Riwayat Transaksi</span>
                         </div>
+                    </button>
+
+                    <!-- Diskon & Promo -->
+                    <button wire:click="switchTab('discounts')"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'discounts' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-tags w-5 text-center {{ $activeTab === 'discounts' ? 'text-orange-500' : 'text-slate-400' }}"></i>
+                            <span>Diskon & Promo</span>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $activeTab === 'discounts' ? 'bg-orange-200/60 text-orange-700' : 'bg-slate-100 text-slate-500' }}">{{ $discounts->count() }}</span>
                     </button>
 
                     <!-- Laba Rugi & Finansial -->
@@ -164,6 +188,21 @@
 
                 <!-- Top Right Controls -->
                 <div class="flex items-center gap-3">
+                    <!-- Tenant Switcher Dropdown (Demo Multi-Tenant & Salon Selector) -->
+                    @if(isset($allTenants) && $allTenants->count() > 1)
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[11px] text-slate-400 font-medium hidden lg:inline">Bisnis:</span>
+                            <select wire:change="switchTenant($event.target.value)"
+                                class="bg-orange-50 border border-orange-200 text-xs font-bold text-orange-700 py-1.5 px-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer">
+                                @foreach($allTenants as $t)
+                                    <option value="{{ $t->id }}" {{ $tenantId == $t->id ? 'selected' : '' }}>
+                                        🏢 {{ $t->name }} ({{ $t->businessType?->name ?? 'Bisnis' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+
                     <!-- Outlet Switcher -->
                     @if($outlets->count() > 1)
                         <div class="relative">
@@ -497,21 +536,50 @@
                         </div>
 
                         <!-- Search & Category Filters -->
-                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-                            <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                            <div class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0">
+                                <!-- Filter Semua Kategori -->
                                 <button wire:click="$set('selectedCategoryFilter', 'all')"
-                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition {{ $selectedCategoryFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
-                                    Semua Kategori ({{ $products->count() }})
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition shrink-0 {{ $selectedCategoryFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                    Semua Kategori ({{ $totalProductsCount ?? $products->count() }})
                                 </button>
+
+                                <!-- Pill Kategori + Tombol Edit Langsung -->
                                 @foreach($categories as $cat)
-                                    <button wire:click="$set('selectedCategoryFilter', {{ $cat->id }})"
-                                        class="px-3 py-1.5 text-xs font-semibold rounded-lg transition whitespace-nowrap {{ $selectedCategoryFilter == $cat->id ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
-                                        {{ $cat->name }}
-                                    </button>
+                                    <div class="inline-flex items-center rounded-lg border transition shrink-0 {{ $selectedCategoryFilter == $cat->id ? 'bg-orange-500 border-orange-500 text-white shadow-sm' : 'bg-slate-100 border-transparent text-slate-600 hover:bg-slate-200' }}">
+                                        <button wire:click="$set('selectedCategoryFilter', {{ $cat->id }})"
+                                            class="px-3 py-1.5 text-xs font-semibold whitespace-nowrap flex items-center gap-1.5">
+                                            @if($cat->icon)
+                                                <i class="fa-solid {{ $cat->icon }} text-[10px] {{ $selectedCategoryFilter == $cat->id ? 'text-white' : 'text-slate-400' }}"></i>
+                                            @endif
+                                            <span>{{ $cat->name }}</span>
+                                        </button>
+                                        <button wire:click="openEditCategoryModal({{ $cat->id }})"
+                                            title="Edit Kategori: {{ $cat->name }}"
+                                            class="pr-2 pl-0.5 py-1.5 text-[10px] {{ $selectedCategoryFilter == $cat->id ? 'text-orange-200 hover:text-white' : 'text-slate-400 hover:text-slate-700' }} transition">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                    </div>
                                 @endforeach
+
+                                <!-- Tombol Tambah Kategori Langsung di Samping Kategori -->
+                                <button wire:click="openNewCategoryModal"
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-dashed border-orange-400 bg-orange-50 text-orange-600 hover:bg-orange-100 hover:border-orange-500 transition flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs"
+                                    title="Tambah Kategori Menu Baru">
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                    <span>Tambah Kategori</span>
+                                </button>
+
+                                <!-- Tombol Kelola Semua Kategori -->
+                                <button wire:click="openManageCategoriesModal"
+                                    class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                                    title="Kelola & Atur Urutan Kategori">
+                                    <i class="fa-solid fa-sliders text-[11px] text-slate-500"></i>
+                                    <span class="hidden sm:inline">Kelola Kategori</span>
+                                </button>
                             </div>
 
-                            <div class="relative w-full sm:w-64">
+                            <div class="relative w-full lg:w-64 shrink-0">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                                 <input type="text" wire:model.live.debounce.300ms="searchProduct"
                                     placeholder="Cari nama menu..."
@@ -548,9 +616,21 @@
                                                     </div>
                                                 </td>
                                                 <td class="py-3.5 px-4 text-xs text-slate-600">
-                                                    <span class="bg-slate-100 px-2.5 py-1 rounded-md font-medium text-slate-700">
-                                                        {{ $p->category->name ?? 'Katalog' }}
-                                                    </span>
+                                                    @if($p->category)
+                                                        <button wire:click="openEditCategoryModal({{ $p->category->id }})"
+                                                            title="Edit kategori {{ $p->category->name }}"
+                                                            class="bg-slate-100 hover:bg-orange-50 hover:text-orange-600 px-2.5 py-1 rounded-md font-medium text-slate-700 inline-flex items-center gap-1.5 transition">
+                                                            @if($p->category->icon)
+                                                                <i class="fa-solid {{ $p->category->icon }} text-[10px] text-slate-400"></i>
+                                                            @endif
+                                                            <span>{{ $p->category->name }}</span>
+                                                            <i class="fa-solid fa-pen text-[9px] text-slate-400 ml-0.5"></i>
+                                                        </button>
+                                                    @else
+                                                        <span class="bg-slate-100 px-2.5 py-1 rounded-md font-medium text-slate-400">
+                                                            Tanpa Kategori
+                                                        </span>
+                                                    @endif
                                                 </td>
                                                 <td class="py-3.5 px-4 text-right font-bold text-slate-900">
                                                     Rp {{ number_format($p->base_price, 0, ',', '.') }}
@@ -589,6 +669,196 @@
                                             <tr>
                                                 <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
                                                     Tidak ada menu yang sesuai filter.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- ==================== TAB: MASTER LAYANAN (KHUSUS SALON & BARBERSHOP) ==================== -->
+                @if ($activeTab === 'services')
+                    <div class="space-y-5">
+                        <!-- Top Header & Action Controls -->
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h1 class="text-xl font-bold text-slate-900">Katalog & Master Layanan</h1>
+                                    <span class="text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        Modul Salon & Barbershop
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">Kelola tarif potong rambut, perawatan spa, durasi waktu pengerjaan, dan skema komisi kapster/stylist.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button wire:click="openNewServiceModal"
+                                    class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-scissors"></i>
+                                    <span>Tambah Layanan Baru</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4 Stat Summary Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Total Layanan Aktif</div>
+                                <div class="text-2xl font-bold text-slate-900 mt-1">{{ $services->where('is_available', true)->count() }} Layanan</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">{{ $services->count() }} total terdaftar</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Rata-rata Durasi Layanan</div>
+                                <div class="text-2xl font-bold text-indigo-600 mt-1">
+                                    {{ $services->count() > 0 ? round($services->avg('duration_minutes')) : 40 }} Menit
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Waktu pengerjaan per sesi</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Rata-rata Tarif Layanan</div>
+                                <div class="text-2xl font-bold text-emerald-600 mt-1">
+                                    Rp {{ number_format($services->count() > 0 ? $services->avg('base_price') : 0, 0, ',', '.') }}
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Harga per transaksi jasa</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Rata-rata Komisi Kapster</div>
+                                <div class="text-2xl font-bold text-orange-600 mt-1">
+                                    @php
+                                        $avgCom = 0;
+                                        if ($services->count() > 0) {
+                                            $totalCom = 0;
+                                            foreach($services as $s) {
+                                                $totalCom += $s->estimated_commission;
+                                            }
+                                            $avgCom = $totalCom / $services->count();
+                                        }
+                                    @endphp
+                                    Rp {{ number_format($avgCom, 0, ',', '.') }}
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Estimasi hak kapster / staf</div>
+                            </div>
+                        </div>
+
+                        <!-- Search & Category Filters -->
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                            <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+                                <button wire:click="$set('selectedServiceCategoryFilter', 'all')"
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition {{ $selectedServiceCategoryFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                    Semua Kategori ({{ $services->count() }})
+                                </button>
+                                @foreach($categories as $cat)
+                                    <button wire:click="$set('selectedServiceCategoryFilter', {{ $cat->id }})"
+                                        class="px-3 py-1.5 text-xs font-semibold rounded-lg transition whitespace-nowrap {{ $selectedServiceCategoryFilter == $cat->id ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                        {{ $cat->name }}
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            <div class="relative w-full sm:w-64">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                <input type="text" wire:model.live.debounce.300ms="searchService"
+                                    placeholder="Cari layanan jasa..."
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            </div>
+                        </div>
+
+                        <!-- Service Table -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 border-b border-slate-200/80 text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                                        <tr>
+                                            <th class="py-3 px-4">Nama Layanan</th>
+                                            <th class="py-3 px-4">Kategori</th>
+                                            <th class="py-3 px-4 text-center">Durasi</th>
+                                            <th class="py-3 px-4 text-right">Tarif Jasa</th>
+                                            <th class="py-3 px-4 text-right">Komisi Kapster</th>
+                                            <th class="py-3 px-4 text-right">Modal Bahan</th>
+                                            <th class="py-3 px-4 text-center">Margin Bersih</th>
+                                            <th class="py-3 px-4 text-center">Status</th>
+                                            <th class="py-3 px-4 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @forelse($services as $srv)
+                                            <tr class="hover:bg-slate-50/60 transition">
+                                                <td class="py-3.5 px-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <img src="{{ $srv->image_url ?: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=150&h=150&q=80' }}"
+                                                            class="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0">
+                                                        <div>
+                                                            <div class="font-bold text-slate-900">{{ $srv->name }}</div>
+                                                            <div class="text-[11px] text-slate-400">{{ $srv->sku ?? 'SRV-00' . $srv->id }} • {{ $srv->category_tag ?? 'Treatment' }}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-xs">
+                                                    <span class="bg-slate-100 px-2.5 py-1 rounded-md font-medium text-slate-700">
+                                                        {{ $srv->category->name ?? 'Layanan' }}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center">
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                                                        <i class="fa-regular fa-clock text-[10px]"></i>
+                                                        {{ $srv->duration_minutes ?? 30 }} Menit
+                                                    </span>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-right font-bold text-slate-900">
+                                                    Rp {{ number_format($srv->base_price, 0, ',', '.') }}
+                                                </td>
+                                                <td class="py-3.5 px-4 text-right text-xs">
+                                                    <span class="font-bold text-indigo-600 block">
+                                                        Rp {{ number_format($srv->estimated_commission, 0, ',', '.') }}
+                                                    </span>
+                                                    <span class="text-[10px] text-slate-400">
+                                                        {{ $srv->commission_type === 'percentage' ? '(' . (int)$srv->commission_value . '% Tarif)' : '(Nominal Tetap)' }}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-right text-xs text-slate-500">
+                                                    Rp {{ number_format($srv->cost_price, 0, ',', '.') }}
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center">
+                                                    @php
+                                                        $netRevenue = $srv->base_price - $srv->estimated_commission - $srv->cost_price;
+                                                        $marginPct = $srv->base_price > 0 ? round(($netRevenue / $srv->base_price) * 100) : 0;
+                                                    @endphp
+                                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full {{ $marginPct >= 50 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600' }}">
+                                                        Rp {{ number_format($netRevenue, 0, ',', '.') }} ({{ $marginPct }}%)
+                                                    </span>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center">
+                                                    <button wire:click="toggleServiceAvailability({{ $srv->id }})"
+                                                        class="text-xs font-semibold px-2.5 py-1 rounded-lg transition {{ $srv->is_available ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200' }}">
+                                                        {{ $srv->is_available ? 'Tersedia' : 'Libur' }}
+                                                    </button>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-right space-x-1">
+                                                    <button wire:click="editService({{ $srv->id }})"
+                                                        title="Edit Layanan"
+                                                        class="p-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </button>
+                                                    <button wire:click="deleteService({{ $srv->id }})"
+                                                        wire:confirm="Yakin ingin menghapus layanan '{{ $srv->name }}'?"
+                                                        title="Hapus Layanan"
+                                                        class="p-1.5 text-xs text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="9" class="py-12 text-center text-slate-400 text-sm">
+                                                    <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
+                                                        <i class="fa-solid fa-scissors"></i>
+                                                    </div>
+                                                    <div>Belum ada layanan salon/barbershop yang ditambahkan.</div>
+                                                    <button wire:click="openNewServiceModal" class="mt-2 text-xs text-orange-600 font-semibold hover:underline">
+                                                        + Tambah Layanan Pertama
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @endforelse
@@ -976,6 +1246,205 @@
                     </div>
                 @endif
 
+                <!-- ==================== TAB: DISKON & PROMOSI ==================== -->
+                @if ($activeTab === 'discounts')
+                    <div class="space-y-5">
+                        <!-- Top Header & Action Controls -->
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                            <div>
+                                <h1 class="text-xl font-bold text-slate-900">Manajemen Diskon & Promosi</h1>
+                                <p class="text-xs text-slate-500 mt-0.5">Atur skema diskon persentase (%) atau potongan nominal langsung (Rp) untuk layanan dan produk.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button wire:click="openNewDiscountModal"
+                                    class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-tags"></i>
+                                    <span>Tambah Diskon Baru</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4 Stat Summary Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Promo Aktif</div>
+                                <div class="text-2xl font-bold text-emerald-600 mt-1">
+                                    {{ $discounts->where('is_active', true)->count() }} Promo
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Siap digunakan di POS kasir</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Diskon Persentase (%)</div>
+                                <div class="text-2xl font-bold text-indigo-600 mt-1">
+                                    {{ $discounts->where('type', 'percentage')->count() }} Kupon
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Potongan berbasis rasio %</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Diskon Nominal Uang (Rp)</div>
+                                <div class="text-2xl font-bold text-purple-600 mt-1">
+                                    {{ $discounts->where('type', 'fixed')->count() }} Kupon
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Potongan rupiah langsung</div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="text-slate-500 text-xs font-medium">Total Penggunaan Promo</div>
+                                <div class="text-2xl font-bold text-slate-900 mt-1">
+                                    {{ $discounts->sum('usage_count') }} Kali
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Digunakan oleh pelanggan</div>
+                            </div>
+                        </div>
+
+                        <!-- Filter & Search Controls -->
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <button wire:click="$set('discountStatusFilter', 'all')"
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition {{ $discountStatusFilter === 'all' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                    Semua Promo ({{ $discounts->count() }})
+                                </button>
+                                <button wire:click="$set('discountStatusFilter', 'active')"
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition {{ $discountStatusFilter === 'active' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                    Sedang Aktif
+                                </button>
+                                <button wire:click="$set('discountStatusFilter', 'inactive')"
+                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition {{ $discountStatusFilter === 'inactive' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                    Nonaktif
+                                </button>
+                            </div>
+
+                            <div class="relative w-full sm:w-64">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                <input type="text" wire:model.live.debounce.300ms="searchDiscount"
+                                    placeholder="Cari nama atau kode promo..."
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            </div>
+                        </div>
+
+                        <!-- Discounts Table -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 border-b border-slate-200/80 text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                                        <tr>
+                                            <th class="py-3 px-4">Nama Diskon & Kupon</th>
+                                            <th class="py-3 px-4 text-center">Tipe & Nilai Potongan</th>
+                                            <th class="py-3 px-4 text-right">Syarat Min. Belanja</th>
+                                            <th class="py-3 px-4 text-center">Berlaku Untuk</th>
+                                            <th class="py-3 px-4 text-center">Periode Berlaku</th>
+                                            <th class="py-3 px-4 text-center">Penggunaan</th>
+                                            <th class="py-3 px-4 text-center">Status</th>
+                                            <th class="py-3 px-4 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @forelse($discounts as $disc)
+                                            <tr class="hover:bg-slate-50/60 transition">
+                                                <td class="py-3.5 px-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 {{ $disc->type === 'percentage' ? 'bg-emerald-50 text-emerald-600' : 'bg-purple-50 text-purple-600' }}">
+                                                            <i class="fa-solid {{ $disc->type === 'percentage' ? 'fa-percent' : 'fa-money-bill-wave' }}"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-bold text-slate-900">{{ $disc->name }}</div>
+                                                            <div class="flex items-center gap-2 mt-0.5">
+                                                                @if($disc->code)
+                                                                    <span class="font-mono text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 font-semibold">
+                                                                        {{ $disc->code }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="text-[10px] text-slate-400">Otomatis / Tanpa Kode</span>
+                                                                @endif
+                                                                @if($disc->notes)
+                                                                    <span class="text-[11px] text-slate-400 truncate max-w-xs">• {{ $disc->notes }}</span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center">
+                                                    @if($disc->type === 'percentage')
+                                                        <span class="inline-flex flex-col items-center">
+                                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                Diskon {{ (int)$disc->value }}%
+                                                            </span>
+                                                            @if($disc->max_discount)
+                                                                <span class="text-[10px] text-slate-400 mt-0.5">Maks. Rp {{ number_format($disc->max_discount, 0, ',', '.') }}</span>
+                                                            @endif
+                                                        </span>
+                                                    @else
+                                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                                            Potongan Rp {{ number_format($disc->value, 0, ',', '.') }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="py-3.5 px-4 text-right font-medium text-slate-700">
+                                                    {{ $disc->min_purchase > 0 ? 'Rp ' . number_format($disc->min_purchase, 0, ',', '.') : 'Tanpa Minimum' }}
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center">
+                                                    <span class="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                                                        @if($disc->applicable_to === 'services')
+                                                            Khusus Layanan Jasa
+                                                        @elseif($disc->applicable_to === 'products')
+                                                            Khusus Produk Retail
+                                                        @else
+                                                            Semua Menu & Layanan
+                                                        @endif
+                                                    </span>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center text-xs text-slate-500">
+                                                    @if($disc->start_date && $disc->end_date)
+                                                        <div>{{ $disc->start_date->format('d M') }} - {{ $disc->end_date->format('d M Y') }}</div>
+                                                    @elseif($disc->end_date)
+                                                        <div>s/d {{ $disc->end_date->format('d M Y') }}</div>
+                                                    @else
+                                                        <span class="text-emerald-600 font-medium">Berlaku Selamanya</span>
+                                                    @endif
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center text-xs">
+                                                    <span class="font-bold text-slate-700">{{ $disc->usage_count }}</span>
+                                                    <span class="text-slate-400">/ {{ $disc->max_usage ?: '∞' }} kali</span>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center">
+                                                    <button wire:click="toggleDiscountStatus({{ $disc->id }})"
+                                                        class="text-xs font-semibold px-2.5 py-1 rounded-lg transition {{ $disc->is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200' }}">
+                                                        {{ $disc->is_active ? 'Aktif' : 'Nonaktif' }}
+                                                    </button>
+                                                </td>
+                                                <td class="py-3.5 px-4 text-right space-x-1">
+                                                    <button wire:click="editDiscount({{ $disc->id }})"
+                                                        title="Edit Promo"
+                                                        class="p-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                    </button>
+                                                    <button wire:click="deleteDiscount({{ $disc->id }})"
+                                                        wire:confirm="Yakin ingin menghapus diskon '{{ $disc->name }}'?"
+                                                        title="Hapus Promo"
+                                                        class="p-1.5 text-xs text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8" class="py-12 text-center text-slate-400 text-sm">
+                                                    <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
+                                                        <i class="fa-solid fa-tags"></i>
+                                                    </div>
+                                                    <div>Belum ada program diskon atau promosi aktif.</div>
+                                                    <button wire:click="openNewDiscountModal" class="mt-2 text-xs text-orange-600 font-semibold hover:underline">
+                                                        + Buat Promo Pertama
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- ==================== TAB 7: LABA RUGI & FINANSIAL ==================== -->
                 @if ($activeTab === 'finance')
                     <div class="space-y-6">
@@ -1227,9 +1696,16 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori</label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-semibold text-slate-700">Kategori</label>
+                                <button type="button" wire:click="openNewCategoryModal"
+                                    class="text-[11px] font-semibold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-[9px]"></i> Kategori Baru
+                                </button>
+                            </div>
                             <select wire:model="productCategoryId"
                                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <option value="">-- Pilih Kategori --</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                                 @endforeach
@@ -1601,6 +2077,544 @@
                         class="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-sm">
                         Konfirmasi Void
                     </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- 8. Modal Tambah / Edit Kategori Menu -->
+    @if ($showCategoryModal)
+        <div class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">
+                            {{ $editingCategoryId ? 'Edit Kategori' : 'Tambah Kategori Baru' }}
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Kategori tersimpan langsung ke database & tampil di POS Kasir</p>
+                    </div>
+                    <button wire:click="$set('showCategoryModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-sm">
+                    <!-- Nama Kategori -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">
+                            Nama Kategori <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" wire:model="categoryName" placeholder="Contoh: Signature Coffee, Haircut, Treatment"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        @error('categoryName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Pilih Ikon -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih Ikon Cepat</label>
+                        <div class="grid grid-cols-6 gap-2 mb-2">
+                            @php
+                                $presetIcons = [
+                                    ['icon' => 'fa-mug-hot', 'label' => 'Kopi'],
+                                    ['icon' => 'fa-scissors', 'label' => 'Cukur'],
+                                    ['icon' => 'fa-spa', 'label' => 'Spa'],
+                                    ['icon' => 'fa-paintbrush', 'label' => 'Coloring'],
+                                    ['icon' => 'fa-utensils', 'label' => 'Makanan'],
+                                    ['icon' => 'fa-cookie-bite', 'label' => 'Snack'],
+                                    ['icon' => 'fa-burger', 'label' => 'Burger'],
+                                    ['icon' => 'fa-glass-water', 'label' => 'Minuman'],
+                                    ['icon' => 'fa-bottle-water', 'label' => 'Botol'],
+                                    ['icon' => 'fa-tag', 'label' => 'Tag Umum'],
+                                    ['icon' => 'fa-box', 'label' => 'Paket'],
+                                    ['icon' => 'fa-star', 'label' => 'Favorit'],
+                                ];
+                            @endphp
+                            @foreach($presetIcons as $item)
+                                <button type="button" wire:click="$set('categoryIcon', '{{ $item['icon'] }}')"
+                                    title="{{ $item['label'] }}"
+                                    class="h-10 rounded-xl border flex items-center justify-center text-sm transition {{ $categoryIcon === $item['icon'] ? 'bg-orange-50 border-orange-500 text-orange-600 font-bold shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100' }}">
+                                    <i class="fa-solid {{ $item['icon'] }}"></i>
+                                </button>
+                            @endforeach
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">FontAwesome:</span>
+                            <div class="relative flex-1">
+                                <i class="fa-solid {{ $categoryIcon ?: 'fa-tag' }} absolute left-3 top-2.5 text-xs text-orange-500"></i>
+                                <input type="text" wire:model="categoryIcon" placeholder="fa-scissors"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Urutan Tampil & Status -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Urutan Tampil (Sort)</label>
+                            <input type="number" wire:model="categorySortOrder" min="0"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium">
+                            @error('categorySortOrder') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Status Kategori</label>
+                            <label class="flex items-center gap-2 mt-2.5 cursor-pointer text-xs font-medium text-slate-700">
+                                <input type="checkbox" wire:model="categoryIsActive" class="rounded text-orange-500 focus:ring-orange-500">
+                                <span>Aktif di POS & Menu</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                    @if ($editingCategoryId)
+                        <button type="button"
+                            wire:click="deleteCategory({{ $editingCategoryId }})"
+                            wire:confirm="Yakin ingin menghapus kategori ini? Produk dalam kategori ini tidak akan terhapus, hanya status kategorinya menjadi kosong."
+                            class="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Hapus</span>
+                        </button>
+                    @else
+                        <div></div>
+                    @endif
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" wire:click="$set('showCategoryModal', false)"
+                            class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">
+                            Batal
+                        </button>
+                        <button type="button" wire:click="saveCategory"
+                            class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i>
+                            <span>{{ $editingCategoryId ? 'Simpan Perubahan' : 'Tambah Kategori' }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- 9. Modal Kelola Semua Kategori Menu -->
+    @if ($showManageCategoriesModal)
+        <div class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Kelola Semua Kategori Menu</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Daftar kategori produk tenant Anda. Kategori baru akan langsung tampil di Master Produk & POS Kasir.</p>
+                    </div>
+                    <button wire:click="$set('showManageCategoriesModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 max-h-[70vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-xs font-semibold text-slate-500">Total: {{ $categories->count() }} Kategori</div>
+                        <button type="button" wire:click="openNewCategoryModal"
+                            class="px-3 py-1.5 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus text-[10px]"></i>
+                            <span>Tambah Kategori Baru</span>
+                        </button>
+                    </div>
+
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="py-2.5 px-3">Urutan</th>
+                                    <th class="py-2.5 px-3">Kategori</th>
+                                    <th class="py-2.5 px-3">Slug</th>
+                                    <th class="py-2.5 px-3 text-center">Jumlah Menu</th>
+                                    <th class="py-2.5 px-3 text-center">Status</th>
+                                    <th class="py-2.5 px-3 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @forelse($categories as $cat)
+                                    <tr class="hover:bg-slate-50/70 transition">
+                                        <td class="py-3 px-3 font-mono text-slate-400">#{{ $cat->sort_order }}</td>
+                                        <td class="py-3 px-3">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-7 h-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                                                    <i class="fa-solid {{ $cat->icon ?: 'fa-tag' }}"></i>
+                                                </div>
+                                                <span class="font-bold text-slate-900">{{ $cat->name }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3 font-mono text-slate-400 text-[11px]">{{ $cat->slug }}</td>
+                                        <td class="py-3 px-3 text-center">
+                                            <span class="px-2 py-0.5 rounded-full bg-slate-100 font-semibold text-slate-700">
+                                                {{ $cat->products_count ?? 0 }} Produk
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-3 text-center">
+                                            <span class="px-2 py-0.5 rounded-full font-semibold {{ $cat->is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400' }}">
+                                                {{ $cat->is_active ? 'Aktif' : 'Nonaktif' }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-3 text-right space-x-1">
+                                            <button type="button" wire:click="openEditCategoryModal({{ $cat->id }})"
+                                                class="px-2.5 py-1 text-slate-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg font-semibold transition"
+                                                title="Edit Kategori">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                                            </button>
+                                            <button type="button" wire:click="deleteCategory({{ $cat->id }})"
+                                                wire:confirm="Hapus kategori '{{ $cat->name }}'? Produk di dalamnya tidak akan terhapus."
+                                                class="px-2.5 py-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg font-semibold transition"
+                                                title="Hapus Kategori">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="py-6 text-center text-slate-400">
+                                            Belum ada kategori yang dibuat.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+                    <button type="button" wire:click="$set('showManageCategoriesModal', false)"
+                        class="px-4 py-2 text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl transition">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- 10. Modal Tambah / Edit Layanan Salon & Barbershop -->
+    @if ($showServiceModal)
+        <div class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">
+                            {{ $editingServiceId ? 'Edit Layanan Jasa' : 'Tambah Layanan Jasa Baru' }}
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Konfigurasi tarif layanan, durasi waktu sesi, dan komisi kapster / stylist</p>
+                    </div>
+                    <button wire:click="$set('showServiceModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-sm">
+                    <!-- Nama Layanan -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Layanan Jasa <span class="text-rose-500">*</span></label>
+                        <input type="text" wire:model="serviceName" placeholder="Contoh: Gentleman Haircut, Creambath Spa, Beard Trim"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        @error('serviceName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Kategori & Tag Sub -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-semibold text-slate-700">Kategori Layanan</label>
+                                <button type="button" wire:click="openNewCategoryModal"
+                                    class="text-[11px] font-semibold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-[9px]"></i> Kategori Baru
+                                </button>
+                            </div>
+                            <select wire:model="serviceCategoryId"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tag Sub-kategori</label>
+                            <input type="text" wire:model="serviceCategoryTag" placeholder="e.g. Haircut • Pria"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        </div>
+                    </div>
+
+                    <!-- Tarif Jasa & Durasi -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tarif Layanan (Rp) <span class="text-rose-500">*</span></label>
+                            <input type="number" wire:model="servicePrice"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            @error('servicePrice') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Estimasi Durasi (Menit) <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <input type="number" wire:model="serviceDuration" min="5" step="5" placeholder="30"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-12 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">Menit</span>
+                            </div>
+                            @error('serviceDuration') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Skema Komisi Kapster -->
+                    <div class="p-3.5 bg-indigo-50/60 border border-indigo-100 rounded-xl space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-hand-holding-dollar text-indigo-600"></i>
+                                <span>Skema Komisi Kapster / Stylist</span>
+                            </label>
+                            <div class="flex items-center gap-3 text-xs">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" value="fixed" wire:model.live="serviceCommissionType" class="text-indigo-600 focus:ring-indigo-500">
+                                    <span class="font-medium text-slate-700">Nominal Tetap (Rp)</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" value="percentage" wire:model.live="serviceCommissionType" class="text-indigo-600 focus:ring-indigo-500">
+                                    <span class="font-medium text-slate-700">Persentase (%)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-indigo-900 mb-1">
+                                    {{ $serviceCommissionType === 'percentage' ? 'Persentase Komisi (%)' : 'Nilai Komisi per Sesi (Rp)' }}
+                                </label>
+                                <input type="number" wire:model.live="serviceCommissionValue"
+                                    class="w-full bg-white border border-indigo-200 rounded-lg px-3 py-1.5 text-xs font-bold text-indigo-700 focus:ring-1 focus:ring-indigo-500">
+                                @error('serviceCommissionValue') <span class="text-[11px] text-rose-500 mt-0.5 block">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-indigo-900 mb-1">Estimasi Komisi Diterima Staf</label>
+                                <div class="bg-white border border-indigo-200 rounded-lg px-3 py-1.5 text-xs font-bold text-emerald-600">
+                                    @php
+                                        $estCom = $serviceCommissionType === 'percentage' 
+                                            ? round(($servicePrice * $serviceCommissionValue) / 100) 
+                                            : $serviceCommissionValue;
+                                    @endphp
+                                    Rp {{ number_format(max(0, $estCom), 0, ',', '.') }} / sesi
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Bahan / HPP & URL Foto -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Modal Bahan Produk (Rp)</label>
+                            <input type="number" wire:model="serviceCostPrice" placeholder="e.g. 5000 (shampoo/oil)"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <span class="text-[10px] text-slate-400">Pemakaian shampoo, pomade, cream</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">URL Foto Layanan</label>
+                            <input type="text" wire:model="serviceImageUrl" placeholder="https://images.unsplash..."
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                            <input type="checkbox" wire:model="serviceIsAvailable" class="rounded text-orange-500 focus:ring-orange-500">
+                            <span>Layanan ini tersedia & aktif di POS Kasir</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                    @if ($editingServiceId)
+                        <button type="button"
+                            wire:click="deleteService({{ $editingServiceId }})"
+                            wire:confirm="Yakin ingin menghapus layanan ini?"
+                            class="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Hapus</span>
+                        </button>
+                    @else
+                        <div></div>
+                    @endif
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" wire:click="$set('showServiceModal', false)"
+                            class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">Batal</button>
+                        <button type="button" wire:click="saveService"
+                            class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i>
+                            <span>{{ $editingServiceId ? 'Simpan Perubahan' : 'Tambah Layanan' }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- 11. Modal Tambah / Edit Diskon Lengkap (% dan Rp) -->
+    @if ($showDiscountModal)
+        <div class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">
+                            {{ $editingDiscountId ? 'Edit Program Diskon / Promo' : 'Tambah Program Diskon Baru' }}
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Diskon dapat berupa persentase (%) atau potongan uang langsung (Rp)</p>
+                    </div>
+                    <button wire:click="$set('showDiscountModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto text-sm">
+                    <!-- Nama Diskon & Kode Kupon -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Promo / Diskon <span class="text-rose-500">*</span></label>
+                            <input type="text" wire:model="discountName" placeholder="Contoh: Diskon Pelajar & Mahasiswa 15%, Potongan Cukur 15K"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            @error('discountName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kode Kupon / Voucher (Opsional)</label>
+                            <input type="text" wire:model="discountCode" placeholder="Contoh: PELAJAR15, CUKUR15K"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <span class="text-[10px] text-slate-400">Kosongkan jika promo otomatis tanpa kode</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Berlaku Untuk</label>
+                            <select wire:model="discountApplicableTo"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <option value="all">Semua Menu & Layanan</option>
+                                <option value="services">Khusus Layanan Jasa</option>
+                                <option value="products">Khusus Produk Retail</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pilihan Tipe Diskon: Persentase (%) vs Nominal Uang (Rp) -->
+                    <div class="p-4 rounded-xl border border-orange-200 bg-orange-50/50 space-y-3">
+                        <label class="block text-xs font-bold text-slate-800">Skema & Tipe Potongan Harga <span class="text-rose-500">*</span></label>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition {{ $discountType === 'percentage' ? 'bg-white border-orange-500 shadow-xs' : 'bg-slate-50 border-slate-200' }}">
+                                <input type="radio" value="percentage" wire:model.live="discountType" class="text-orange-500 focus:ring-orange-500">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900">Persentase (%)</div>
+                                    <div class="text-[10px] text-slate-500">Misal: 10%, 20%, 50%</div>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition {{ $discountType === 'fixed' ? 'bg-white border-orange-500 shadow-xs' : 'bg-slate-50 border-slate-200' }}">
+                                <input type="radio" value="fixed" wire:model.live="discountType" class="text-orange-500 focus:ring-orange-500">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900">Nominal Langsung (Rp)</div>
+                                    <div class="text-[10px] text-slate-500">Misal: Potongan Rp 15.000</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                    {{ $discountType === 'percentage' ? 'Besar Diskon (%)' : 'Besar Potongan (Rp)' }} <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" wire:model="discountValue" min="1"
+                                        class="w-full bg-white border border-slate-300 rounded-xl pl-3.5 pr-10 py-2 text-sm font-bold text-orange-600 focus:ring-1 focus:ring-orange-500">
+                                    <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">
+                                        {{ $discountType === 'percentage' ? '%' : 'Rp' }}
+                                    </span>
+                                </div>
+                                @error('discountValue') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            @if($discountType === 'percentage')
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Maksimal Potongan (Rp)</label>
+                                    <input type="number" wire:model="discountMaxAmount" placeholder="e.g. 25000"
+                                        class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-semibold focus:ring-1 focus:ring-orange-500">
+                                    <span class="text-[10px] text-slate-400">Batas maksimal nominal diskon</span>
+                                </div>
+                            @else
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Keterangan Nilai</label>
+                                    <div class="py-2 text-xs text-slate-500">
+                                        Total belanja dipotong langsung Rp {{ number_format($discountValue ?: 0, 0, ',', '.') }}
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Syarat & Kuota -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Syarat Min. Belanja (Rp)</label>
+                            <input type="number" wire:model="discountMinPurchase" placeholder="0"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <span class="text-[10px] text-slate-400">Isi 0 jika tanpa syarat minimum</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Batas Kuota Penggunaan</label>
+                            <input type="number" wire:model="discountMaxUsage" placeholder="e.g. 100"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <span class="text-[10px] text-slate-400">Kosongkan jika kuota tak terbatas</span>
+                        </div>
+                    </div>
+
+                    <!-- Periode Promo -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Mulai Berlaku</label>
+                            <input type="date" wire:model="discountStartDate"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Berakhir</label>
+                            <input type="date" wire:model="discountEndDate"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        </div>
+                    </div>
+
+                    <!-- Catatan / S&K -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Syarat & Ketentuan</label>
+                        <input type="text" wire:model="discountNotes" placeholder="Contoh: Khusus hari Senin - Kamis, berlaku untuk member"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                            <input type="checkbox" wire:model="discountIsActive" class="rounded text-orange-500 focus:ring-orange-500">
+                            <span>Promo ini aktif dan siap digunakan saat transaksi kasir</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                    @if ($editingDiscountId)
+                        <button type="button"
+                            wire:click="deleteDiscount({{ $editingDiscountId }})"
+                            wire:confirm="Yakin ingin menghapus diskon ini?"
+                            class="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Hapus</span>
+                        </button>
+                    @else
+                        <div></div>
+                    @endif
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" wire:click="$set('showDiscountModal', false)"
+                            class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">Batal</button>
+                        <button type="button" wire:click="saveDiscount"
+                            class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i>
+                            <span>{{ $editingDiscountId ? 'Simpan Perubahan' : 'Buat Diskon' }}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

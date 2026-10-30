@@ -16,6 +16,11 @@ class ProductRecipe extends Model
         'quantity' => 'decimal:2',
     ];
 
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

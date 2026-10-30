@@ -23,6 +23,11 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

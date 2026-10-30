@@ -26,10 +26,10 @@ class SuperAdminDashboardTest extends TestCase
         $this->get('/admin')
             ->assertStatus(200)
             ->assertSee('Dashboard Platform')
-            ->assertSee('1.284')
-            ->assertSee('Rp 48,6 jt')
-            ->assertSee('86.420')
-            ->assertSee('12')
+            ->assertSee('Total Tenant')
+            ->assertSee('Pendapatan Bulanan')
+            ->assertSee('Transaksi Platform')
+            ->assertSee('Perlu Perhatian')
             ->assertSee('Kopi Ruang Pagi');
     }
 

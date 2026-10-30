@@ -54,10 +54,17 @@ class SuperAdminPlatformSeeder extends Seeder
             [
                 'name' => 'Salon & Barbershop',
                 'icon' => 'fa-scissors',
-                'description' => 'Untuk barbershop, salon kecantikan dengan komisi kapster/terapis dan pencatatan bahan shampoo.',
+                'description' => 'Untuk barbershop, salon kecantikan dengan komisi kapster/terapis, katalog produk perawatan/pomade, dan layanan jasa.',
                 'default_settings' => [
-                    'has_commissions' => true,
+                    'has_products' => true,
                     'has_services' => true,
+                    'has_commissions' => true,
+                    'default_units' => ['pcs', 'botol', 'tube', 'pot'],
+                    'preset_modules' => [
+                        'Master Produk & Penjualan Retail',
+                        'Layanan Jasa & Perawatan',
+                        'Komisi Pegawai / Kapster',
+                    ],
                 ],
                 'is_active' => true,
             ]

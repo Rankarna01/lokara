@@ -306,6 +306,7 @@ class Terminal extends Component
             $order = Order::create([
                 'tenant_id' => $tenant->id,
                 'outlet_id' => $this->selectedOutletId ?? 1,
+                'customer_id' => $this->selectedCustomer['id'] ?? null,
                 'user_id' => Auth::id() ?? 1,
                 'order_number' => $orderNumber,
                 'order_type' => $this->orderType,
@@ -316,11 +317,13 @@ class Terminal extends Component
                 'service_amount' => 0,
                 'total_amount' => $totals['total'],
                 'status' => 'completed',
+                'payment_status' => 'paid',
                 'paid_at' => Carbon::now(),
             ]);
 
             foreach ($this->cart as $item) {
                 OrderItem::create([
+                    'tenant_id' => $tenant->id,
                     'order_id' => $order->id,
                     'product_id' => $item['product_id'],
                     'product_name' => $item['name'],
@@ -332,6 +335,7 @@ class Terminal extends Component
             }
 
             OrderPayment::create([
+                'tenant_id' => $tenant->id,
                 'order_id' => $order->id,
                 'payment_method' => $this->paymentMethod,
                 'amount' => $totals['total'],

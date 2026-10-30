@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Tenant\BackofficeDashboard;
 use App\Models\Category;
+use App\Models\Discount;
 use App\Models\Ingredient;
 use App\Models\Order;
 use App\Models\Outlet;
@@ -209,5 +210,225 @@ class TenantBackofficeTest extends TestCase
             ->call('executeVoidOrder');
 
         $this->assertEquals('voided', $order->fresh()->status);
+    }
+
+    public function test_can_create_new_category_in_master_product()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewCategoryModal')
+            ->assertSet('showCategoryModal', true)
+            ->set('categoryName', 'Dessert & Bakery')
+            ->set('categoryIcon', 'fa-cake-candles')
+            ->set('categorySortOrder', 5)
+            ->set('categoryIsActive', true)
+            ->call('saveCategory')
+            ->assertSet('showCategoryModal', false);
+
+        $category = Category::where('tenant_id', $tenant->id)
+            ->where('name', 'Dessert & Bakery')
+            ->first();
+
+        $this->assertNotNull($category);
+        $this->assertEquals('dessert-bakery', $category->slug);
+        $this->assertEquals('fa-cake-candles', $category->icon);
+        $this->assertEquals(5, $category->sort_order);
+        $this->assertTrue($category->is_active);
+    }
+
+    public function test_can_edit_existing_category_in_master_product()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+        $cat = Category::where('tenant_id', $tenant->id)->first();
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openEditCategoryModal', $cat->id)
+            ->assertSet('showCategoryModal', true)
+            ->assertSet('editingCategoryId', $cat->id)
+            ->assertSet('categoryName', $cat->name)
+            ->set('categoryName', 'Kopi Spesialti')
+            ->set('categoryIcon', 'fa-mug-saucer')
+            ->call('saveCategory')
+            ->assertSet('showCategoryModal', false);
+
+        $cat->refresh();
+        $this->assertEquals('Kopi Spesialti', $cat->name);
+        $this->assertEquals('fa-mug-saucer', $cat->icon);
+    }
+
+    public function test_can_delete_category_and_nullify_products()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+
+        // Create a category with a product
+        $category = Category::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Kategori Sementara',
+            'slug' => 'kategori-sementara',
+            'sort_order' => 99,
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'tenant_id' => $tenant->id,
+            'category_id' => $category->id,
+            'name' => 'Kopi Khusus Demo',
+            'slug' => 'kopi-khusus-demo',
+            'base_price' => 25000,
+            'cost_price' => 8000,
+            'is_active' => true,
+            'is_available' => true,
+        ]);
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('deleteCategory', $category->id);
+
+        $this->assertNull(Category::find($category->id));
+        $this->assertNull($product->fresh()->category_id);
+    }
+
+    public function test_can_open_manage_categories_modal()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openManageCategoriesModal')
+            ->assertSet('showManageCategoriesModal', true);
+    }
+
+    public function test_salon_tenant_shows_master_layanan_and_discounts()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $this->assertNotNull($salonOwner);
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->assertSee('Master Layanan')
+            ->assertSee('Diskon')
+            ->call('switchTab', 'services')
+            ->assertSet('activeTab', 'services')
+            ->assertSee('Gentleman Haircut')
+            ->call('switchTab', 'discounts')
+            ->assertSet('activeTab', 'discounts')
+            ->assertSee('OPENING20')
+            ->assertSee('CUKUR15K');
+    }
+
+    public function test_can_switch_tenant_in_backoffice()
+    {
+        $fnbOwner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $fnbTenant = Tenant::where('slug', 'kopiruangpagi')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+
+        Livewire::actingAs($fnbOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->assertSet('tenantId', $fnbTenant->id)
+            ->call('switchTenant', $salonTenant->id)
+            ->assertSet('tenantId', $salonTenant->id)
+            ->assertSee('Studio Rona');
+    }
+
+    public function test_can_create_and_edit_service_in_salon()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $cat = Category::where('tenant_id', $salonTenant->id)->first();
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewServiceModal')
+            ->assertSet('showServiceModal', true)
+            ->set('serviceName', 'Premium Head Spa')
+            ->set('serviceCategoryId', $cat->id)
+            ->set('servicePrice', 120000)
+            ->set('serviceDuration', 45)
+            ->set('serviceCommissionType', 'percentage')
+            ->set('serviceCommissionValue', 20)
+            ->call('saveService')
+            ->assertSet('showServiceModal', false);
+
+        $service = Product::where('tenant_id', $salonTenant->id)
+            ->where('name', 'Premium Head Spa')
+            ->first();
+
+        $this->assertNotNull($service);
+        $this->assertEquals('service', $service->type);
+        $this->assertEquals(120000, $service->base_price);
+        $this->assertEquals(45, $service->duration_minutes);
+        $this->assertEquals('percentage', $service->commission_type);
+        $this->assertEquals(20, $service->commission_value);
+        $this->assertEquals(24000, $service->estimated_commission); // 20% of 120,000
+
+        // Test editing service
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('editService', $service->id)
+            ->assertSet('showServiceModal', true)
+            ->assertSet('serviceName', 'Premium Head Spa')
+            ->set('servicePrice', 135000)
+            ->call('saveService');
+
+        $this->assertEquals(135000, $service->fresh()->base_price);
+    }
+
+    public function test_can_create_and_manage_discounts_percentage_and_fixed()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+
+        // 1. Percentage discount with max amount
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewDiscountModal')
+            ->assertSet('showDiscountModal', true)
+            ->set('discountName', 'Promo Gajian 25%')
+            ->set('discountCode', 'PAYDAY25')
+            ->set('discountType', 'percentage')
+            ->set('discountValue', 25)
+            ->set('discountMinPurchase', 100000)
+            ->set('discountMaxAmount', 30000)
+            ->call('saveDiscount')
+            ->assertSet('showDiscountModal', false);
+
+        $discPercent = Discount::where('tenant_id', $salonTenant->id)->where('code', 'PAYDAY25')->first();
+        $this->assertNotNull($discPercent);
+        $this->assertEquals('percentage', $discPercent->type);
+        $this->assertEquals(25, $discPercent->value);
+        // Calculation test: 25% of 80,000 is 0 (below min purchase 100k)
+        $this->assertEquals(0, $discPercent->calculateAmount(80000));
+        // 25% of 200,000 = 50,000 capped by max 30,000
+        $this->assertEquals(30000, $discPercent->calculateAmount(200000));
+
+        // 2. Fixed amount discount
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewDiscountModal')
+            ->set('discountName', 'Potongan Kilat Rp 20.000')
+            ->set('discountCode', 'KILAT20K')
+            ->set('discountType', 'fixed')
+            ->set('discountValue', 20000)
+            ->set('discountMinPurchase', 50000)
+            ->call('saveDiscount');
+
+        $discFixed = Discount::where('tenant_id', $salonTenant->id)->where('code', 'KILAT20K')->first();
+        $this->assertNotNull($discFixed);
+        $this->assertEquals('fixed', $discFixed->type);
+        $this->assertEquals(20000, $discFixed->value);
+        $this->assertEquals(20000, $discFixed->calculateAmount(75000));
+
+        // 3. Toggle discount status
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('toggleDiscountStatus', $discFixed->id);
+
+        $this->assertFalse($discFixed->fresh()->is_active);
     }
 }

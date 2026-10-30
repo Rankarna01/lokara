@@ -36,8 +36,9 @@ class BusinessType extends Model
                 'Multi-Gudang & Grosir',
             ],
             'salon' => [
-                'Komisi Pegawai / Kapster',
+                'Master Produk & Penjualan Retail',
                 'Layanan Jasa & Perawatan',
+                'Komisi Pegawai / Kapster',
             ],
             'laundry' => [
                 'Layanan Kiloan & Satuan',
