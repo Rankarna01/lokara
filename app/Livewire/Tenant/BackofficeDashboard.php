@@ -13,6 +13,7 @@ use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\ProductRecipe;
 use App\Models\PurchaseOrder;
+use App\Models\Shift;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Tenant;
@@ -20,9 +21,12 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class BackofficeDashboard extends Component
 {
+    use WithFileUploads;
+
     public string $activeTab = 'dashboard';
     public ?int $tenantId = null;
     public ?int $selectedOutletId = null;
@@ -46,6 +50,7 @@ class BackofficeDashboard extends Component
     public float $serviceCommissionValue = 20000;
     public float $serviceCostPrice = 5000;
     public string $serviceImageUrl = '';
+    public $serviceImageFile = null;
     public bool $serviceIsAvailable = true;
     public string $searchService = '';
     public string $selectedServiceCategoryFilter = 'all';
@@ -123,11 +128,33 @@ class BackofficeDashboard extends Component
     public string $expensePaymentMethod = 'Kas Toko / Tunai';
     public string $expenseNotes = '';
 
-    // Purchase Order Modal
+    // Purchase Order Modal & Filters
     public bool $showPoModal = false;
     public ?int $poSupplierId = null;
     public float $poTotalAmount = 0;
     public string $poNotes = '';
+    public string $poExpectedDate = '';
+    public string $searchPo = '';
+    public string $poStatusFilter = 'all'; // 'all', 'ordered', 'received', 'cancelled'
+    public string $poSupplierFilter = 'all';
+    public string $poDateFilter = 'all'; // 'all', 'today', '7_days', '30_days', 'this_month', 'custom'
+    public string $poStartDate = '';
+    public string $poEndDate = '';
+    public bool $showPoDetailModal = false;
+    public ?int $viewingPoId = null;
+
+    // Supplier Management Modal & Form
+    public bool $showSupplierModal = false;
+    public ?int $editingSupplierId = null;
+    public string $supplierName = '';
+    public string $supplierContactPerson = '';
+    public string $supplierPhone = '';
+    public string $supplierEmail = '';
+    public string $supplierAddress = '';
+    public int $supplierTermsDays = 0;
+    public bool $supplierIsActive = true;
+    public string $searchSupplier = '';
+    public string $supplierStatusFilter = 'all'; // 'all', 'active', 'inactive'
 
     // Void Order Modal
     public bool $showVoidModal = false;
@@ -158,6 +185,20 @@ class BackofficeDashboard extends Component
     public string $staffPhone = '';
     public bool $staffIsActive = true;
 
+    // Master Shift Management
+    public bool $showShiftTemplateModal = false;
+    public ?int $editingShiftTemplateId = null;
+    public string $shiftTemplateName = '';
+    public string $shiftTemplateStartTime = '07:00';
+    public string $shiftTemplateEndTime = '15:00';
+    public float $shiftTemplateDefaultCash = 200000;
+    public bool $shiftTemplateIsActive = true;
+
+    // Shift Policy Rules
+    public float $policyDefaultCash = 200000;
+    public bool $policyEnforceLock = true;
+    public bool $policyRequireReconciliation = true;
+
     // Toast
     public string $toastMessage = '';
     public string $toastType = 'success';
@@ -183,6 +224,14 @@ class BackofficeDashboard extends Component
         if (!$this->selectedOutletId && $this->tenantId) {
             $outlet = Outlet::where('tenant_id', $this->tenantId)->first();
             $this->selectedOutletId = $outlet?->id;
+        }
+
+        $tenantModel = Tenant::find($this->tenantId);
+        if ($tenantModel && isset($tenantModel->settings['shift_policies'])) {
+            $policies = $tenantModel->settings['shift_policies'];
+            $this->policyDefaultCash = (float) ($policies['default_cash'] ?? 200000);
+            $this->policyEnforceLock = (bool) ($policies['enforce_lock'] ?? true);
+            $this->policyRequireReconciliation = (bool) ($policies['require_reconciliation'] ?? true);
         }
     }
 
@@ -460,8 +509,15 @@ class BackofficeDashboard extends Component
         $this->serviceCommissionValue = (float) ($service->commission_value ?? 0);
         $this->serviceCostPrice = (float) ($service->cost_price ?? 0);
         $this->serviceImageUrl = $service->image_url ?? '';
+        $this->serviceImageFile = null;
         $this->serviceIsAvailable = (bool) $service->is_available;
         $this->showServiceModal = true;
+    }
+
+    public function removeServiceImage()
+    {
+        $this->serviceImageFile = null;
+        $this->serviceImageUrl = '';
     }
 
     public function saveService()
@@ -472,11 +528,17 @@ class BackofficeDashboard extends Component
             'serviceDuration' => 'required|integer|min:5',
             'serviceCommissionValue' => 'required|numeric|min:0',
             'serviceCostPrice' => 'nullable|numeric|min:0',
+            'serviceImageFile' => 'nullable|image|max:3072',
         ]);
 
         if ($this->serviceCommissionType === 'percentage' && $this->serviceCommissionValue > 100) {
             $this->addError('serviceCommissionValue', 'Komisi persentase tidak boleh melebihi 100%.');
             return;
+        }
+
+        if ($this->serviceImageFile) {
+            $path = $this->serviceImageFile->store('services', 'public');
+            $this->serviceImageUrl = '/storage/' . $path;
         }
 
         if ($this->editingServiceId) {
@@ -547,6 +609,7 @@ class BackofficeDashboard extends Component
         $this->serviceCommissionType = 'fixed';
         $this->serviceCommissionValue = 20000;
         $this->serviceCostPrice = 5000;
+        $this->serviceImageFile = null;
         $this->serviceImageUrl = '';
         $this->serviceIsAvailable = true;
     }
@@ -788,12 +851,121 @@ class BackofficeDashboard extends Component
     }
 
     // --- PURCHASES & SUPPLIER ---
-    public function openPoModal()
+    public function openNewSupplierModal()
     {
-        $sup = Supplier::where('tenant_id', $this->tenantId)->first();
-        $this->poSupplierId = $sup?->id;
+        $this->resetSupplierForm();
+        $this->showSupplierModal = true;
+    }
+
+    public function editSupplier(int $id)
+    {
+        $supplier = Supplier::where('tenant_id', $this->tenantId)->findOrFail($id);
+        $this->editingSupplierId = $supplier->id;
+        $this->supplierName = $supplier->name;
+        $this->supplierContactPerson = $supplier->contact_person ?? '';
+        $this->supplierPhone = $supplier->phone ?? '';
+        $this->supplierEmail = $supplier->email ?? '';
+        $this->supplierAddress = $supplier->address ?? '';
+        $this->supplierTermsDays = (int) ($supplier->terms_days ?? 0);
+        $this->supplierIsActive = (bool) $supplier->is_active;
+        $this->showSupplierModal = true;
+    }
+
+    public function saveSupplier()
+    {
+        $this->validate([
+            'supplierName' => 'required|min:2|max:100',
+            'supplierContactPerson' => 'nullable|max:50',
+            'supplierPhone' => 'nullable|max:30',
+            'supplierEmail' => 'nullable|email|max:100',
+            'supplierAddress' => 'nullable|max:255',
+            'supplierTermsDays' => 'required|integer|min:0|max:180',
+        ]);
+
+        if ($this->editingSupplierId) {
+            $supplier = Supplier::where('tenant_id', $this->tenantId)->findOrFail($this->editingSupplierId);
+            $supplier->update([
+                'name' => $this->supplierName,
+                'contact_person' => $this->supplierContactPerson ?: null,
+                'phone' => $this->supplierPhone ?: null,
+                'email' => $this->supplierEmail ?: null,
+                'address' => $this->supplierAddress ?: null,
+                'terms_days' => $this->supplierTermsDays,
+                'is_active' => $this->supplierIsActive,
+            ]);
+            $this->showToast("Data rekanan supplier '{$supplier->name}' berhasil diperbarui.");
+        } else {
+            $supplier = Supplier::create([
+                'tenant_id' => $this->tenantId,
+                'name' => $this->supplierName,
+                'contact_person' => $this->supplierContactPerson ?: null,
+                'phone' => $this->supplierPhone ?: null,
+                'email' => $this->supplierEmail ?: null,
+                'address' => $this->supplierAddress ?: null,
+                'terms_days' => $this->supplierTermsDays,
+                'is_active' => $this->supplierIsActive,
+            ]);
+            $this->showToast("Supplier '{$supplier->name}' berhasil ditambahkan!");
+
+            if ($this->showPoModal) {
+                $this->poSupplierId = $supplier->id;
+            }
+        }
+
+        $this->showSupplierModal = false;
+        $this->resetSupplierForm();
+    }
+
+    public function deleteSupplier(int $id)
+    {
+        $supplier = Supplier::where('tenant_id', $this->tenantId)->findOrFail($id);
+        $poCount = $supplier->purchaseOrders()->count();
+
+        if ($poCount > 0) {
+            $supplier->update(['is_active' => false]);
+            $this->showToast("Supplier '{$supplier->name}' memiliki {$poCount} riwayat PO, status dinonaktifkan.", 'warning');
+            return;
+        }
+
+        $name = $supplier->name;
+        $supplier->delete();
+        $this->showToast("Supplier '{$name}' berhasil dihapus.");
+    }
+
+    public function toggleSupplierStatus(int $id)
+    {
+        $supplier = Supplier::where('tenant_id', $this->tenantId)->findOrFail($id);
+        $supplier->is_active = !$supplier->is_active;
+        $supplier->save();
+        $status = $supplier->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        $this->showToast("Status supplier '{$supplier->name}' {$status}.");
+    }
+
+    public function resetSupplierForm()
+    {
+        $this->editingSupplierId = null;
+        $this->supplierName = '';
+        $this->supplierContactPerson = '';
+        $this->supplierPhone = '';
+        $this->supplierEmail = '';
+        $this->supplierAddress = '';
+        $this->supplierTermsDays = 0;
+        $this->supplierIsActive = true;
+    }
+
+    public function openPoModal(?int $supplierId = null)
+    {
+        $suppliers = Supplier::where('tenant_id', $this->tenantId)->where('is_active', true)->get();
+        if ($suppliers->isEmpty()) {
+            $this->showToast('Belum ada supplier terdaftar. Silakan tambahkan supplier terlebih dahulu.', 'warning');
+            $this->openNewSupplierModal();
+            return;
+        }
+
+        $this->poSupplierId = $supplierId ?? ($this->poSupplierId && $suppliers->contains('id', $this->poSupplierId) ? $this->poSupplierId : $suppliers->first()?->id);
         $this->poTotalAmount = 1500000;
-        $this->poNotes = 'Pengadaan bahan baku mingguan';
+        $this->poNotes = 'Pengadaan bahan baku & kebutuhan operasional';
+        $this->poExpectedDate = now()->addDays(3)->toDateString();
         $this->showPoModal = true;
     }
 
@@ -802,9 +974,12 @@ class BackofficeDashboard extends Component
         $this->validate([
             'poSupplierId' => 'required|exists:suppliers,id',
             'poTotalAmount' => 'required|numeric|min:1000',
+            'poExpectedDate' => 'nullable|date',
+            'poNotes' => 'nullable|max:255',
         ]);
 
-        $poNumber = 'PO-' . date('Ym') . '-' . str_pad((string) (PurchaseOrder::where('tenant_id', $this->tenantId)->count() + 1), 3, '0', STR_PAD_LEFT);
+        $poCount = PurchaseOrder::where('tenant_id', $this->tenantId)->count() + 1;
+        $poNumber = 'PO-' . date('Ym') . '-' . str_pad((string) $poCount, 3, '0', STR_PAD_LEFT);
 
         PurchaseOrder::create([
             'tenant_id' => $this->tenantId,
@@ -812,21 +987,119 @@ class BackofficeDashboard extends Component
             'supplier_id' => $this->poSupplierId,
             'po_number' => $poNumber,
             'order_date' => now()->toDateString(),
-            'expected_date' => now()->addDays(3)->toDateString(),
+            'expected_date' => $this->poExpectedDate ?: now()->addDays(3)->toDateString(),
             'status' => 'ordered',
             'total_amount' => $this->poTotalAmount,
-            'notes' => $this->poNotes,
+            'notes' => $this->poNotes ?: 'Pengadaan stok operasional',
         ]);
 
         $this->showPoModal = false;
-        $this->showToast("Purchase Order {$poNumber} berhasil diterbitkan!");
+        $this->showToast("Purchase Order {$poNumber} senilai Rp " . number_format($this->poTotalAmount, 0, ',', '.') . " berhasil diterbitkan!");
     }
 
     public function markPoReceived(int $id)
     {
         $po = PurchaseOrder::where('tenant_id', $this->tenantId)->findOrFail($id);
         $po->update(['status' => 'received']);
-        $this->showToast("PO {$po->po_number} ditandai Diterima (GRN). Stok diperbarui!");
+        $this->showToast("PO {$po->po_number} berhasil ditandai Diterima (GRN). Stok operasional diperbarui!");
+    }
+
+    public function cancelPo(int $id)
+    {
+        $po = PurchaseOrder::where('tenant_id', $this->tenantId)->findOrFail($id);
+        if ($po->status === 'received') {
+            $this->showToast("PO {$po->po_number} sudah berstatus Diterima, tidak dapat dibatalkan.", 'error');
+            return;
+        }
+        $po->update(['status' => 'cancelled']);
+        $this->showToast("PO {$po->po_number} berhasil dibatalkan.", 'info');
+    }
+
+    public function viewPoDetail(int $id)
+    {
+        $this->viewingPoId = $id;
+        $this->showPoDetailModal = true;
+    }
+
+    public function resetPoFilters()
+    {
+        $this->searchPo = '';
+        $this->poStatusFilter = 'all';
+        $this->poSupplierFilter = 'all';
+        $this->poDateFilter = 'all';
+        $this->poStartDate = '';
+        $this->poEndDate = '';
+    }
+
+    public function seedDefaultSuppliers()
+    {
+        $tenant = Tenant::find($this->tenantId);
+        $isSalon = $tenant?->isSalon();
+
+        if ($isSalon) {
+            $defaults = [
+                [
+                    'name' => "PT L'Oreal Professional Indonesia",
+                    'contact_person' => 'Maya Indriani',
+                    'phone' => '081233445566',
+                    'email' => 'order@loreal-pro.co.id',
+                    'address' => 'Jl. TB Simatupang No. 88, Jakarta Selatan',
+                    'terms_days' => 14,
+                ],
+                [
+                    'name' => 'CV Barbershop Supplies Nusantara',
+                    'contact_person' => 'Budi Santoso',
+                    'phone' => '081988776655',
+                    'email' => 'sales@barbersupplies.id',
+                    'address' => 'Komp. Ruko Darmo Park II Blok B, Surabaya',
+                    'terms_days' => 7,
+                ],
+                [
+                    'name' => 'Toko Handuk & Aksesoris Salon Berkah',
+                    'contact_person' => 'Bu Hj. Nur',
+                    'phone' => '081344556677',
+                    'email' => 'toko.berkah@gmail.com',
+                    'address' => 'Pasar Turi Baru Blok C-12, Surabaya',
+                    'terms_days' => 0,
+                ],
+            ];
+        } else {
+            $defaults = [
+                [
+                    'name' => 'PT Kopi Nusantara Makmur',
+                    'contact_person' => 'Hendro Setiawan',
+                    'phone' => '081122334455',
+                    'email' => 'sales@kopinusantara.co.id',
+                    'address' => 'Kawasan Industri Sentul Kav. 12, Bogor',
+                    'terms_days' => 14,
+                ],
+                [
+                    'name' => 'CV Dairy Fresh Sejahtera',
+                    'contact_person' => 'Siti Nurhaliza',
+                    'phone' => '081299887766',
+                    'email' => 'order@dairyfresh.com',
+                    'address' => 'Jl. Pasar Minggu Raya No. 88, Jakarta Selatan',
+                    'terms_days' => 7,
+                ],
+                [
+                    'name' => 'Toko Kemasan Jaya Mandiri',
+                    'contact_person' => 'Aheng Salim',
+                    'phone' => '081765432100',
+                    'email' => 'sales@kemasanjaya.id',
+                    'address' => 'Glodok Plaza Blok B-14, Jakarta Barat',
+                    'terms_days' => 0,
+                ],
+            ];
+        }
+
+        foreach ($defaults as $d) {
+            Supplier::firstOrCreate(
+                ['tenant_id' => $this->tenantId, 'name' => $d['name']],
+                array_merge($d, ['tenant_id' => $this->tenantId, 'is_active' => true])
+            );
+        }
+
+        $this->showToast('Rekomendasi pemasok standar berhasil ditambahkan!');
     }
 
     // --- EXPENSES (OPEX) ---
@@ -1067,6 +1340,137 @@ class BackofficeDashboard extends Component
         $this->showToast("Akun staf '{$name}' berhasil dihapus.");
     }
 
+    // --- MASTER SHIFT & POLICY MANAGEMENT ---
+    public function openNewShiftTemplateModal()
+    {
+        $this->editingShiftTemplateId = null;
+        $this->shiftTemplateName = '';
+        $this->shiftTemplateStartTime = '07:00';
+        $this->shiftTemplateEndTime = '15:00';
+        $this->shiftTemplateDefaultCash = 200000;
+        $this->shiftTemplateIsActive = true;
+        $this->showShiftTemplateModal = true;
+    }
+
+    public function editShiftTemplate(int $id)
+    {
+        $templates = $this->getShiftTemplates();
+        $template = collect($templates)->firstWhere('id', $id);
+        if ($template) {
+            $this->editingShiftTemplateId = $template['id'];
+            $this->shiftTemplateName = $template['name'];
+            $this->shiftTemplateStartTime = $template['start_time'];
+            $this->shiftTemplateEndTime = $template['end_time'];
+            $this->shiftTemplateDefaultCash = (float) $template['default_cash'];
+            $this->shiftTemplateIsActive = (bool) $template['is_active'];
+            $this->showShiftTemplateModal = true;
+        }
+    }
+
+    public function saveShiftTemplate()
+    {
+        $this->validate([
+            'shiftTemplateName' => 'required|string|max:100',
+            'shiftTemplateStartTime' => 'required',
+            'shiftTemplateEndTime' => 'required',
+            'shiftTemplateDefaultCash' => 'required|numeric|min:0',
+        ]);
+
+        $tenant = Tenant::find($this->tenantId);
+        if (!$tenant) return;
+
+        $settings = $tenant->settings ?? [];
+        $templates = $this->getShiftTemplates();
+
+        if ($this->editingShiftTemplateId) {
+            foreach ($templates as &$item) {
+                if ($item['id'] === $this->editingShiftTemplateId) {
+                    $item['name'] = $this->shiftTemplateName;
+                    $item['start_time'] = $this->shiftTemplateStartTime;
+                    $item['end_time'] = $this->shiftTemplateEndTime;
+                    $item['default_cash'] = $this->shiftTemplateDefaultCash;
+                    $item['is_active'] = $this->shiftTemplateIsActive;
+                }
+            }
+        } else {
+            $newId = count($templates) > 0 ? max(array_column($templates, 'id')) + 1 : 1;
+            $templates[] = [
+                'id' => $newId,
+                'name' => $this->shiftTemplateName,
+                'start_time' => $this->shiftTemplateStartTime,
+                'end_time' => $this->shiftTemplateEndTime,
+                'default_cash' => $this->shiftTemplateDefaultCash,
+                'is_active' => $this->shiftTemplateIsActive,
+            ];
+        }
+
+        $settings['shift_templates'] = $templates;
+        $tenant->update(['settings' => $settings]);
+        $this->showShiftTemplateModal = false;
+        $this->showToast('Master template shift berhasil disimpan.');
+    }
+
+    public function toggleShiftTemplateStatus(int $id)
+    {
+        $tenant = Tenant::find($this->tenantId);
+        if (!$tenant) return;
+
+        $settings = $tenant->settings ?? [];
+        $templates = $this->getShiftTemplates();
+
+        foreach ($templates as &$item) {
+            if ($item['id'] === $id) {
+                $item['is_active'] = !($item['is_active'] ?? true);
+            }
+        }
+
+        $settings['shift_templates'] = $templates;
+        $tenant->update(['settings' => $settings]);
+        $this->showToast('Status template shift berhasil diubah.');
+    }
+
+    public function deleteShiftTemplate(int $id)
+    {
+        $tenant = Tenant::find($this->tenantId);
+        if (!$tenant) return;
+
+        $settings = $tenant->settings ?? [];
+        $templates = array_values(array_filter($this->getShiftTemplates(), fn($t) => $t['id'] !== $id));
+
+        $settings['shift_templates'] = $templates;
+        $tenant->update(['settings' => $settings]);
+        $this->showToast('Template shift berhasil dihapus.', 'info');
+    }
+
+    public function saveShiftPolicies()
+    {
+        $tenant = Tenant::find($this->tenantId);
+        if (!$tenant) return;
+
+        $settings = $tenant->settings ?? [];
+        $settings['shift_policies'] = [
+            'default_cash' => $this->policyDefaultCash,
+            'enforce_lock' => $this->policyEnforceLock,
+            'require_reconciliation' => $this->policyRequireReconciliation,
+        ];
+        $tenant->update(['settings' => $settings]);
+        $this->showToast('Kebijakan & aturan master shift berhasil disimpan.');
+    }
+
+    public function getShiftTemplates(): array
+    {
+        $tenant = Tenant::find($this->tenantId);
+        if ($tenant && !empty($tenant->settings['shift_templates'])) {
+            return $tenant->settings['shift_templates'];
+        }
+
+        return [
+            ['id' => 1, 'name' => 'Shift 1 (Pagi)', 'start_time' => '07:00', 'end_time' => '15:00', 'default_cash' => 200000, 'is_active' => true],
+            ['id' => 2, 'name' => 'Shift 2 (Sore - Malam)', 'start_time' => '15:00', 'end_time' => '23:00', 'default_cash' => 200000, 'is_active' => true],
+            ['id' => 3, 'name' => 'Shift Full Day', 'start_time' => '08:00', 'end_time' => '22:00', 'default_cash' => 300000, 'is_active' => false],
+        ];
+    }
+
     // --- TOAST NOTIFICATION ---
     private function showToast(string $message, string $type = 'success')
     {
@@ -1192,9 +1596,70 @@ class BackofficeDashboard extends Component
         }
         $transactions = $transactionsQuery->orderBy('id', 'desc')->take(20)->get();
 
-        // 5. Suppliers & Purchase Orders Data
-        $suppliers = Supplier::where('tenant_id', $this->tenantId)->get();
-        $purchaseOrders = PurchaseOrder::with(['supplier', 'outlet'])->where('tenant_id', $this->tenantId)->orderBy('id', 'desc')->get();
+        // 5. Suppliers & Purchase Orders Data (Filtered)
+        $poQuery = PurchaseOrder::with(['supplier', 'outlet', 'items'])
+            ->where('tenant_id', $this->tenantId);
+
+        if (!empty($this->searchPo)) {
+            $poQuery->where(function ($q) {
+                $q->where('po_number', 'like', '%' . $this->searchPo . '%')
+                  ->orWhere('notes', 'like', '%' . $this->searchPo . '%')
+                  ->orWhereHas('supplier', function ($sq) {
+                      $sq->where('name', 'like', '%' . $this->searchPo . '%')
+                        ->orWhere('contact_person', 'like', '%' . $this->searchPo . '%');
+                  });
+            });
+        }
+
+        if ($this->poStatusFilter !== 'all') {
+            $poQuery->where('status', $this->poStatusFilter);
+        }
+
+        if ($this->poSupplierFilter !== 'all') {
+            $poQuery->where('supplier_id', $this->poSupplierFilter);
+        }
+
+        if ($this->poDateFilter === 'today') {
+            $poQuery->whereDate('order_date', now()->today());
+        } elseif ($this->poDateFilter === '7_days') {
+            $poQuery->where('order_date', '>=', now()->subDays(7)->toDateString());
+        } elseif ($this->poDateFilter === '30_days') {
+            $poQuery->where('order_date', '>=', now()->subDays(30)->toDateString());
+        } elseif ($this->poDateFilter === 'this_month') {
+            $poQuery->whereMonth('order_date', now()->month)->whereYear('order_date', now()->year);
+        } elseif ($this->poDateFilter === 'custom' && !empty($this->poStartDate) && !empty($this->poEndDate)) {
+            $poQuery->whereBetween('order_date', [$this->poStartDate, $this->poEndDate]);
+        }
+
+        $purchaseOrders = $poQuery->orderBy('id', 'desc')->get();
+
+        // PO Statistics
+        $allTenantPos = PurchaseOrder::where('tenant_id', $this->tenantId)->get();
+        $totalPoCount = $allTenantPos->count();
+        $totalPoAmount = $allTenantPos->sum('total_amount');
+        $orderedPoCount = $allTenantPos->where('status', 'ordered')->count();
+        $receivedPoCount = $allTenantPos->where('status', 'received')->count();
+        $cancelledPoCount = $allTenantPos->where('status', 'cancelled')->count();
+
+        // Suppliers query with search & filter
+        $supplierQuery = Supplier::withCount('purchaseOrders')->where('tenant_id', $this->tenantId);
+        if (!empty($this->searchSupplier)) {
+            $supplierQuery->where(function ($q) {
+                $q->where('name', 'like', '%' . $this->searchSupplier . '%')
+                  ->orWhere('contact_person', 'like', '%' . $this->searchSupplier . '%')
+                  ->orWhere('phone', 'like', '%' . $this->searchSupplier . '%')
+                  ->orWhere('email', 'like', '%' . $this->searchSupplier . '%')
+                  ->orWhere('address', 'like', '%' . $this->searchSupplier . '%');
+            });
+        }
+        if ($this->supplierStatusFilter === 'active') {
+            $supplierQuery->where('is_active', true);
+        } elseif ($this->supplierStatusFilter === 'inactive') {
+            $supplierQuery->where('is_active', false);
+        }
+        $suppliers = $supplierQuery->orderBy('name')->get();
+        $allSuppliersList = Supplier::where('tenant_id', $this->tenantId)->orderBy('name')->get();
+        $viewingPo = $this->viewingPoId ? PurchaseOrder::with(['supplier', 'outlet', 'items'])->where('tenant_id', $this->tenantId)->find($this->viewingPoId) : null;
 
         // 6. Expenses Data
         $expenses = Expense::where('tenant_id', $this->tenantId)->orderBy('expense_date', 'desc')->get();
@@ -1232,11 +1697,20 @@ class BackofficeDashboard extends Component
             'ingredients' => $ingredients,
             'transactions' => $transactions,
             'suppliers' => $suppliers,
+            'allSuppliersList' => $allSuppliersList,
             'purchaseOrders' => $purchaseOrders,
+            'totalPoCount' => $totalPoCount,
+            'totalPoAmount' => $totalPoAmount,
+            'orderedPoCount' => $orderedPoCount,
+            'receivedPoCount' => $receivedPoCount,
+            'cancelledPoCount' => $cancelledPoCount,
+            'viewingPo' => $viewingPo,
             'expenses' => $expenses,
             'customers' => $customers,
             'cashiers' => $cashiers,
             'stockMovements' => $stockMovements,
+            'shiftTemplates' => $this->getShiftTemplates(),
+            'shiftHistory' => \App\Models\Shift::with(['user', 'outlet'])->where('tenant_id', $this->tenantId)->latest()->take(10)->get(),
         ])->layout('layouts.app', ['title' => 'Admin Back Office - ' . ($tenant->name ?? 'Lokara POS')]);
     }
 }

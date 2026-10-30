@@ -143,7 +143,7 @@
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'settings' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-sliders w-5 text-center {{ $activeTab === 'settings' ? 'text-orange-500' : 'text-slate-400' }}"></i>
-                            <span>Outlet & Staf Kasir</span>
+                            <span>Cabang, Staf & Shift</span>
                         </div>
                     </button>
                 </nav>
@@ -1140,69 +1140,273 @@
                 <!-- ==================== TAB 5: PEMBELIAN & SUPPLIER ==================== -->
                 @if ($activeTab === 'purchases')
                     <div class="space-y-6">
+                        <!-- Top Header & Primary Action Controls -->
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
                             <div>
-                                <h1 class="text-xl font-bold text-slate-900">Pembelian & Supplier (Procurement)</h1>
-                                <p class="text-xs text-slate-500 mt-0.5">Kelola Purchase Order (PO), penerimaan barang (GRN), dan daftar kontak pemasok.</p>
+                                <div class="flex items-center gap-2.5">
+                                    <h1 class="text-xl font-bold text-slate-900">Pembelian & Supplier (Procurement)</h1>
+                                    <span class="text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        Rantai Pasok & PO
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">Kelola Purchase Order (PO), penerimaan barang (GRN), syarat tempo pembayaran, dan kontak rekanan pemasok.</p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button wire:click="openPoModal"
-                                    class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition">
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <button type="button" wire:click="openNewSupplierModal"
+                                    class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center gap-2 cursor-pointer shadow-xs">
+                                    <i class="fa-solid fa-user-plus text-slate-500"></i>
+                                    <span>Tambah Supplier</span>
+                                </button>
+                                <button type="button" wire:click="openPoModal()"
+                                    class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition cursor-pointer">
                                     <i class="fa-solid fa-cart-plus"></i>
                                     <span>Buat Purchase Order (PO)</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- PO Table -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-                            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-                                <h3 class="font-bold text-slate-900 text-sm">Daftar Purchase Order</h3>
-                                <span class="text-xs text-slate-500">{{ $purchaseOrders->count() }} PO terdaftar</span>
+                        <!-- 4 Stat Summary Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 text-xs font-medium">Total Pengadaan (PO)</span>
+                                    <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs">
+                                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                                    </span>
+                                </div>
+                                <div class="text-2xl font-bold text-slate-900 mt-2">
+                                    Rp {{ number_format($totalPoAmount, 0, ',', '.') }}
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">{{ $totalPoCount }} PO terdaftar di sistem</div>
                             </div>
+
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 text-xs font-medium">Menunggu Pengiriman</span>
+                                    <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+                                        <i class="fa-solid fa-truck-fast"></i>
+                                    </span>
+                                </div>
+                                <div class="text-2xl font-bold text-amber-600 mt-2">{{ $orderedPoCount }} PO</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Sedang diproses pemasok</div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 text-xs font-medium">Selesai Diterima (GRN)</span>
+                                    <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                                        <i class="fa-solid fa-boxes-packing"></i>
+                                    </span>
+                                </div>
+                                <div class="text-2xl font-bold text-emerald-600 mt-2">{{ $receivedPoCount }} PO</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">Stok telah masuk gudang</div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500 text-xs font-medium">Rekanan Supplier</span>
+                                    <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                                        <i class="fa-solid fa-handshake"></i>
+                                    </span>
+                                </div>
+                                <div class="text-2xl font-bold text-indigo-600 mt-2">{{ $suppliers->count() }} Pemasok</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">{{ $suppliers->where('is_active', true)->count() }} rekanan aktif</div>
+                            </div>
+                        </div>
+
+                        <!-- ================= SECTION 1: DAFTAR PURCHASE ORDER ================= -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                            <!-- Card Header & Filter Bar -->
+                            <div class="p-5 border-b border-slate-100 space-y-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                                            <i class="fa-solid fa-clipboard-list text-orange-500"></i>
+                                            <span>Daftar Purchase Order</span>
+                                        </h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Pantau status pemesanan ke pemasok dan konfirmasi penerimaan barang (GRN)</p>
+                                    </div>
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 self-start sm:self-auto">
+                                        {{ $purchaseOrders->count() }} PO ditemukan
+                                    </span>
+                                </div>
+
+                                <!-- Filter Controls Grid -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                                    <!-- 1. Search Bar -->
+                                    <div class="relative">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                        <input type="text" wire:model.live.debounce.300ms="searchPo"
+                                            placeholder="Cari No. PO, supplier, catatan..."
+                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                    </div>
+
+                                    <!-- 2. Status Filter -->
+                                    <div>
+                                        <select wire:model.live="poStatusFilter"
+                                            class="w-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 py-1.5 px-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer">
+                                            <option value="all">Semua Status PO</option>
+                                            <option value="ordered">Dipesan (Dalam Pengiriman)</option>
+                                            <option value="received">Diterima (GRN Selesai)</option>
+                                            <option value="cancelled">Dibatalkan</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- 3. Supplier Filter -->
+                                    <div>
+                                        <select wire:model.live="poSupplierFilter"
+                                            class="w-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 py-1.5 px-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer">
+                                            <option value="all">Semua Supplier Rekanan</option>
+                                            @foreach($allSuppliersList as $sOption)
+                                                <option value="{{ $sOption->id }}">{{ $sOption->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- 4. Date Range Filter -->
+                                    <div>
+                                        <select wire:model.live="poDateFilter"
+                                            class="w-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 py-1.5 px-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer">
+                                            <option value="all">Semua Waktu Order</option>
+                                            <option value="today">Hari Ini</option>
+                                            <option value="7_days">7 Hari Terakhir</option>
+                                            <option value="30_days">30 Hari Terakhir</option>
+                                            <option value="this_month">Bulan Ini</option>
+                                            <option value="custom">Rentang Tanggal Khusus</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Date Range Inputs (Shown when poDateFilter === 'custom') -->
+                                @if($poDateFilter === 'custom')
+                                    <div class="flex items-center gap-3 pt-2 bg-slate-50/80 p-3 rounded-xl border border-slate-200/70">
+                                        <span class="text-xs font-semibold text-slate-600">Dari:</span>
+                                        <input type="date" wire:model.live="poStartDate"
+                                            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-orange-500">
+                                        <span class="text-xs font-semibold text-slate-600">Sampai:</span>
+                                        <input type="date" wire:model.live="poEndDate"
+                                            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-orange-500">
+                                        <button type="button" wire:click="resetPoFilters"
+                                            class="text-xs text-orange-600 hover:text-orange-700 font-semibold ml-auto hover:underline cursor-pointer">
+                                            Reset Filter
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- PO Table Content -->
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left text-sm">
                                     <thead class="bg-slate-50 border-b border-slate-200/80 text-xs text-slate-500 uppercase font-semibold">
                                         <tr>
                                             <th class="py-3 px-4">No. PO</th>
-                                            <th class="py-3 px-4">Supplier</th>
+                                            <th class="py-3 px-4">Supplier Pemasok</th>
                                             <th class="py-3 px-4">Tanggal Order</th>
+                                            <th class="py-3 px-4">Estimasi Tiba</th>
                                             <th class="py-3 px-4 text-right">Total Tagihan</th>
-                                            <th class="py-3 px-4 text-center">Status</th>
+                                            <th class="py-3 px-4 text-center">Status PO</th>
                                             <th class="py-3 px-4 text-right">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100">
                                         @forelse($purchaseOrders as $po)
                                             <tr class="hover:bg-slate-50/60 transition">
-                                                <td class="py-3 px-4 font-bold text-slate-900">{{ $po->po_number }}</td>
                                                 <td class="py-3 px-4">
-                                                    <div class="font-semibold text-slate-800">{{ $po->supplier->name ?? '-' }}</div>
-                                                    <div class="text-[11px] text-slate-400">{{ $po->supplier->contact_person ?? '' }} ({{ $po->supplier->phone ?? '' }})</div>
+                                                    <button type="button" wire:click="viewPoDetail({{ $po->id }})"
+                                                        class="font-mono font-bold text-orange-600 hover:text-orange-700 hover:underline cursor-pointer flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-file-invoice text-slate-400 text-xs"></i>
+                                                        <span>{{ $po->po_number }}</span>
+                                                    </button>
+                                                    @if($po->notes)
+                                                        <div class="text-[11px] text-slate-400 mt-0.5 truncate max-w-[200px]" title="{{ $po->notes }}">
+                                                            {{ $po->notes }}
+                                                        </div>
+                                                    @endif
                                                 </td>
-                                                <td class="py-3 px-4 text-xs text-slate-600">{{ $po->order_date->format('d M Y') }}</td>
-                                                <td class="py-3 px-4 text-right font-bold text-slate-900">
+                                                <td class="py-3 px-4">
+                                                    <div class="font-semibold text-slate-900">{{ $po->supplier->name ?? 'Pemasok Terhapus' }}</div>
+                                                    <div class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                                                        @if($po->supplier?->contact_person)
+                                                            <span><i class="fa-regular fa-user mr-1 text-slate-400"></i>{{ $po->supplier->contact_person }}</span>
+                                                        @endif
+                                                        @if($po->supplier?->phone)
+                                                            <span><i class="fa-solid fa-phone mr-1 text-slate-400"></i>{{ $po->supplier->phone }}</span>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
+                                                    <div class="font-medium text-slate-800">{{ $po->order_date ? $po->order_date->format('d M Y') : '-' }}</div>
+                                                    <div class="text-[10px] text-slate-400">{{ $po->order_date ? $po->order_date->diffForHumans() : '' }}</div>
+                                                </td>
+                                                <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
+                                                    @if($po->expected_date)
+                                                        <span class="font-medium text-slate-700">{{ $po->expected_date->format('d M Y') }}</span>
+                                                    @else
+                                                        <span class="text-slate-400">-</span>
+                                                    @endif
+                                                </td>
+                                                <td class="py-3 px-4 text-right font-bold text-slate-900 whitespace-nowrap">
                                                     Rp {{ number_format($po->total_amount, 0, ',', '.') }}
                                                 </td>
-                                                <td class="py-3 px-4 text-center">
-                                                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $po->status === 'received' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200' }}">
-                                                        {{ $po->status === 'received' ? 'Diterima (GRN)' : 'Dipesan' }}
-                                                    </span>
-                                                </td>
-                                                <td class="py-3 px-4 text-right">
-                                                    @if($po->status !== 'received')
-                                                        <button wire:click="markPoReceived({{ $po->id }})"
-                                                            class="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 rounded-lg">
-                                                            Terima Barang (GRN)
-                                                        </button>
+                                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                                    @if($po->status === 'received')
+                                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Diterima (GRN)
+                                                        </span>
+                                                    @elseif($po->status === 'cancelled')
+                                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Dibatalkan
+                                                        </span>
                                                     @else
-                                                        <span class="text-xs text-slate-400"><i class="fa-solid fa-check text-emerald-500 mr-1"></i> Selesai</span>
+                                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Dipesan
+                                                        </span>
                                                     @endif
+                                                </td>
+                                                <td class="py-3 px-4 text-right whitespace-nowrap">
+                                                    <div class="flex items-center justify-end gap-1.5">
+                                                        <button type="button" wire:click="viewPoDetail({{ $po->id }})"
+                                                            title="Lihat Detail Purchase Order"
+                                                            class="px-2.5 py-1 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer">
+                                                            Detail
+                                                        </button>
+
+                                                        @if($po->status === 'ordered')
+                                                            <button type="button" wire:click="markPoReceived({{ $po->id }})"
+                                                                title="Konfirmasi Barang Diterima (GRN)"
+                                                                class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-lg transition cursor-pointer flex items-center gap-1">
+                                                                <i class="fa-solid fa-box-open text-[10px]"></i>
+                                                                <span>Terima (GRN)</span>
+                                                            </button>
+
+                                                            <button type="button" wire:click="cancelPo({{ $po->id }})"
+                                                                wire:confirm="Yakin ingin membatalkan Purchase Order ini?"
+                                                                title="Batalkan PO"
+                                                                class="p-1 text-xs text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer">
+                                                                <i class="fa-solid fa-ban"></i>
+                                                            </button>
+                                                        @elseif($po->status === 'received')
+                                                            <span class="text-xs text-emerald-600 font-medium px-2 py-1 flex items-center gap-1">
+                                                                <i class="fa-solid fa-circle-check"></i> Selesai
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="6" class="py-6 text-center text-slate-400 text-sm">Belum ada purchase order.</td>
+                                                <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
+                                                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                                                        <i class="fa-solid fa-receipt text-lg"></i>
+                                                    </div>
+                                                    <p class="font-semibold text-slate-700">Belum ada purchase order ditemukan.</p>
+                                                    <p class="text-xs text-slate-400 mt-0.5">Sesuaikan filter pencarian atau buat PO baru untuk memesan ke supplier.</p>
+                                                    <button type="button" wire:click="openPoModal()"
+                                                        class="mt-3.5 px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-xs inline-flex items-center gap-1.5 transition cursor-pointer">
+                                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                                        <span>Buat Purchase Order Baru</span>
+                                                    </button>
+                                                </td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -1210,20 +1414,167 @@
                             </div>
                         </div>
 
-                        <!-- Suppliers Master Cards -->
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                            <h3 class="font-bold text-slate-900 text-sm">Master Rekanan Supplier</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                @foreach($suppliers as $sup)
-                                    <div class="p-4 rounded-xl border border-slate-200/80 bg-slate-50">
-                                        <div class="font-bold text-slate-900 text-sm">{{ $sup->name }}</div>
-                                        <div class="text-xs text-slate-500 mt-1">PIC: {{ $sup->contact_person }}</div>
-                                        <div class="text-xs text-slate-500">Telp: {{ $sup->phone }}</div>
-                                        <div class="mt-2 text-[11px] font-semibold text-slate-600 bg-white px-2 py-1 rounded inline-block border border-slate-200/60">
-                                            Tempo: {{ $sup->terms_days == 0 ? 'Cash on Delivery (COD)' : $sup->terms_days . ' Hari' }}
+                        <!-- ================= SECTION 2: MASTER REKANAN SUPPLIER ================= -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                                        <i class="fa-solid fa-handshake text-indigo-500"></i>
+                                        <span>Master Rekanan Supplier</span>
+                                    </h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Kelola daftar kontak pemasok, syarat tempo pembayaran, dan riwayat pesanan.</p>
+                                </div>
+                                <div class="flex items-center gap-2.5 flex-wrap">
+                                    @if($suppliers->isEmpty())
+                                        <button type="button" wire:click="seedDefaultSuppliers"
+                                            class="px-3.5 py-2 text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i>
+                                            <span>Gunakan Rekomendasi Pemasok</span>
+                                        </button>
+                                    @endif
+                                    <button type="button" wire:click="openNewSupplierModal"
+                                        class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition cursor-pointer">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span>Tambah Supplier Baru</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Search & Filter Controls for Suppliers -->
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div class="relative w-full sm:w-72">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                    <input type="text" wire:model.live.debounce.300ms="searchSupplier"
+                                        placeholder="Cari nama supplier, PIC, telepon..."
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                </div>
+                                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                    <select wire:model.live="supplierStatusFilter"
+                                        class="bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 py-1.5 px-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer">
+                                        <option value="all">Semua Status ({{ $suppliers->count() }})</option>
+                                        <option value="active">Aktif Bekerjasama</option>
+                                        <option value="inactive">Nonaktif</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Suppliers Cards Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @forelse($suppliers as $sup)
+                                    <div class="p-5 rounded-2xl border {{ $sup->is_active ? 'border-slate-200/80 bg-white' : 'border-slate-200 bg-slate-50/60 opacity-80' }} hover:shadow-md transition flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <h4 class="font-bold text-slate-900 text-sm leading-snug">{{ $sup->name }}</h4>
+                                                    <span class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                                        <i class="fa-solid fa-receipt text-[10px]"></i>
+                                                        <span>{{ $sup->purchase_orders_count ?? 0 }} PO Terbit</span>
+                                                    </span>
+                                                </div>
+
+                                                <!-- Toggle Active Status -->
+                                                <button type="button" wire:click="toggleSupplierStatus({{ $sup->id }})"
+                                                    title="Klik untuk ubah status aktif/nonaktif"
+                                                    class="cursor-pointer shrink-0">
+                                                    @if($sup->is_active)
+                                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center gap-1 hover:bg-emerald-100">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                                                        </span>
+                                                    @else
+                                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1 hover:bg-slate-200">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Nonaktif
+                                                        </span>
+                                                    @endif
+                                                </button>
+                                            </div>
+
+                                            <div class="mt-3.5 space-y-2 text-xs text-slate-600">
+                                                @if($sup->contact_person)
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="fa-solid fa-user-tie text-slate-400 w-4 text-center"></i>
+                                                        <span class="font-medium text-slate-800">{{ $sup->contact_person }}</span>
+                                                    </div>
+                                                @endif
+
+                                                @if($sup->phone)
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="fa-solid fa-phone text-slate-400 w-4 text-center"></i>
+                                                        <a href="tel:{{ $sup->phone }}" class="text-slate-700 hover:text-orange-600 hover:underline">{{ $sup->phone }}</a>
+                                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $sup->phone) }}" target="_blank"
+                                                            class="text-emerald-600 hover:text-emerald-700 ml-1 text-[11px]" title="Chat via WhatsApp">
+                                                            <i class="fa-brands fa-whatsapp"></i>
+                                                        </a>
+                                                    </div>
+                                                @endif
+
+                                                @if($sup->email)
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="fa-solid fa-envelope text-slate-400 w-4 text-center"></i>
+                                                        <a href="mailto:{{ $sup->email }}" class="text-slate-700 hover:text-orange-600 hover:underline truncate">{{ $sup->email }}</a>
+                                                    </div>
+                                                @endif
+
+                                                @if($sup->address)
+                                                    <div class="flex items-start gap-2 pt-0.5">
+                                                        <i class="fa-solid fa-location-dot text-slate-400 w-4 text-center mt-0.5 shrink-0"></i>
+                                                        <span class="text-slate-500 text-[11px] leading-relaxed line-clamp-2" title="{{ $sup->address }}">{{ $sup->address }}</span>
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                <span class="text-[11px] text-slate-400">Tempo Pembayaran:</span>
+                                                <span class="px-2 py-0.5 rounded-lg text-[11px] font-semibold {{ $sup->terms_days == 0 ? 'bg-amber-50 text-amber-700 border border-amber-200/60' : 'bg-slate-100 text-slate-700 border border-slate-200' }}">
+                                                    <i class="fa-regular fa-clock mr-1 text-[10px]"></i>
+                                                    {{ $sup->terms_days == 0 ? 'COD / Tunai' : 'Tempo ' . $sup->terms_days . ' Hari' }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Card Action Buttons -->
+                                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                            <button type="button" wire:click="openPoModal({{ $sup->id }})"
+                                                class="px-2.5 py-1.5 text-xs font-semibold bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200 rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                                                <i class="fa-solid fa-cart-plus text-[10px]"></i>
+                                                <span>Buat PO</span>
+                                            </button>
+
+                                            <div class="flex items-center gap-1">
+                                                <button type="button" wire:click="editSupplier({{ $sup->id }})"
+                                                    title="Edit Data Supplier"
+                                                    class="p-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                </button>
+                                                <button type="button" wire:click="deleteSupplier({{ $sup->id }})"
+                                                    wire:confirm="Yakin ingin menghapus supplier ini?"
+                                                    title="Hapus Supplier"
+                                                    class="p-1.5 text-xs text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                @endforeach
+                                @empty
+                                    <div class="col-span-1 md:col-span-3 py-10 text-center text-slate-400 text-sm bg-slate-50/80 rounded-2xl border border-dashed border-slate-200">
+                                        <div class="w-12 h-12 rounded-full bg-white text-slate-400 flex items-center justify-center mx-auto mb-3 shadow-xs">
+                                            <i class="fa-solid fa-truck-ramp-box text-lg text-slate-400"></i>
+                                        </div>
+                                        <h4 class="font-bold text-slate-800 text-sm">Belum Ada Rekanan Supplier</h4>
+                                        <p class="text-xs text-slate-500 max-w-md mx-auto mt-1">Daftarkan supplier bahan baku, produk retail, atau gunakan preset standar untuk mulai membuat Purchase Order.</p>
+                                        <div class="mt-4 flex items-center justify-center gap-3">
+                                            <button type="button" wire:click="openNewSupplierModal"
+                                                class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-1.5">
+                                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                                <span>Tambah Supplier Baru</span>
+                                            </button>
+                                            <button type="button" wire:click="seedDefaultSuppliers"
+                                                class="px-3.5 py-2 text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 rounded-xl transition cursor-pointer inline-flex items-center gap-1.5">
+                                                <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i>
+                                                <span>Rekomendasi Pemasok Standar</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -1888,6 +2239,171 @@
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Section 3: Master Shift, Jadwal & Rekonsiliasi Kas Laci -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+                                        <i class="fa-solid fa-business-time"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-sm">Master Shift & Kebijakan Kasir</h3>
+                                        <p class="text-[11px] text-slate-400">Atur template jadwal shift kerja, kebijakan buka/tutup kasir, serta modal kas awal laci.</p>
+                                    </div>
+                                </div>
+                                <button wire:click="openNewShiftTemplateModal"
+                                    class="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-2 shrink-0">
+                                    <i class="fa-solid fa-plus text-xs"></i>
+                                    <span>+ Tambah Template Shift</span>
+                                </button>
+                            </div>
+
+                            <div class="p-5 space-y-6">
+                                <!-- Kebijakan & Aturan Kasir -->
+                                <div class="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-shield-halved text-orange-500 text-xs"></i>
+                                            <span class="font-bold text-slate-900 text-xs">Kebijakan Operasional Kasir</span>
+                                        </div>
+                                        <button wire:click="saveShiftPolicies"
+                                                class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[11px] rounded-lg transition shadow-2xs">
+                                            Simpan Kebijakan
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                        <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+                                            <label class="block font-semibold text-slate-700 text-[11px]">Modal Kas Awal Default (Rp)</label>
+                                            <div class="relative">
+                                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">Rp</span>
+                                                <input type="number" wire:model="policyDefaultCash"
+                                                       class="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                                            </div>
+                                            <p class="text-[10px] text-slate-400">Nominal rekomendasi saat kasir membuka shift baru.</p>
+                                        </div>
+                                        <div class="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                                            <div>
+                                                <div class="font-semibold text-slate-800 text-[11px]">Wajib Buka Shift</div>
+                                                <p class="text-[10px] text-slate-400">Kunci kasir hingga shift resmi dibuka</p>
+                                            </div>
+                                            <input type="checkbox" wire:model="policyEnforceLock" class="w-4 h-4 text-orange-500 rounded focus:ring-orange-500 cursor-pointer" />
+                                        </div>
+                                        <div class="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                                            <div>
+                                                <div class="font-semibold text-slate-800 text-[11px]">Wajib Rekonsiliasi Kas</div>
+                                                <p class="text-[10px] text-slate-400">Kasir wajib hitung fisik uang di laci</p>
+                                            </div>
+                                            <input type="checkbox" wire:model="policyRequireReconciliation" class="w-4 h-4 text-orange-500 rounded focus:ring-orange-500 cursor-pointer" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tabel Template Shift -->
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-bold text-slate-800 text-xs flex items-center gap-2">
+                                            <i class="fa-solid fa-clock text-slate-400"></i>
+                                            <span>Master Jadwal Jam Shift</span>
+                                        </h4>
+                                        <span class="text-[11px] text-slate-400">{{ count($shiftTemplates) }} Template Tersedia</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        @foreach($shiftTemplates as $tmpl)
+                                            <div class="p-4 rounded-2xl border transition {{ ($tmpl['is_active'] ?? true) ? 'bg-white border-slate-200 shadow-2xs' : 'bg-slate-50 border-slate-200/60 opacity-60' }}">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="font-bold text-slate-900 text-xs">{{ $tmpl['name'] }}</span>
+                                                    <button wire:click="toggleShiftTemplateStatus({{ $tmpl['id'] }})"
+                                                            class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ ($tmpl['is_active'] ?? true) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500' }}">
+                                                        {{ ($tmpl['is_active'] ?? true) ? 'Aktif' : 'Non-Aktif' }}
+                                                    </button>
+                                                </div>
+                                                <div class="mt-2 space-y-1 text-xs">
+                                                    <div class="flex items-center justify-between text-slate-500 text-[11px]">
+                                                        <span>Jam Operasional:</span>
+                                                        <span class="font-bold text-slate-800 font-mono">{{ $tmpl['start_time'] }} - {{ $tmpl['end_time'] }}</span>
+                                                    </div>
+                                                    <div class="flex items-center justify-between text-slate-500 text-[11px]">
+                                                        <span>Modal Kas Laci:</span>
+                                                        <span class="font-bold text-orange-600">Rp{{ number_format($tmpl['default_cash'] ?? 200000, 0, ',', '.') }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-end gap-1.5">
+                                                    <button wire:click="editShiftTemplate({{ $tmpl['id'] }})" class="p-1.5 text-slate-400 hover:text-orange-600 transition" title="Edit Template">
+                                                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                    </button>
+                                                    <button wire:click="deleteShiftTemplate({{ $tmpl['id'] }})" class="p-1.5 text-slate-400 hover:text-rose-600 transition" title="Hapus Template">
+                                                        <i class="fa-regular fa-trash-can text-xs"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <!-- Riwayat Shift Kasir Terkini (Monitoring Log) -->
+                                <div class="space-y-3 pt-2">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-bold text-slate-800 text-xs flex items-center gap-2">
+                                            <i class="fa-solid fa-list-check text-slate-400"></i>
+                                            <span>Monitoring Riwayat Shift Kasir Semua Cabang</span>
+                                        </h4>
+                                        <span class="text-[11px] text-slate-400">{{ $shiftHistory->count() }} Riwayat Terakhir</span>
+                                    </div>
+                                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                                        <table class="w-full text-left border-collapse text-xs">
+                                            <thead>
+                                                <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
+                                                    <th class="py-2.5 px-3">Kasir & Cabang</th>
+                                                    <th class="py-2.5 px-3">Waktu Buka / Tutup</th>
+                                                    <th class="py-2.5 px-3 text-right">Modal Awal</th>
+                                                    <th class="py-2.5 px-3 text-right">Kas Aktual</th>
+                                                    <th class="py-2.5 px-3 text-right">Selisih Kas</th>
+                                                    <th class="py-2.5 px-3 text-center">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100">
+                                                @forelse($shiftHistory as $sh)
+                                                    <tr class="hover:bg-slate-50/50 transition">
+                                                        <td class="py-2.5 px-3">
+                                                            <div class="font-bold text-slate-900">{{ $sh->user->name ?? 'Kasir' }}</div>
+                                                            <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                                                                <i class="fa-solid fa-store text-[9px]"></i>
+                                                                <span>{{ $sh->outlet->name ?? 'Cabang' }}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="py-2.5 px-3 text-[11px] text-slate-600">
+                                                            <div>{{ $sh->opened_at ? $sh->opened_at->format('d/m/y H:i') : '-' }}</div>
+                                                            <div class="text-[10px] text-slate-400">{{ $sh->closed_at ? 'Tutup: ' . $sh->closed_at->format('d/m/y H:i') : 'Masih berjalan' }}</div>
+                                                        </td>
+                                                        <td class="py-2.5 px-3 text-right font-semibold text-slate-800">
+                                                            Rp{{ number_format($sh->opening_cash, 0, ',', '.') }}
+                                                        </td>
+                                                        <td class="py-2.5 px-3 text-right font-semibold text-slate-800">
+                                                            {{ $sh->actual_cash !== null ? 'Rp' . number_format($sh->actual_cash, 0, ',', '.') : '-' }}
+                                                        </td>
+                                                        <td class="py-2.5 px-3 text-right font-bold {{ ($sh->difference ?? 0) < 0 ? 'text-rose-600' : (($sh->difference ?? 0) > 0 ? 'text-emerald-600' : 'text-slate-600') }}">
+                                                            {{ $sh->difference !== null ? (($sh->difference > 0 ? '+' : '') . 'Rp' . number_format($sh->difference, 0, ',', '.')) : '-' }}
+                                                        </td>
+                                                        <td class="py-2.5 px-3 text-center">
+                                                            @if($sh->closed_at)
+                                                                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Selesai</span>
+                                                            @else
+                                                                <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full animate-pulse">● Berjalan</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="6" class="py-6 text-center text-slate-400">Belum ada riwayat shift kasir tercatat.</td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 @endif
             </main>
@@ -2222,42 +2738,293 @@
 
     <!-- 6. Modal Buat Purchase Order (PO) -->
     @if ($showPoModal)
-        <div class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+        <div class="fixed inset-0 z-[70] bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
                 <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="font-bold text-slate-900 text-base">Buat Purchase Order (PO) Baru</h3>
-                    <button wire:click="$set('showPoModal', false)" class="text-slate-400 hover:text-slate-600">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-cart-plus text-orange-500"></i>
+                            <span>Buat Purchase Order (PO) Baru</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Terbitkan pesanan resmi ke rekanan pemasok.</p>
+                    </div>
+                    <button type="button" wire:click="$set('showPoModal', false)" class="text-slate-400 hover:text-slate-600 cursor-pointer">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <div class="p-5 space-y-4 text-sm">
+                <div class="p-5 space-y-4 text-sm max-h-[75vh] overflow-y-auto">
+                    <!-- Supplier Selection with Quick Add -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Supplier</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-slate-700">Pilih Supplier Rekanan <span class="text-rose-500">*</span></label>
+                            <button type="button" wire:click="openNewSupplierModal"
+                                class="text-[11px] font-semibold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-plus text-[9px]"></i> Tambah Supplier Baru
+                            </button>
+                        </div>
                         <select wire:model="poSupplierId"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-orange-500">
-                            @foreach($suppliers as $sup)
-                                <option value="{{ $sup->id }}">{{ $sup->name }}</option>
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-orange-500 cursor-pointer">
+                            <option value="">-- Pilih Supplier --</option>
+                            @foreach($allSuppliersList as $sup)
+                                <option value="{{ $sup->id }}">
+                                    {{ $sup->name }} ({{ $sup->terms_days == 0 ? 'COD / Tunai' : 'Tempo ' . $sup->terms_days . ' Hari' }})
+                                </option>
                             @endforeach
                         </select>
+                        @error('poSupplierId') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Total Nilai Pesanan (Rp)</label>
-                        <input type="number" wire:model="poTotalAmount"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-1 focus:ring-orange-500 font-bold">
+
+                    <!-- Tanggal Estimasi & Outlet -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Estimasi Tiba / Pengiriman</label>
+                            <input type="date" wire:model="poExpectedDate"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500">
+                            @error('poExpectedDate') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Outlet Penerima</label>
+                            <div class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 truncate">
+                                {{ $selectedOutlet->name ?? 'Outlet Utama' }}
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Total Nilai Tagihan -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Pengadaan</label>
-                        <input type="text" wire:model="poNotes" placeholder="e.g. Restock 10 Kg Espresso Blend"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-orange-500">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Total Nilai Tagihan Pesanan (Rp) <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-2.5 text-xs font-bold text-slate-400">Rp</span>
+                            <input type="number" wire:model="poTotalAmount" placeholder="1500000" min="1000"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-sm focus:ring-1 focus:ring-orange-500 font-bold text-slate-900">
+                        </div>
+                        @error('poTotalAmount') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Catatan Pengadaan -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Pengadaan / Rincian Barang</label>
+                        <textarea wire:model="poNotes" rows="3" placeholder="Contoh: Restock Shampoo Anti-Dandruff 20 btl, Pomade 30 pcs, dan Handuk Microfiber..."
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-orange-500"></textarea>
+                        @error('poNotes') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
                     </div>
                 </div>
+
                 <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
-                    <button wire:click="$set('showPoModal', false)"
-                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">Batal</button>
-                    <button wire:click="savePurchaseOrder"
-                        class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm">
-                        Terbitkan PO
+                    <button type="button" wire:click="$set('showPoModal', false)"
+                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer">Batal</button>
+                    <button type="button" wire:click="savePurchaseOrder"
+                        class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Terbitkan PO Resmi</span>
                     </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Tambah / Edit Rekanan Supplier -->
+    @if ($showSupplierModal)
+        <div class="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-truck-field text-indigo-500"></i>
+                            <span>{{ $editingSupplierId ? 'Edit Data Rekanan Supplier' : 'Tambah Rekanan Supplier Baru' }}</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Daftarkan profil pemasok untuk mempermudah penerbitan Purchase Order (PO).</p>
+                    </div>
+                    <button type="button" wire:click="$set('showSupplierModal', false)" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 text-sm max-h-[75vh] overflow-y-auto">
+                    <!-- Nama Supplier -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Perusahaan / Supplier <span class="text-rose-500">*</span></label>
+                        <input type="text" wire:model="supplierName" placeholder="Contoh: PT L'Oreal Indonesia, Toko Kemasan Mandiri"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-1 focus:ring-orange-500">
+                        @error('supplierName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- PIC & No. Telepon -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Nama PIC (Kontak)</label>
+                            <input type="text" wire:model="supplierContactPerson" placeholder="Contoh: Ibu Maya / Pak Hendro"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-orange-500">
+                            @error('supplierContactPerson') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">No. Telepon / WhatsApp</label>
+                            <input type="text" wire:model="supplierPhone" placeholder="Contoh: 081233445566"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-orange-500">
+                            @error('supplierPhone') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Email Pemasok</label>
+                        <input type="email" wire:model="supplierEmail" placeholder="Contoh: order@supplier.co.id"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-orange-500">
+                        @error('supplierEmail') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Alamat Lengkap -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Kantor / Gudang</label>
+                        <textarea wire:model="supplierAddress" rows="2" placeholder="Alamat pengiriman / lokasi pemasok..."
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-orange-500"></textarea>
+                        @error('supplierAddress') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Syarat Tempo Pembayaran -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Syarat Pembayaran (Tempo Hari)</label>
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                            <button type="button" wire:click="$set('supplierTermsDays', 0)"
+                                class="px-2.5 py-1 text-xs font-medium rounded-lg border transition {{ $supplierTermsDays === 0 ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' }}">
+                                COD / Tunai (0 Hari)
+                            </button>
+                            <button type="button" wire:click="$set('supplierTermsDays', 7)"
+                                class="px-2.5 py-1 text-xs font-medium rounded-lg border transition {{ $supplierTermsDays === 7 ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' }}">
+                                Tempo 7 Hari
+                            </button>
+                            <button type="button" wire:click="$set('supplierTermsDays', 14)"
+                                class="px-2.5 py-1 text-xs font-medium rounded-lg border transition {{ $supplierTermsDays === 14 ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' }}">
+                                Tempo 14 Hari
+                            </button>
+                            <button type="button" wire:click="$set('supplierTermsDays', 30)"
+                                class="px-2.5 py-1 text-xs font-medium rounded-lg border transition {{ $supplierTermsDays === 30 ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' }}">
+                                Tempo 30 Hari
+                            </button>
+                        </div>
+                        <div class="relative w-44">
+                            <input type="number" min="0" max="180" wire:model="supplierTermsDays"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-900 focus:ring-1 focus:ring-orange-500">
+                            <span class="absolute right-3 top-2 text-xs text-slate-400">Hari</span>
+                        </div>
+                        @error('supplierTermsDays') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Status Aktif -->
+                    <div>
+                        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700">
+                            <input type="checkbox" wire:model="supplierIsActive" class="rounded text-orange-500 focus:ring-orange-500">
+                            <span>Supplier Aktif Bekerjasama</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button" wire:click="$set('showSupplierModal', false)"
+                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer">Batal</button>
+                    <button type="button" wire:click="saveSupplier"
+                        class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-check"></i>
+                        <span>{{ $editingSupplierId ? 'Simpan Perubahan' : 'Tambah Supplier' }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Detail Purchase Order (PO) -->
+    @if ($showPoDetailModal && $viewingPo)
+        <div class="fixed inset-0 z-[75] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-bold text-slate-900 text-base">{{ $viewingPo->po_number }}</span>
+                            @if($viewingPo->status === 'received')
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Diterima (GRN)</span>
+                            @elseif($viewingPo->status === 'cancelled')
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Dibatalkan</span>
+                            @else
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Dipesan</span>
+                            @endif
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Detail faktur pemesanan pengadaan barang</p>
+                    </div>
+                    <button type="button" wire:click="$set('showPoDetailModal', false)" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+                    <!-- Supplier Info Box -->
+                    <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/70 space-y-2">
+                        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rekanan Pemasok</div>
+                        <div class="font-bold text-slate-900 text-sm">{{ $viewingPo->supplier->name ?? 'Pemasok Terhapus' }}</div>
+                        <div class="grid grid-cols-2 gap-2 text-slate-600 pt-1">
+                            <div><i class="fa-solid fa-user-tie text-slate-400 mr-1.5"></i>PIC: {{ $viewingPo->supplier->contact_person ?? '-' }}</div>
+                            <div><i class="fa-solid fa-phone text-slate-400 mr-1.5"></i>{{ $viewingPo->supplier->phone ?? '-' }}</div>
+                            <div class="col-span-2"><i class="fa-solid fa-location-dot text-slate-400 mr-1.5"></i>{{ $viewingPo->supplier->address ?? '-' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- PO Dates & Outlet -->
+                    <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50/70 rounded-xl border border-slate-200/60">
+                        <div>
+                            <div class="text-slate-400 text-[10px]">Tanggal Terbit Order:</div>
+                            <div class="font-bold text-slate-800 mt-0.5">{{ $viewingPo->order_date ? $viewingPo->order_date->format('d M Y') : '-' }}</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-400 text-[10px]">Estimasi Kedatangan:</div>
+                            <div class="font-bold text-slate-800 mt-0.5">{{ $viewingPo->expected_date ? $viewingPo->expected_date->format('d M Y') : '-' }}</div>
+                        </div>
+                        <div class="col-span-2 pt-1 border-t border-slate-200/50">
+                            <div class="text-slate-400 text-[10px]">Outlet Tujuan:</div>
+                            <div class="font-semibold text-slate-800 mt-0.5">{{ $viewingPo->outlet->name ?? 'Outlet Utama' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Catatan Pengadaan -->
+                    @if($viewingPo->notes)
+                        <div class="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl">
+                            <div class="font-semibold text-amber-900 text-[11px]">Catatan / Instruksi Pengadaan:</div>
+                            <div class="text-amber-800 mt-0.5 leading-relaxed">{{ $viewingPo->notes }}</div>
+                        </div>
+                    @endif
+
+                    <!-- Total Tagihan -->
+                    <div class="p-4 bg-orange-50/80 rounded-xl border border-orange-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-orange-700 text-[11px] font-semibold uppercase tracking-wider">Total Nilai Tagihan PO</div>
+                            <div class="text-[10px] text-orange-600">Syarat: {{ $viewingPo->supplier?->terms_days == 0 ? 'Cash on Delivery (COD)' : 'Tempo ' . $viewingPo->supplier?->terms_days . ' Hari' }}</div>
+                        </div>
+                        <div class="text-xl font-bold text-slate-900 font-mono">
+                            Rp {{ number_format($viewingPo->total_amount, 0, ',', '.') }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                    @if($viewingPo->status === 'ordered')
+                        <button type="button" wire:click="cancelPo({{ $viewingPo->id }})"
+                            wire:confirm="Yakin ingin membatalkan Purchase Order ini?"
+                            class="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer">
+                            Batalkan PO
+                        </button>
+
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="$set('showPoDetailModal', false)"
+                                class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer">Tutup</button>
+                            <button type="button" wire:click="markPoReceived({{ $viewingPo->id }})"
+                                class="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-box-open"></i>
+                                <span>Konfirmasi Terima Barang (GRN)</span>
+                            </button>
+                        </div>
+                    @else
+                        <div></div>
+                        <button type="button" wire:click="$set('showPoDetailModal', false)"
+                            class="px-4 py-2 text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl cursor-pointer">Tutup</button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -2621,18 +3388,81 @@
                         </div>
                     </div>
 
-                    <!-- Modal Bahan / HPP & URL Foto -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Modal Bahan Produk (Rp)</label>
-                            <input type="number" wire:model="serviceCostPrice" placeholder="e.g. 5000 (shampoo/oil)"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
-                            <span class="text-[10px] text-slate-400">Pemakaian shampoo, pomade, cream</span>
+                    <!-- Modal Bahan / HPP Produk -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Modal Bahan Produk (HPP per Sesi)</label>
+                        <input type="number" wire:model="serviceCostPrice" placeholder="e.g. 5000 (shampoo, pomade, cream)"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        <span class="text-[10px] text-slate-400">Pemakaian shampoo, pomade, obat cream, handuk, dll</span>
+                    </div>
+
+                    <!-- Upload Foto Layanan -->
+                    <div class="border border-slate-200 rounded-2xl p-3.5 bg-slate-50/70 space-y-3" x-data="{ showUrlInput: {{ !empty($serviceImageUrl) ? 'true' : 'false' }} }">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-semibold text-slate-800">
+                                <i class="fa-solid fa-camera text-orange-500 mr-1"></i> Foto Layanan Jasa
+                            </label>
+                            <button type="button" @click="showUrlInput = !showUrlInput"
+                                class="text-[11px] font-medium text-slate-500 hover:text-orange-600 underline transition">
+                                <span x-text="showUrlInput ? 'Sembunyikan Opsi URL' : 'Gunakan URL Foto Web'"></span>
+                            </button>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">URL Foto Layanan</label>
-                            <input type="text" wire:model="serviceImageUrl" placeholder="https://images.unsplash..."
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+
+                        <div class="flex items-center gap-3.5">
+                            <!-- Image Preview Thumbnail -->
+                            <div class="relative shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-white border border-slate-200 shadow-xs flex items-center justify-center">
+                                @if ($serviceImageFile)
+                                    <img src="{{ $serviceImageFile->temporaryUrl() }}" class="w-full h-full object-cover">
+                                    <span class="absolute bottom-0 inset-x-0 bg-emerald-600/95 text-white text-[9px] font-bold text-center py-0.5">Preview Baru</span>
+                                @elseif ($serviceImageUrl)
+                                    <img src="{{ $serviceImageUrl }}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=150&h=150&q=80'">
+                                    <span class="absolute bottom-0 inset-x-0 bg-slate-800/80 text-white text-[9px] font-semibold text-center py-0.5">Tersimpan</span>
+                                @else
+                                    <div class="text-center p-2 text-slate-400">
+                                        <i class="fa-regular fa-image text-2xl text-slate-300"></i>
+                                        <div class="text-[9px] mt-0.5 font-medium text-slate-400">Tanpa Foto</div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex-1 min-w-0 space-y-1.5">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <label class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold cursor-pointer transition shadow-xs">
+                                        <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                                        <span>Pilih / Unggah Gambar</span>
+                                        <input type="file" wire:model="serviceImageFile" accept="image/png,image/jpeg,image/webp,image/jpg" class="hidden">
+                                    </label>
+
+                                    @if ($serviceImageFile || $serviceImageUrl)
+                                        <button type="button" wire:click="removeServiceImage"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold transition">
+                                            <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                            <span>Hapus</span>
+                                        </button>
+                                    @endif
+                                </div>
+
+                                <div wire:loading wire:target="serviceImageFile" class="text-xs text-orange-600 font-semibold flex items-center gap-1.5">
+                                    <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+                                    <span>Mengunggah file foto...</span>
+                                </div>
+
+                                <p class="text-[10px] text-slate-400 leading-tight">
+                                    Format: JPG, PNG, atau WEBP. Ukuran maksimal 3MB.
+                                </p>
+
+                                @error('serviceImageFile')
+                                    <span class="text-[11px] text-rose-500 font-medium block">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- URL Input Option -->
+                        <div x-show="showUrlInput" class="pt-2.5 border-t border-slate-200/80 space-y-1">
+                            <label class="block text-[11px] font-semibold text-slate-600">URL Gambar Eksternal (Opsional):</label>
+                            <input type="text" wire:model="serviceImageUrl" placeholder="https://images.unsplash.com/..."
+                                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500">
                         </div>
                     </div>
 
@@ -3010,6 +3840,76 @@
                         class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
                         <i class="fa-solid fa-check"></i>
                         <span>{{ $editingStaffId ? 'Simpan Perubahan' : 'Buat Akun Pegawai' }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- 7. Modal Tambah / Edit Template Shift -->
+    @if ($showShiftTemplateModal)
+        <div class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-base">{{ $editingShiftTemplateId ? 'Edit Template Shift' : 'Tambah Template Shift Baru' }}</h3>
+                    </div>
+                    <button wire:click="$set('showShiftTemplateModal', false)" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Nama Shift</label>
+                        <input type="text" wire:model="shiftTemplateName" placeholder="Contoh: Shift 1 (Pagi)"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        @error('shiftTemplateName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Jam Mulai</label>
+                            <input type="time" wire:model="shiftTemplateStartTime"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            @error('shiftTemplateStartTime') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Jam Selesai</label>
+                            <input type="time" wire:model="shiftTemplateEndTime"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            @error('shiftTemplateEndTime') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Rekomendasi Modal Kas Awal (Rp)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                            <input type="number" wire:model="shiftTemplateDefaultCash" step="1000" placeholder="200000"
+                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        </div>
+                        @error('shiftTemplateDefaultCash') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                            <input type="checkbox" wire:model="shiftTemplateIsActive" class="rounded text-orange-500 focus:ring-orange-500">
+                            <span>Template shift aktif dan dapat dipilih di kasir</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button" wire:click="$set('showShiftTemplateModal', false)"
+                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl">Batal</button>
+                    <button type="button" wire:click="saveShiftTemplate"
+                        class="px-4 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i>
+                        <span>{{ $editingShiftTemplateId ? 'Simpan Perubahan' : 'Buat Template Shift' }}</span>
                     </button>
                 </div>
             </div>

@@ -177,6 +177,12 @@ class Terminal extends Component
 
     public function addToCart(int $productId)
     {
+        if (! $this->activeShiftId) {
+            $this->showOpenShiftModal = true;
+            $this->notify('Sistem kasir sedang ditutup! Anda wajib membuka shift terlebih dahulu sebelum melayani pesanan.', 'error');
+            return;
+        }
+
         $product = Product::with('variants')->find($productId);
         if (! $product) {
             return;
@@ -319,6 +325,13 @@ class Terminal extends Component
 
     public function processPayment()
     {
+        if (! $this->activeShiftId) {
+            $this->showPaymentModal = false;
+            $this->showOpenShiftModal = true;
+            $this->notify('Sistem kasir sedang ditutup! Anda wajib membuka shift terlebih dahulu.', 'error');
+            return;
+        }
+
         $totals = $this->calculateTotals();
         $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
 
@@ -531,6 +544,26 @@ class Terminal extends Component
         }
     }
 
+    public function switchOutlet(int $outletId)
+    {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['cashier', 'staff'])) {
+            $this->notify('Akses ditolak: Akun kasir hanya dapat bertugas di cabang penugasan.', 'error');
+            return;
+        }
+
+        $tenantId = $user?->tenant_id ?? (Tenant::where('slug', 'kopiruangpagi')->first()?->id ?? 1);
+        $outlet = Outlet::where('tenant_id', $tenantId)->find($outletId);
+        if (!$outlet) {
+            $this->notify('Cabang outlet tidak ditemukan.', 'error');
+            return;
+        }
+
+        $this->selectedOutletId = $outlet->id;
+        $this->checkActiveShift($tenantId);
+        $this->notify("Beralih ke cabang '{$outlet->name}'.");
+    }
+
     public function startShift()
     {
         $this->validate([
@@ -540,6 +573,19 @@ class Terminal extends Component
         $user = Auth::user();
         $tenantId = $user?->tenant_id ?? (Tenant::where('slug', 'kopiruangpagi')->first()?->id ?? 1);
 
+        // Make sure previous shift is closed first!
+        $stillOpen = Shift::where('tenant_id', $tenantId)
+            ->where('outlet_id', $this->selectedOutletId)
+            ->whereNull('closed_at')
+            ->first();
+        if ($stillOpen) {
+            $this->activeShiftId = $stillOpen->id;
+            $this->showOpenShiftModal = false;
+            $this->showShiftModal = true;
+            $this->notify('Masih ada shift yang aktif di cabang ini! Tutup shift terlebih dahulu sebelum membuka shift baru.', 'error');
+            return;
+        }
+
         $shift = Shift::create([
             'tenant_id' => $tenantId,
             'outlet_id' => $this->selectedOutletId,
@@ -547,11 +593,13 @@ class Terminal extends Component
             'opened_at' => now(),
             'opening_cash' => $this->shiftStartingCash,
             'expected_cash' => $this->shiftStartingCash,
+            'status' => 'open',
+            'notes' => $this->openShiftNotes,
         ]);
 
         $this->activeShiftId = $shift->id;
         $this->showOpenShiftModal = false;
-        $this->notify("Shift berhasil dibuka dengan modal awal Rp " . number_format($this->shiftStartingCash, 0, ',', '.'));
+        $this->notify("Shift berhasil dibuka dengan modal awal Rp " . number_format($this->shiftStartingCash, 0, ',', '.') . ". Sistem siap digunakan.");
     }
 
     public function closeShift()
@@ -574,13 +622,16 @@ class Terminal extends Component
                 'expected_cash' => $expectedCash,
                 'actual_cash' => $this->shiftActualCash,
                 'difference' => $difference,
+                'status' => 'closed',
             ]);
         }
 
         $this->activeShiftId = null;
+        $this->cart = [];
         $this->showShiftModal = false;
         $this->showCloseShiftModal = false;
-        $this->notify('Shift kasir berhasil ditutup dan direkonsiliasi. Laporan Z-Report siap dicetak.', 'info');
+        $this->showOpenShiftModal = false;
+        $this->notify('Shift kasir berhasil ditutup dan direkonsiliasi. Sistem kasir kini ditutup.');
     }
 
     public function kickCashDrawer()

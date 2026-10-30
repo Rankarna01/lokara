@@ -631,6 +631,83 @@ class TenantBackofficeDemoSeeder extends Seeder
                     'notes' => 'Potongan Rp 15.000 untuk paket Gentleman Cut',
                 ]
             );
+
+            // Salon Suppliers & Purchase Orders
+            $supLoreal = Supplier::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => "PT L'Oreal Professional Indonesia"],
+                [
+                    'contact_person' => 'Maya Indriani',
+                    'phone' => '081233445566',
+                    'email' => 'order@loreal-pro.co.id',
+                    'address' => 'Jl. TB Simatupang No. 88, Jakarta Selatan',
+                    'terms_days' => 14,
+                    'is_active' => true,
+                ]
+            );
+
+            $supBarber = Supplier::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'CV Barbershop Supplies Nusantara'],
+                [
+                    'contact_person' => 'Budi Santoso',
+                    'phone' => '081988776655',
+                    'email' => 'sales@barbersupplies.id',
+                    'address' => 'Komp. Ruko Darmo Park II Blok B, Surabaya',
+                    'terms_days' => 7,
+                    'is_active' => true,
+                ]
+            );
+
+            $supHanduk = Supplier::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'name' => 'Toko Handuk & Aksesoris Salon Berkah'],
+                [
+                    'contact_person' => 'Bu Hj. Nur',
+                    'phone' => '081344556677',
+                    'email' => 'toko.berkah@gmail.com',
+                    'address' => 'Pasar Turi Baru Blok C-12, Surabaya',
+                    'terms_days' => 0,
+                    'is_active' => true,
+                ]
+            );
+
+            // Purchase Orders for Studio Rona
+            PurchaseOrder::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'po_number' => 'PO-' . date('Ym') . '-001'],
+                [
+                    'outlet_id' => $salonOutlet->id,
+                    'supplier_id' => $supLoreal->id,
+                    'order_date' => now()->subDays(5)->toDateString(),
+                    'expected_date' => now()->subDays(2)->toDateString(),
+                    'status' => 'received',
+                    'total_amount' => 2450000,
+                    'notes' => 'Restock Shampoo Anti-Dandruff 500ml (20 btl) & Serum Keratin (15 btl)',
+                ]
+            );
+
+            PurchaseOrder::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'po_number' => 'PO-' . date('Ym') . '-002'],
+                [
+                    'outlet_id' => $salonOutlet->id,
+                    'supplier_id' => $supBarber->id,
+                    'order_date' => now()->subDays(1)->toDateString(),
+                    'expected_date' => now()->addDays(2)->toDateString(),
+                    'status' => 'ordered',
+                    'total_amount' => 1650000,
+                    'notes' => 'Restock Pomade Matte Clay 100g (30 pcs) & Shaving Foam',
+                ]
+            );
+
+            PurchaseOrder::updateOrCreate(
+                ['tenant_id' => $salonTenant->id, 'po_number' => 'PO-' . date('Ym') . '-003'],
+                [
+                    'outlet_id' => $salonOutlet->id,
+                    'supplier_id' => $supHanduk->id,
+                    'order_date' => now()->subDays(10)->toDateString(),
+                    'expected_date' => now()->subDays(8)->toDateString(),
+                    'status' => 'received',
+                    'total_amount' => 450000,
+                    'notes' => 'Handuk hitam microfiber 50 pcs untuk area cuci rambut',
+                ]
+            );
         }
     }
 }

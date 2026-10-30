@@ -161,19 +161,28 @@
             </div>
         </div>
 
-        <!-- Primary Button: Lanjut Pembayaran -->
-        <button wire:click="openPaymentModal"
-                class="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-orange-500 hover:bg-orange-600 shadow-sm shadow-orange-500/20 flex items-center justify-center gap-1.5 transition">
-            <span>Lanjut Pembayaran</span>
-            <i class="fa-solid fa-chevron-right text-[10px]"></i>
-        </button>
+        @if (! $activeShiftId)
+            <!-- Locked State: Shift Belum Dibuka -->
+            <button type="button" wire:click="$set('showOpenShiftModal', true)"
+                    class="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-slate-900 hover:bg-slate-800 shadow-sm flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-lock text-amber-400 text-xs"></i>
+                <span>Buka Shift Terlebih Dahulu</span>
+            </button>
+        @else
+            <!-- Primary Button: Lanjut Pembayaran -->
+            <button wire:click="openPaymentModal"
+                    class="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-orange-500 hover:bg-orange-600 shadow-sm shadow-orange-500/20 flex items-center justify-center gap-1.5 transition">
+                <span>Lanjut Pembayaran</span>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
 
-        <!-- Secondary Button: Simpan Pesanan -->
-        <button wire:click="holdOrder"
-                class="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-2 transition">
-            <i class="fa-regular fa-floppy-disk text-slate-400"></i>
-            <span>Simpan Pesanan</span>
-        </button>
+            <!-- Secondary Button: Simpan Pesanan -->
+            <button wire:click="holdOrder"
+                    class="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-2 transition">
+                <i class="fa-regular fa-floppy-disk text-slate-400"></i>
+                <span>Simpan Pesanan</span>
+            </button>
+        @endif
     </div>
 </aside>
 

@@ -47,14 +47,36 @@ class TenantPosDemoSeeder extends Seeder
         );
 
         // 3. Cashier User (Matching Image 3: Dina Putri - Kasir)
-        User::updateOrCreate(
+        $cashier = User::updateOrCreate(
             ['email' => 'dina@kopiruangpagi.id'],
             [
                 'name' => 'Dina Putri',
                 'password' => Hash::make('password'),
                 'role' => 'cashier',
                 'phone' => '081234567800',
+                'tenant_id' => $tenant->id,
+                'outlet_id' => $mainOutlet->id,
                 'is_active' => true,
+            ]
+        );
+
+        // Previous Closed Shift Record for Audit
+        \App\Models\Shift::updateOrCreate(
+            [
+                'tenant_id' => $tenant->id,
+                'outlet_id' => $mainOutlet->id,
+                'status' => 'closed',
+            ],
+            [
+                'user_id' => $cashier->id,
+                'opened_at' => now()->subDay()->startOfDay()->addHours(8),
+                'closed_at' => now()->subDay()->startOfDay()->addHours(16),
+                'opening_cash' => 200000.00,
+                'expected_cash' => 200000.00,
+                'actual_cash' => 200000.00,
+                'difference' => 0.00,
+                'status' => 'closed',
+                'notes' => 'Shift Kemarin Selesai & Direkonsiliasi',
             ]
         );
 

@@ -38,7 +38,7 @@ class PosTerminalTest extends TestCase
             ->assertSee('Es Kopi Susu Aren')
             ->assertSee('Cafe Latte')
             ->assertSee('Croissant Butter')
-            ->assertSee('Lanjut Pembayaran');
+            ->assertSee('Buka Shift Terlebih Dahulu');
     }
 
     public function test_can_switch_category_filter()
@@ -79,6 +79,8 @@ class PosTerminalTest extends TestCase
     public function test_can_complete_payment_and_create_order()
     {
         Livewire::test(Terminal::class)
+            ->set('shiftStartingCash', 200000)
+            ->call('startShift')
             ->call('openPaymentModal')
             ->assertSet('showPaymentModal', true)
             ->set('paymentMethod', 'cash')
@@ -191,6 +193,60 @@ class PosTerminalTest extends TestCase
             ->assertSee('PRINTER THERMAL READY')
             ->call('savePrinterSettings')
             ->assertSet('showPrinterModal', false);
+    }
+
+    public function test_cashier_cannot_switch_branch_in_pos()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $tebetOutlet = Outlet::where('slug', 'cabang-tebet')->first();
+
+        Livewire::actingAs($dina, 'web')
+            ->test(Terminal::class)
+            ->assertSet('selectedOutletId', $dina->outlet_id)
+            ->call('switchOutlet', $tebetOutlet->id)
+            ->assertSet('selectedOutletId', $dina->outlet_id); // Tetap di outlet penugasan kasir
+    }
+
+    public function test_owner_can_switch_branch_in_pos()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tebetOutlet = Outlet::where('slug', 'cabang-tebet')->first();
+
+        Livewire::actingAs($owner, 'web')
+            ->test(Terminal::class)
+            ->call('switchOutlet', $tebetOutlet->id)
+            ->assertSet('selectedOutletId', $tebetOutlet->id);
+    }
+
+    public function test_system_locked_before_opening_shift_and_relocks_after_closing()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $product = Product::first();
+
+        // 1. Initial State: No active shift -> System is locked
+        $component = Livewire::actingAs($dina, 'web')
+            ->test(Terminal::class)
+            ->assertSet('activeShiftId', null)
+            ->call('addToCart', $product->id)
+            ->assertSet('showOpenShiftModal', true); // Prompts open shift modal because locked!
+
+        // 2. Open Shift -> System becomes unlocked
+        $component->set('shiftStartingCash', 200000)
+            ->call('startShift')
+            ->assertSet('showOpenShiftModal', false);
+        $this->assertNotNull($component->get('activeShiftId'));
+
+        // 3. Now can add to cart
+        $initialCount = count($component->get('cart'));
+        $component->call('addToCart', $product->id);
+        $this->assertGreaterThanOrEqual($initialCount, count($component->get('cart')));
+
+        // 4. Close Shift -> System relocks & cart is cleared
+        $component->set('showCloseShiftModal', true)
+            ->set('shiftActualCash', 200000)
+            ->call('closeShift')
+            ->assertSet('activeShiftId', null)
+            ->assertCount('cart', 0);
     }
 }
 

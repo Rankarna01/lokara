@@ -26,16 +26,16 @@
         @if ($activeShiftId)
             <button wire:click="openShiftManagement"
                     title="Lihat status shift & kas laci"
-                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold hover:bg-emerald-100 transition">
+                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold hover:bg-emerald-100 transition shadow-2xs">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Shift Aktif: Rp{{ number_format($shiftStartingCash, 0, ',', '.') }}</span>
             </button>
         @else
-            <button wire:click="$set('showOpenShiftModal', true)"
-                    title="Mulai shift kasir & isi modal awal"
-                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold hover:bg-amber-100 transition">
-                <i class="fa-solid fa-lock text-amber-600 text-[10px]"></i>
-                <span>Buka Kasir Baru</span>
+            <button wire:click="openShiftManagement"
+                    title="Sistem kasir ditutup! Buka shift kasir & isi modal awal untuk mulai transaksi"
+                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold hover:bg-rose-100 transition shadow-2xs">
+                <i class="fa-solid fa-lock text-rose-600 text-[10px]"></i>
+                <span>Sistem Ditutup (Belum Buka Shift)</span>
             </button>
         @endif
     </div>
@@ -50,31 +50,61 @@
             <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
         </button>
 
-        <!-- Outlet Dropdown -->
-        <div class="relative" x-data="{ open: false }">
-            <button @click="open = !open"
-                    class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-left text-xs hover:bg-slate-50 transition">
-                <i class="fa-solid fa-location-dot text-slate-500 text-xs"></i>
+        <!-- Outlet Selector / Badge -->
+        @php
+            $canSwitchOutlet = auth()->check() 
+                ? in_array(auth()->user()->role, ['owner', 'manager', 'super_admin'])
+                : true;
+        @endphp
+
+        @if ($canSwitchOutlet && $outlets->count() > 1)
+            <!-- Dropdown for Owner / Manager with multiple outlets -->
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open"
+                        class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-left text-xs hover:bg-slate-50 transition shadow-2xs">
+                    <i class="fa-solid fa-location-dot text-orange-500 text-xs"></i>
+                    <div>
+                        <div class="font-bold text-slate-900 leading-tight">{{ $tenant->name ?? 'Kopi Ruang Pagi' }}</div>
+                        <div class="text-[10px] text-slate-400 font-medium">{{ $currentOutlet->name ?? 'Outlet Utama' }}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
+                </button>
+
+                <div x-show="open" @click.outside="open = false" x-transition
+                     class="absolute right-0 mt-1 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 z-30 text-xs">
+                    <div class="px-3 py-1 text-[10px] font-bold uppercase text-slate-400 tracking-wider border-b border-slate-100">
+                        Pilih Cabang POS:
+                    </div>
+                    @foreach ($outlets as $out)
+                        <button wire:click="switchOutlet({{ $out->id }})" @click="open = false"
+                                class="w-full text-left px-3 py-2 hover:bg-orange-50 flex items-center justify-between transition {{ $selectedOutletId === $out->id ? 'text-orange-600 font-bold bg-orange-50/50' : 'text-slate-700 font-medium' }}">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-store text-xs {{ $selectedOutletId === $out->id ? 'text-orange-500' : 'text-slate-400' }}"></i>
+                                <span>{{ $out->name }}</span>
+                            </div>
+                            @if ($selectedOutletId === $out->id)
+                                <i class="fa-solid fa-check text-xs text-orange-600"></i>
+                            @endif
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        @else
+            <!-- Static Badge for Cashier / Staff or Single Outlet (Cannot Switch) -->
+            <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-left text-xs shadow-2xs"
+                 title="Cabang penugasan akun kasir">
+                <i class="fa-solid fa-location-dot text-orange-500 text-xs"></i>
                 <div>
                     <div class="font-bold text-slate-900 leading-tight">{{ $tenant->name ?? 'Kopi Ruang Pagi' }}</div>
-                    <div class="text-[10px] text-slate-400">{{ $currentOutlet->name ?? 'Outlet Utama' }}</div>
-                </div>
-                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
-            </button>
-
-            <div x-show="open" @click.outside="open = false" x-transition
-                 class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30 text-xs">
-                @foreach ($outlets as $out)
-                    <button wire:click="$set('selectedOutletId', {{ $out->id }})" @click="open = false"
-                            class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between {{ $selectedOutletId === $out->id ? 'text-orange-600 font-semibold' : 'text-slate-700' }}">
-                        <span>{{ $out->name }}</span>
-                        @if ($selectedOutletId === $out->id)
-                            <i class="fa-solid fa-check text-orange-500 text-[10px]"></i>
+                    <div class="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                        <span>{{ $currentOutlet->name ?? 'Outlet Utama' }}</span>
+                        @if(auth()->check() && in_array(auth()->user()->role, ['cashier', 'staff']))
+                            <span class="text-[9px] bg-slate-100 text-slate-600 px-1 rounded font-mono font-bold">Ditugaskan</span>
                         @endif
-                    </button>
-                @endforeach
+                    </div>
+                </div>
             </div>
-        </div>
+        @endif
 
         <!-- Notification Bell -->
         <button class="relative p-2 text-slate-400 hover:text-slate-600 transition">

@@ -1,6 +1,31 @@
 <!-- ================= CATALOG CONTENT AREA ================= -->
 <div class="flex-1 overflow-y-auto p-6 space-y-6">
 
+    @if (! $activeShiftId)
+        <!-- Warning: Kasir Belum Buka Shift / Sistem Ditutup -->
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-xs shrink-0">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-700 bg-rose-100 border border-rose-200 px-2 py-0.5 rounded">Sistem Kasir Ditutup</span>
+                        <span class="text-xs font-bold text-slate-800">Shift Belum Dibuka</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">
+                        Kasir wajib membuka shift dan memasukkan modal kas awal di mesin kasir sebelum dapat melakukan transaksi penjualan.
+                    </p>
+                </div>
+            </div>
+            <button wire:click="$set('showOpenShiftModal', true)"
+                    class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2 shrink-0">
+                <i class="fa-solid fa-key text-xs"></i>
+                <span>Buka Shift Sekarang</span>
+            </button>
+        </div>
+    @endif
+
     <!-- 1. Horizontal Category Tabs Bar -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         <!-- Tab: Semua Menu -->

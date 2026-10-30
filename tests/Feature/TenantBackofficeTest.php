@@ -14,6 +14,8 @@ use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -397,6 +399,55 @@ class TenantBackofficeTest extends TestCase
         $this->assertEquals(135000, $service->fresh()->base_price);
     }
 
+    public function test_can_upload_service_image_file_and_remove_image()
+    {
+        Storage::fake('public');
+
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $cat = Category::where('tenant_id', $salonTenant->id)->first();
+
+        $fakeImage = UploadedFile::fake()->image('treatment.jpg', 400, 400);
+
+        $component = Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewServiceModal')
+            ->assertSet('showServiceModal', true)
+            ->set('serviceName', 'Facial Glow Treatment')
+            ->set('serviceCategoryId', $cat->id)
+            ->set('servicePrice', 95000)
+            ->set('serviceDuration', 50)
+            ->set('serviceCommissionType', 'fixed')
+            ->set('serviceCommissionValue', 25000)
+            ->set('serviceImageFile', $fakeImage)
+            ->call('saveService')
+            ->assertSet('showServiceModal', false);
+
+        $service = Product::where('tenant_id', $salonTenant->id)
+            ->where('name', 'Facial Glow Treatment')
+            ->first();
+
+        $this->assertNotNull($service);
+        $this->assertNotNull($service->image_url);
+        $this->assertStringStartsWith('/storage/services/', $service->image_url);
+
+        // Verify file stored in public disk
+        $relativeDiskPath = str_replace('/storage/', '', $service->image_url);
+        Storage::disk('public')->assertExists($relativeDiskPath);
+
+        // Test removeServiceImage method
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('editService', $service->id)
+            ->assertSet('serviceImageUrl', $service->image_url)
+            ->call('removeServiceImage')
+            ->assertSet('serviceImageFile', null)
+            ->assertSet('serviceImageUrl', '')
+            ->call('saveService');
+
+        $this->assertNull($service->fresh()->image_url);
+    }
+
     public function test_can_create_new_category_from_inside_service_modal()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();
@@ -596,5 +647,176 @@ class TenantBackofficeTest extends TestCase
         Livewire::actingAs($cashier, 'web')
             ->test(BackofficeDashboard::class)
             ->assertRedirect(route('pos.terminal'));
+    }
+
+    public function test_owner_can_manage_master_shift_templates_and_policies()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::where('slug', 'kopiruangpagi')->first();
+
+        // 1. View Master Shift in Settings Tab
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'settings')
+            ->assertSee('Master Shift')
+            ->assertSee('Kebijakan Kasir')
+            ->assertSee('Shift 1 (Pagi)')
+            ->assertSee('Kebijakan Operasional Kasir');
+
+        // 2. Add New Shift Template
+        $component->call('openNewShiftTemplateModal')
+            ->assertSet('showShiftTemplateModal', true)
+            ->set('shiftTemplateName', 'Shift Malam (Midnight)')
+            ->set('shiftTemplateStartTime', '23:00')
+            ->set('shiftTemplateEndTime', '07:00')
+            ->set('shiftTemplateDefaultCash', 150000)
+            ->set('shiftTemplateIsActive', true)
+            ->call('saveShiftTemplate')
+            ->assertSet('showShiftTemplateModal', false);
+
+        $tenant->refresh();
+        $templates = $tenant->settings['shift_templates'] ?? [];
+        $this->assertTrue(collect($templates)->contains('name', 'Shift Malam (Midnight)'));
+
+        // 3. Save Shift Policies
+        $component->set('policyDefaultCash', 250000)
+            ->set('policyEnforceLock', true)
+            ->set('policyRequireReconciliation', true)
+            ->call('saveShiftPolicies');
+
+        $tenant->refresh();
+        $this->assertEquals(250000, $tenant->settings['shift_policies']['default_cash']);
+        $this->assertTrue($tenant->settings['shift_policies']['enforce_lock']);
+
+        // 4. Toggle Shift Template Status
+        $createdTemplate = collect($tenant->settings['shift_templates'])->firstWhere('name', 'Shift Malam (Midnight)');
+        $this->assertNotNull($createdTemplate);
+
+        $component->call('toggleShiftTemplateStatus', $createdTemplate['id']);
+        $tenant->refresh();
+        $updated = collect($tenant->settings['shift_templates'])->firstWhere('id', $createdTemplate['id']);
+        $this->assertFalse($updated['is_active']);
+
+        // 5. Delete Shift Template
+        $component->call('deleteShiftTemplate', $createdTemplate['id']);
+        $tenant->refresh();
+        $this->assertFalse(collect($tenant->settings['shift_templates'])->contains('id', $createdTemplate['id']));
+    }
+
+    public function test_can_manage_supplier_crud()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+
+        // 1. Create Supplier
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewSupplierModal')
+            ->assertSet('showSupplierModal', true)
+            ->set('supplierName', 'PT Aneka Bahan Nusantara')
+            ->set('supplierContactPerson', 'Rahmat Hidayat')
+            ->set('supplierPhone', '081299775533')
+            ->set('supplierEmail', 'sales@anekabahan.co.id')
+            ->set('supplierAddress', 'Kawasan Industri Cikarang Blok A-5')
+            ->set('supplierTermsDays', 14)
+            ->set('supplierIsActive', true)
+            ->call('saveSupplier')
+            ->assertSet('showSupplierModal', false);
+
+        $supplier = Supplier::where('tenant_id', $tenant->id)
+            ->where('name', 'PT Aneka Bahan Nusantara')
+            ->first();
+
+        $this->assertNotNull($supplier);
+        $this->assertEquals('Rahmat Hidayat', $supplier->contact_person);
+        $this->assertEquals(14, $supplier->terms_days);
+        $this->assertTrue($supplier->is_active);
+
+        // 2. Edit Supplier
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('editSupplier', $supplier->id)
+            ->assertSet('showSupplierModal', true)
+            ->assertSet('supplierName', 'PT Aneka Bahan Nusantara')
+            ->set('supplierTermsDays', 30)
+            ->call('saveSupplier')
+            ->assertSet('showSupplierModal', false);
+
+        $this->assertEquals(30, $supplier->fresh()->terms_days);
+
+        // 3. Toggle Supplier Status
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('toggleSupplierStatus', $supplier->id);
+
+        $this->assertFalse($supplier->fresh()->is_active);
+
+        // 4. Delete Supplier
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('deleteSupplier', $supplier->id);
+
+        $this->assertNull(Supplier::find($supplier->id));
+    }
+
+    public function test_can_filter_and_manage_purchase_orders()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::first();
+        $supplier = Supplier::where('tenant_id', $tenant->id)->first();
+
+        // Create a PO
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openPoModal', $supplier->id)
+            ->assertSet('showPoModal', true)
+            ->assertSet('poSupplierId', $supplier->id)
+            ->set('poTotalAmount', 2500000)
+            ->set('poNotes', 'Pengadaan Biji Kopi Arabika 50kg')
+            ->call('savePurchaseOrder')
+            ->assertSet('showPoModal', false);
+
+        $po = PurchaseOrder::where('tenant_id', $tenant->id)
+            ->where('notes', 'Pengadaan Biji Kopi Arabika 50kg')
+            ->first();
+
+        $this->assertNotNull($po);
+        $this->assertEquals('ordered', $po->status);
+
+        // Test view detail PO
+        $component->call('switchTab', 'purchases')
+            ->call('closeToast')
+            ->call('viewPoDetail', $po->id)
+            ->assertSet('showPoDetailModal', true)
+            ->assertSet('viewingPoId', $po->id)
+            ->set('showPoDetailModal', false);
+
+        // Test Filter by status
+        $component->set('poStatusFilter', 'ordered')
+            ->assertSee($po->po_number)
+            ->set('poStatusFilter', 'received')
+            ->assertDontSee($po->po_number);
+
+        // Test Search PO
+        $component->set('poStatusFilter', 'all')
+            ->set('searchPo', 'Arabika 50kg')
+            ->assertSee($po->po_number)
+            ->set('searchPo', 'NonExistentString12345')
+            ->assertDontSee($po->po_number);
+
+        // Test Date Filter
+        $component->set('searchPo', '')
+            ->set('poDateFilter', 'today')
+            ->assertSee($po->po_number);
+
+        // Test Mark PO Received (GRN)
+        $component->call('markPoReceived', $po->id);
+        $this->assertEquals('received', $po->fresh()->status);
+
+        // Test Reset Filters
+        $component->call('resetPoFilters')
+            ->assertSet('searchPo', '')
+            ->assertSet('poStatusFilter', 'all')
+            ->assertSet('poDateFilter', 'all');
     }
 }
