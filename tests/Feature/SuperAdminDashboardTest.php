@@ -71,6 +71,34 @@ class SuperAdminDashboardTest extends TestCase
         ]);
     }
 
+    public function test_validation_errors_when_creating_tenant_with_empty_fields()
+    {
+        Livewire::test(PlatformDashboard::class)
+            ->call('openCreateTenantModal')
+            ->set('newTenantName', '')
+            ->set('newTenantSlug', '')
+            ->set('newTenantCity', '')
+            ->set('newTenantOwnerName', '')
+            ->set('newTenantOwnerEmail', '')
+            ->set('newTenantOwnerPhone', '')
+            ->call('createTenant')
+            ->assertHasErrors([
+                'newTenantName' => 'required',
+                'newTenantSlug' => 'required',
+                'newTenantCity' => 'required',
+                'newTenantOwnerName' => 'required',
+                'newTenantOwnerEmail' => 'required',
+                'newTenantOwnerPhone' => 'required',
+            ])
+            ->assertSee('Ada Kolom Wajib yang Belum Diisi!')
+            ->assertSee('Nama bisnis / toko wajib diisi.')
+            ->assertSee('Subdomain slug wajib diisi.')
+            ->assertSee('Kota asal bisnis wajib diisi.')
+            ->assertSee('Nama pemilik (owner) wajib diisi.')
+            ->assertSee('Alamat email pemilik wajib diisi.')
+            ->assertSee('Nomor WhatsApp pemilik wajib diisi.');
+    }
+
     public function test_livewire_can_toggle_tenant_status()
     {
         $tenant = Tenant::first();
@@ -99,5 +127,103 @@ class SuperAdminDashboardTest extends TestCase
                 'status' => 'paid',
             ]);
         }
+    }
+
+    public function test_can_open_reset_password_modal_and_update_password()
+    {
+        $tenant = Tenant::first();
+
+        Livewire::test(PlatformDashboard::class)
+            ->call('openResetPasswordModal', $tenant->owner_email, $tenant->owner_name, $tenant->name, 'Owner')
+            ->assertSet('showResetPasswordModal', true)
+            ->assertSet('resetUserEmail', $tenant->owner_email)
+            ->set('newPassword', 'NewSecret123!')
+            ->set('newPassword_confirmation', 'NewSecret123!')
+            ->call('updatePassword')
+            ->assertHasNoErrors()
+            ->assertSet('showResetPasswordModal', false);
+
+        $user = \App\Models\User::where('email', $tenant->owner_email)->first();
+        $this->assertNotNull($user);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('NewSecret123!', $user->password));
+    }
+
+    public function test_reset_password_fails_when_validation_not_met()
+    {
+        $tenant = Tenant::first();
+
+        // 1. Empty password
+        Livewire::test(PlatformDashboard::class)
+            ->call('openResetPasswordModal', $tenant->owner_email, $tenant->owner_name, $tenant->name, 'Owner')
+            ->set('newPassword', '')
+            ->set('newPassword_confirmation', '')
+            ->call('updatePassword')
+            ->assertHasErrors(['newPassword' => 'required']);
+
+        // 2. Mismatch confirmation
+        Livewire::test(PlatformDashboard::class)
+            ->call('openResetPasswordModal', $tenant->owner_email, $tenant->owner_name, $tenant->name, 'Owner')
+            ->set('newPassword', 'password123')
+            ->set('newPassword_confirmation', 'differentPassword')
+            ->call('updatePassword')
+            ->assertHasErrors(['newPassword' => 'confirmed']);
+    }
+
+    public function test_can_generate_random_password()
+    {
+        Livewire::test(PlatformDashboard::class)
+            ->call('openResetPasswordModal', 'test@demo.com', 'Test User', 'Test Tenant', 'Owner')
+            ->call('generateRandomPassword')
+            ->assertSet('showPasswordText', true);
+    }
+
+    public function test_can_create_new_tenant_user_account()
+    {
+        $tenant = Tenant::first();
+
+        Livewire::test(PlatformDashboard::class)
+            ->call('openCreateUserModal')
+            ->set('createUserName', 'Kasir Baru')
+            ->set('createUserEmail', 'kasirbaru@kopiruangpagi.id')
+            ->set('createUserTenantId', $tenant->id)
+            ->set('createUserRole', 'cashier')
+            ->set('createUserPassword', 'KasirPass123')
+            ->set('createUserPassword_confirmation', 'KasirPass123')
+            ->call('createUser')
+            ->assertHasNoErrors()
+            ->assertSet('showCreateUserModal', false);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'kasirbaru@kopiruangpagi.id',
+            'role' => 'cashier',
+            'tenant_id' => $tenant->id,
+        ]);
+    }
+
+    public function test_can_close_reset_password_modal()
+    {
+        Livewire::test(PlatformDashboard::class)
+            ->call('openResetPasswordModal', 'test@demo.com', 'Test User', 'Test Tenant', 'Owner')
+            ->assertSet('showResetPasswordModal', true)
+            ->call('closeResetPasswordModal')
+            ->assertSet('showResetPasswordModal', false);
+    }
+
+    public function test_can_close_create_user_modal()
+    {
+        Livewire::test(PlatformDashboard::class)
+            ->call('openCreateUserModal')
+            ->assertSet('showCreateUserModal', true)
+            ->call('closeCreateUserModal')
+            ->assertSet('showCreateUserModal', false);
+    }
+
+    public function test_can_close_create_tenant_modal()
+    {
+        Livewire::test(PlatformDashboard::class)
+            ->call('openCreateTenantModal')
+            ->assertSet('showCreateTenantModal', true)
+            ->call('closeCreateTenantModal')
+            ->assertSet('showCreateTenantModal', false);
     }
 }

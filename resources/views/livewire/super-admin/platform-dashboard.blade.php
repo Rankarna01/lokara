@@ -582,9 +582,19 @@
                 <!-- ################# TAB 3: AKUN TENANT ################# -->
                 @if ($activeTab === 'tenant-users')
                     <div class="space-y-5">
-                        <div>
-                            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Akun Pengguna Tenant</h1>
-                            <p class="text-sm text-slate-500 mt-0.5">Daftar pemilik dan staf lintas seluruh bisnis yang aktif di platform</p>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Akun Pengguna Tenant</h1>
+                                <p class="text-sm text-slate-500 mt-0.5">Daftar pemilik dan staf lintas seluruh bisnis yang aktif di platform</p>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <button type="button"
+                                        wire:click="openCreateUserModal"
+                                        class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold shadow-sm shadow-orange-500/20 flex items-center gap-2 transition cursor-pointer">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                    <span>Buat Akun Pengguna</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm">
@@ -625,7 +635,11 @@
                                                 <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-[10px]">Owner</span></td>
                                                 <td class="py-3 px-4 text-slate-500">Hari ini, 14:20</td>
                                                 <td class="py-3 px-4 text-right">
-                                                    <button wire:click="notify('Link reset password dikirim ke {{ $t->owner_email }}')" class="px-2.5 py-1 text-[11px] rounded border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium">Reset Password</button>
+                                                    <button type="button"
+                                                            wire:click="openResetPasswordModal('{{ $t->owner_email }}', '{{ addslashes($t->owner_name) }}', '{{ addslashes($t->name) }}', 'Owner')"
+                                                            class="px-2.5 py-1 text-[11px] rounded-lg border border-slate-200 text-slate-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 font-medium transition cursor-pointer">
+                                                        Reset Password
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -639,14 +653,31 @@
                 <!-- ################# TAB 4: PAKET & LANGGANAN ################# -->
                 @if ($activeTab === 'plans')
                     <div class="space-y-6">
-                        <div>
-                            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Paket & Langganan</h1>
-                            <p class="text-sm text-slate-500 mt-0.5">Konfigurasi batasan fitur, kuota outlet, dan tarif langganan SaaS</p>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Paket & Langganan</h1>
+                                <p class="text-sm text-slate-500 mt-0.5">Konfigurasi batasan fitur, kuota outlet, dan tarif langganan SaaS</p>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <button type="button"
+                                        wire:click="openManageFeaturesModal"
+                                        class="px-3.5 py-2 rounded-xl bg-white border border-slate-200/80 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm flex items-center gap-2 transition hover:border-slate-300">
+                                    <i class="fa-solid fa-list-check text-orange-500"></i>
+                                    <span>Kelola Master Fitur</span>
+                                    <span class="px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold">{{ $allPlatformFeatures->count() }}</span>
+                                </button>
+                                <button type="button"
+                                        wire:click="openCreatePlanModal"
+                                        class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold shadow-sm shadow-orange-500/20 flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Tambah Paket Baru</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                             @foreach ($plans as $plan)
-                                <div class="bg-white border {{ $plan->is_featured ? 'border-orange-500 ring-1 ring-orange-500' : 'border-slate-200/80' }} rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                                <div class="bg-white border {{ $plan->is_featured ? 'border-orange-500 ring-2 ring-orange-500/20' : 'border-slate-200/80' }} rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                                     <div>
                                         <div class="flex items-center justify-between">
                                             <h3 class="text-lg font-bold text-slate-900">{{ $plan->name }}</h3>
@@ -658,6 +689,9 @@
                                         <div class="mt-4">
                                             <span class="text-2xl font-extrabold text-slate-900">Rp {{ number_format($plan->price_monthly, 0, ',', '.') }}</span>
                                             <span class="text-xs text-slate-400">/ bulan</span>
+                                            @if ($plan->price_yearly > 0)
+                                                <div class="text-[11px] text-slate-400 mt-0.5">Rp {{ number_format($plan->price_yearly, 0, ',', '.') }} / tahun</div>
+                                            @endif
                                         </div>
 
                                         <div class="mt-6 space-y-2.5 border-t border-slate-100 pt-4 text-xs">
@@ -674,20 +708,27 @@
                                                 <span>Max <strong>{{ $plan->limits['max_products'] ?? 50 }}</strong> Master Produk</span>
                                             </div>
 
-                                            @if (is_array($plan->features))
+                                            @if (is_array($plan->features) && count($plan->features) > 0)
                                                 @foreach ($plan->features as $feat)
                                                     <div class="flex items-center gap-2 text-slate-600">
                                                         <i class="fa-solid fa-check text-orange-500 text-xs"></i>
                                                         <span>{{ $feat }}</span>
                                                     </div>
                                                 @endforeach
+                                            @else
+                                                <div class="text-[11px] text-slate-400 italic py-1">Belum ada fitur dicentang</div>
                                             @endif
                                         </div>
                                     </div>
 
                                     <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                                         <span class="text-slate-400">{{ $plan->tenants_count ?? 0 }} Tenant aktif</span>
-                                        <button wire:click="notify('Edit paket {{ $plan->name }} siap disesuaikan')" class="text-orange-600 hover:text-orange-700 font-semibold">Ubah Tarif</button>
+                                        <button type="button"
+                                                wire:click="openEditPlanModal({{ $plan->id }})"
+                                                class="text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1.5 hover:underline">
+                                            <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                                            <span>Ubah Tarif</span>
+                                        </button>
                                     </div>
                                 </div>
                             @endforeach
@@ -765,55 +806,90 @@
                 <!-- ################# TAB 6: TEMPLATE USAHA ################# -->
                 @if ($activeTab === 'business-types')
                     <div class="space-y-6">
-                        <div>
-                            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Template Jenis Usaha</h1>
-                            <p class="text-sm text-slate-500 mt-0.5">Konfigurasi modul dan preset standar saat tenant baru mendaftar</p>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Template Jenis Usaha</h1>
+                                <p class="text-sm text-slate-500 mt-0.5">Konfigurasi modul dan preset standar saat tenant baru mendaftar</p>
+                            </div>
+                            <button type="button"
+                                    wire:click="openCreateBusinessTypeModal"
+                                    class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold shadow-sm shadow-orange-500/20 flex items-center gap-2 transition self-start sm:self-auto cursor-pointer">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Tambah Template Baru</span>
+                            </button>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             @foreach ($businessTypes as $bt)
-                                <div class="bg-white border border-slate-200/80 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                                <div class="bg-white border {{ $bt->is_active ? 'border-slate-200/80' : 'border-slate-200 opacity-80 bg-slate-50/50' }} rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                                     <div>
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg">
-                                                <i class="fa-solid {{ $bt->icon }}"></i>
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg shadow-sm">
+                                                    <i class="fa-solid {{ $bt->icon }}"></i>
+                                                </div>
+                                                <div>
+                                                    <h3 class="font-bold text-slate-900">{{ $bt->name }}</h3>
+                                                    <span class="text-[11px] text-slate-400">{{ $bt->tenants_count ?? 0 }} Bisnis Menggunakan</span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 class="font-bold text-slate-900">{{ $bt->name }}</h3>
-                                                <span class="text-[11px] text-slate-400">{{ $bt->tenants_count ?? 0 }} Bisnis Menggunakan</span>
-                                            </div>
+                                            <button type="button"
+                                                    wire:click="toggleBusinessTypeActive({{ $bt->id }})"
+                                                    title="Klik untuk ubah status aktif/nonaktif"
+                                                    class="text-xs transition cursor-pointer">
+                                                @if ($bt->is_active)
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center gap-1 hover:bg-emerald-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                                                    </span>
+                                                @else
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1 hover:bg-slate-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Nonaktif
+                                                    </span>
+                                                @endif
+                                            </button>
                                         </div>
 
                                         <p class="text-xs text-slate-500 mt-4 leading-relaxed">{{ $bt->description }}</p>
 
-                                        <div class="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-600 space-y-1">
-                                            <div class="font-semibold text-slate-700 mb-1">Preset Modul Aktif:</div>
-                                            @if ($bt->slug === 'fnb')
-                                                <div>• Resep & Bill of Materials (BOM) Gram/ml</div>
-                                                <div>• Manajemen Meja & Cetak Dapur/Bar</div>
-                                                <div>• Peringatan Bahan Kedaluwarsa</div>
-                                            @elseif ($bt->slug === 'retail')
-                                                <div>• Barcode Scanning Cepat (EAN-13)</div>
-                                                <div>• Varian Ukuran & Warna</div>
-                                                <div>• Multi-Gudang & Grosir</div>
-                                            @elseif ($bt->slug === 'salon')
-                                                <div>• Komisi Pegawai / Kapster</div>
-                                                <div>• Layanan Jasa & Perawatan</div>
-                                            @elseif ($bt->slug === 'laundry')
-                                                <div>• Layanan Kiloan & Satuan</div>
-                                                <div>• Pelacakan Status Cuci-Kering-Setrika</div>
-                                            @else
-                                                <div>• Harga Bertingkat Grosir</div>
-                                                <div>• Piutang Penjualan Tempo</div>
+                                        <div class="mt-4 p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 text-[11px] text-slate-600 space-y-1.5">
+                                            <div class="font-semibold text-slate-700 flex items-center justify-between">
+                                                <span>Preset Modul Aktif:</span>
+                                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-bold">
+                                                    {{ count($bt->preset_modules) }} modul
+                                                </span>
+                                            </div>
+                                            <div class="space-y-1 pt-0.5">
+                                                @forelse ($bt->preset_modules as $mod)
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="text-orange-500 font-bold">•</span>
+                                                        <span>{{ $mod }}</span>
+                                                    </div>
+                                                @empty
+                                                    <div class="text-[11px] text-slate-400 italic">Belum ada modul preset</div>
+                                                @endforelse
+                                            </div>
+
+                                            @if (!empty($bt->default_settings['default_units']))
+                                                <div class="pt-2 mt-2 border-t border-slate-200/60 flex items-center gap-1 flex-wrap text-[10px]">
+                                                    <span class="text-slate-400">Satuan:</span>
+                                                    @foreach ($bt->default_settings['default_units'] as $unit)
+                                                        <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-mono text-[10px]">
+                                                            {{ $unit }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
 
                                     <div class="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                                        <span class="text-emerald-600 font-semibold flex items-center gap-1.5">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
-                                        </span>
-                                        <button wire:click="notify('Template {{ $bt->name }} siap dikonfigurasi')" class="text-orange-600 hover:text-orange-700 font-medium">Ubah Preset</button>
+                                        <span class="text-slate-400 text-[11px]">Slug: <code class="font-mono text-slate-500">{{ $bt->slug }}</code></span>
+                                        <button type="button"
+                                                wire:click="openEditPresetModal({{ $bt->id }})"
+                                                class="text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1.5 hover:underline cursor-pointer">
+                                            <i class="fa-solid fa-sliders text-[11px]"></i>
+                                            <span>Ubah Preset</span>
+                                        </button>
                                     </div>
                                 </div>
                             @endforeach
@@ -992,70 +1068,1512 @@
 
     <!-- ================= MODAL TAMBAH TENANT BARU ================= -->
     @if ($showCreateTenantModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 animate-scale-up space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+             x-data
+             @keydown.escape.window="$wire.closeCreateTenantModal()"
+             @click.self="$wire.closeCreateTenantModal()">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 animate-scale-up space-y-4"
+                 @click.outside="$wire.closeCreateTenantModal()">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="text-base font-bold text-slate-900">Daftarkan Tenant Baru</h3>
-                    <button wire:click="$set('showCreateTenantModal', false)" class="text-slate-400 hover:text-slate-600">
+                    <button type="button"
+                            wire:click="closeCreateTenantModal"
+                            @click.prevent="$wire.set('showCreateTenantModal', false)"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
                         <i class="fa-solid fa-xmark text-sm"></i>
                     </button>
                 </div>
 
+                @if ($errors->any())
+                    <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-rose-900">Ada Kolom Wajib yang Belum Diisi!</div>
+                            <div class="text-[11px] text-rose-600 mt-0.5">
+                                Terdapat <strong>{{ $errors->count() }}</strong> kolom yang wajib diisi atau belum valid. Silakan periksa kolom bergaris merah di bawah.
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <form wire:submit.prevent="createTenant" class="space-y-3 text-xs">
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Nama Bisnis / Toko</label>
-                        <input type="text" wire:model.live="newTenantName" placeholder="Contoh: Kopi Ruang Pagi" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500" />
-                        @error('newTenantName') <span class="text-rose-500 text-[11px]">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Subdomain Slug</label>
-                            <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden">
-                                <input type="text" wire:model="newTenantSlug" class="w-full px-3 py-2 text-slate-800 focus:outline-none" />
-                                <span class="bg-slate-100 px-2.5 py-2 text-slate-400 text-[11px]">.lokara.id</span>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Nama Bisnis / Toko <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="text"
+                               wire:model.live="newTenantName"
+                               placeholder="Contoh: Kopi Ruang Pagi"
+                               class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('newTenantName') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                        @error('newTenantName')
+                            <div class="flex items-center gap-1.5 text-rose-600 font-medium text-[11px] mt-1">
+                                <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                                <span>{{ $message }}</span>
                             </div>
-                            @error('newTenantSlug') <span class="text-rose-500 text-[11px]">{{ $message }}</span> @enderror
+                        @enderror
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Subdomain Slug <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <div class="flex items-center border rounded-xl overflow-hidden @error('newTenantSlug') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 @else border-slate-200 @enderror">
+                                <input type="text"
+                                       wire:model="newTenantSlug"
+                                       placeholder="kopi-ruang-pagi"
+                                       class="w-full px-3 py-2 text-xs text-slate-800 focus:outline-none bg-transparent" />
+                                <span class="bg-slate-100 px-2.5 py-2 text-slate-400 text-[11px] font-mono">.lokara.id</span>
+                            </div>
+                            @error('newTenantSlug')
+                                <div class="flex items-center gap-1.5 text-rose-600 font-medium text-[11px] mt-1">
+                                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                                    <span>{{ $message }}</span>
+                                </div>
+                            @enderror
                         </div>
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Kota Asal</label>
-                            <input type="text" wire:model="newTenantCity" placeholder="Jakarta Selatan" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none" />
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Kota Asal <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="text"
+                                   wire:model="newTenantCity"
+                                   placeholder="Jakarta Selatan"
+                                   class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('newTenantCity') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                            @error('newTenantCity')
+                                <div class="flex items-center gap-1.5 text-rose-600 font-medium text-[11px] mt-1">
+                                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                                    <span>{{ $message }}</span>
+                                </div>
+                            @enderror
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Jenis Usaha</label>
-                            <select wire:model="newTenantBusinessType" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none">
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Jenis Usaha <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <select wire:model="newTenantBusinessType"
+                                    class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('newTenantBusinessType') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror">
+                                <option value="">-- Pilih Jenis Usaha --</option>
                                 @foreach ($businessTypes as $bt)
                                     <option value="{{ $bt->id }}">{{ $bt->name }}</option>
                                 @endforeach
                             </select>
+                            @error('newTenantBusinessType')
+                                <div class="flex items-center gap-1.5 text-rose-600 font-medium text-[11px] mt-1">
+                                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                                    <span>{{ $message }}</span>
+                                </div>
+                            @enderror
                         </div>
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Pilihan Paket</label>
-                            <select wire:model="newTenantPlan" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none">
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Pilihan Paket <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <select wire:model="newTenantPlan"
+                                    class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('newTenantPlan') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror">
+                                <option value="">-- Pilih Paket Langganan --</option>
                                 @foreach ($plans as $p)
                                     <option value="{{ $p->id }}">{{ $p->name }} (Rp {{ number_format($p->price_monthly, 0, ',', '.') }})</option>
                                 @endforeach
                             </select>
+                            @error('newTenantPlan')
+                                <div class="flex items-center gap-1.5 text-rose-600 font-medium text-[11px] mt-1">
+                                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                                    <span>{{ $message }}</span>
+                                </div>
+                            @enderror
                         </div>
                     </div>
 
                     <div class="pt-2 border-t border-slate-100 space-y-2">
-                        <div class="font-semibold text-slate-700">Kontak Pemilik (Owner PIC)</div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <input type="text" wire:model="newTenantOwnerName" placeholder="Nama Pemilik" class="border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none" />
-                            <input type="email" wire:model="newTenantOwnerEmail" placeholder="Email" class="border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none" />
-                            <input type="text" wire:model="newTenantOwnerPhone" placeholder="No. WhatsApp" class="border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none" />
+                        <div class="flex items-center justify-between">
+                            <div class="font-semibold text-slate-700">
+                                Kontak Pemilik (Owner PIC) <span class="text-rose-500 font-bold">*</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400">Wajib diisi untuk akses login pemilik</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div>
+                                <input type="text"
+                                       wire:model="newTenantOwnerName"
+                                       placeholder="Nama Pemilik *"
+                                       class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('newTenantOwnerName') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 placeholder-rose-300 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                                @error('newTenantOwnerName')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div>
+                                <input type="email"
+                                       wire:model="newTenantOwnerEmail"
+                                       placeholder="Email *"
+                                       class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('newTenantOwnerEmail') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 placeholder-rose-300 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                                @error('newTenantOwnerEmail')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div>
+                                <input type="text"
+                                       wire:model="newTenantOwnerPhone"
+                                       placeholder="No. WhatsApp *"
+                                       class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('newTenantOwnerPhone') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 placeholder-rose-300 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                                @error('newTenantOwnerPhone')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
                     </div>
 
                     <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
-                        <button type="button" wire:click="$set('showCreateTenantModal', false)" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium">Batal</button>
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-semibold transition">Daftarkan Sekarang</button>
+                        <button type="button"
+                                wire:click="closeCreateTenantModal"
+                                @click.prevent="$wire.set('showCreateTenantModal', false)"
+                                class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs transition cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm shadow-orange-500/20 transition flex items-center gap-2 cursor-pointer">
+                            <span wire:loading.remove wire:target="createTenant">Daftarkan Sekarang</span>
+                            <span wire:loading wire:target="createTenant" class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                                <span>Memproses...</span>
+                            </span>
+                        </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL RESET PASSWORD PENGGUNA ================= -->
+    @if ($showResetPasswordModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+             x-data
+             @keydown.escape.window="$wire.closeResetPasswordModal()"
+             @click.self="$wire.closeResetPasswordModal()">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 animate-scale-up space-y-4"
+                 @click.outside="$wire.closeResetPasswordModal()">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold">
+                            <i class="fa-solid fa-key"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Reset Password Pengguna</h3>
+                            <p class="text-[11px] text-slate-400">Atur kata sandi baru untuk login akun tenant</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            wire:click="closeResetPasswordModal"
+                            @click.prevent="$wire.set('showResetPasswordModal', false)"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Target User Profile Card -->
+                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs">
+                    <div class="min-w-0">
+                        <div class="font-bold text-slate-900 truncate">{{ $resetUserName }}</div>
+                        <div class="text-[11px] text-slate-500 truncate">{{ $resetUserEmail }}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">Tenant: <span class="font-semibold text-slate-700">{{ $resetTenantName }}</span></div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 font-semibold text-[10px] uppercase shrink-0">
+                        {{ $resetUserRole }}
+                    </span>
+                </div>
+
+                <!-- Error Alert if any -->
+                @if ($errors->any())
+                    <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500 text-sm shrink-0 mt-0.5"></i>
+                        <div class="text-[11px]">
+                            @foreach ($errors->all() as $error)
+                                <div>• {{ $error }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <form wire:submit.prevent="updatePassword" class="space-y-3.5 text-xs">
+                    <!-- Quick Random Password Generator -->
+                    <div class="flex items-center justify-between bg-amber-50/60 border border-amber-200/80 p-2.5 rounded-xl">
+                        <div class="text-[11px] text-amber-800">
+                            <i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i>
+                            <span>Butuh password cepat & aman?</span>
+                        </div>
+                        <button type="button"
+                                wire:click="generateRandomPassword"
+                                class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-amber-800 hover:bg-amber-100 font-bold text-[11px] transition shadow-2xs cursor-pointer">
+                            Generate Acak
+                        </button>
+                    </div>
+
+                    <!-- Password Baru -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block font-semibold text-slate-700">
+                                Password Baru <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <button type="button"
+                                    wire:click="$toggle('showPasswordText')"
+                                    class="text-[10px] text-slate-500 hover:text-slate-800 cursor-pointer">
+                                {{ $showPasswordText ? 'Sembunyikan' : 'Tampilkan' }}
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <input type="{{ $showPasswordText ? 'text' : 'password' }}"
+                                   wire:model="newPassword"
+                                   placeholder="Minimal 6 karakter..."
+                                   class="w-full border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 transition focus:outline-none @error('newPassword') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                        </div>
+                        @error('newPassword')
+                            <div class="flex items-center gap-1.5 text-rose-600 font-medium text-[11px] mt-1">
+                                <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                                <span>{{ $message }}</span>
+                            </div>
+                        @enderror
+                    </div>
+
+                    <!-- Konfirmasi Password Baru -->
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Ulangi Password Baru <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="{{ $showPasswordText ? 'text' : 'password' }}"
+                               wire:model="newPassword_confirmation"
+                               placeholder="Ketik ulang password baru..."
+                               class="w-full border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 transition focus:outline-none @error('newPassword') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                        <button type="button"
+                                wire:click="closeResetPasswordModal"
+                                @click.prevent="$wire.set('showResetPasswordModal', false)"
+                                class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs transition cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm shadow-orange-500/20 transition flex items-center gap-2 cursor-pointer">
+                            <span wire:loading.remove wire:target="updatePassword">Simpan Password</span>
+                            <span wire:loading wire:target="updatePassword" class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                                <span>Menyimpan...</span>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL BUAT AKUN PENGGUNA BARU ================= -->
+    @if ($showCreateUserModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+             x-data
+             @keydown.escape.window="$wire.closeCreateUserModal()"
+             @click.self="$wire.closeCreateUserModal()">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 animate-scale-up space-y-4"
+                 @click.outside="$wire.closeCreateUserModal()">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center text-sm font-bold">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Buat Akun Pengguna Baru</h3>
+                            <p class="text-[11px] text-slate-400">Daftarkan akun login staf kasir, manajer, atau pemilik tenant</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            wire:click="closeCreateUserModal"
+                            @click.prevent="$wire.set('showCreateUserModal', false)"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                @if ($errors->any())
+                    <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500 text-sm shrink-0 mt-0.5"></i>
+                        <div>
+                            <div class="font-bold text-rose-900">Terdapat Kesalahan Pengisian:</div>
+                            <div class="text-[11px] text-rose-600 mt-0.5">Silakan lengkapi atau perbaiki kolom yang bergaris merah di bawah.</div>
+                        </div>
+                    </div>
+                @endif
+
+                <form wire:submit.prevent="createUser" class="space-y-3.5 text-xs">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Nama Lengkap <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="text"
+                                   wire:model="createUserName"
+                                   placeholder="Contoh: Budi Santoso"
+                                   class="w-full border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 transition focus:outline-none @error('createUserName') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                            @error('createUserName')
+                                <div class="text-rose-600 font-medium text-[11px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Alamat Email <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="email"
+                                   wire:model="createUserEmail"
+                                   placeholder="budi@kopiruangpagi.id"
+                                   class="w-full border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 transition focus:outline-none @error('createUserEmail') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                            @error('createUserEmail')
+                                <div class="text-rose-600 font-medium text-[11px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Tenant Asal <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <select wire:model="createUserTenantId"
+                                    class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('createUserTenantId') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror">
+                                <option value="">-- Pilih Tenant --</option>
+                                @foreach ($allTenants as $tn)
+                                    <option value="{{ $tn->id }}">{{ $tn->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('createUserTenantId')
+                                <div class="text-rose-600 font-medium text-[11px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Peran (Role) <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <select wire:model="createUserRole"
+                                    class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('createUserRole') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror">
+                                <option value="cashier">Kasir (Layar POS)</option>
+                                <option value="manager">Manajer Toko</option>
+                                <option value="owner">Pemilik (Owner)</option>
+                            </select>
+                            @error('createUserRole')
+                                <div class="text-rose-600 font-medium text-[11px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50/60 border border-amber-200/80 p-2.5 rounded-xl flex items-center justify-between">
+                        <span class="text-[11px] text-amber-800">
+                            <i class="fa-solid fa-key text-amber-500 mr-1"></i>
+                            Buat password otomatis?
+                        </span>
+                        <button type="button"
+                                wire:click="generateCreateUserPassword"
+                                class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-amber-800 hover:bg-amber-100 font-bold text-[11px] transition shadow-2xs cursor-pointer">
+                            Generate Acak
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Password Akun <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="password"
+                                   wire:model="createUserPassword"
+                                   placeholder="Minimal 6 karakter..."
+                                   class="w-full border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 transition focus:outline-none @error('createUserPassword') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                            @error('createUserPassword')
+                                <div class="text-rose-600 font-medium text-[11px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Ulangi Password <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="password"
+                                   wire:model="createUserPassword_confirmation"
+                                   placeholder="Ulangi password..."
+                                   class="w-full border rounded-xl px-3.5 py-2.5 text-xs text-slate-800 transition focus:outline-none @error('createUserPassword') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                        <button type="button"
+                                wire:click="closeCreateUserModal"
+                                @click.prevent="$wire.set('showCreateUserModal', false)"
+                                class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs transition cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm shadow-orange-500/20 transition flex items-center gap-2 cursor-pointer">
+                            <span wire:loading.remove wire:target="createUser">Buat Akun Sekarang</span>
+                            <span wire:loading wire:target="createUser" class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                                <span>Menyimpan...</span>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL UBAH TARIF DINAMIS & CHECKLIST FITUR ================= -->
+    @if ($showEditPlanModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+             x-data
+             @keydown.escape.window="$wire.closeEditPlanModal()"
+             @click.self="$wire.closeEditPlanModal()">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full my-8 animate-scale-up flex flex-col max-h-[90vh]"
+                 @click.outside="$wire.closeEditPlanModal()">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 shrink-0 bg-slate-50/50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-base shadow-sm">
+                            <i class="fa-solid fa-credit-card"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Ubah Tarif & Checklist Fitur</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Paket: <span class="font-semibold text-orange-600">{{ $editPlanName }}</span> • Sesuaikan harga dan checklist fitur</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            wire:click="closeEditPlanModal"
+                            @click.prevent="$wire.set('showEditPlanModal', false)"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- Alert Validation Error -->
+                @if ($errors->any())
+                    <div class="mx-6 mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500 text-sm mt-0.5 shrink-0"></i>
+                        <div>
+                            <div class="font-bold text-rose-900">Periksa Kembali Data Formulir</div>
+                            <div class="text-[11px] text-rose-600 mt-0.5">Terdapat kolom yang belum valid. Silakan tinjau kembali input bertanda merah.</div>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Modal Body (Scrollable) -->
+                <div class="overflow-y-auto px-6 py-5 space-y-6 flex-1 text-xs text-slate-700">
+                    <!-- SECTION 1: TARIF & IDENTITAS PAKET -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-tag text-orange-500 text-xs"></i>
+                            <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Tarif & Kuota Paket</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Nama Paket -->
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">
+                                    Nama Paket <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <input type="text"
+                                       wire:model="editPlanName"
+                                       placeholder="Contoh: Basic, Pro, Business"
+                                       class="w-full border rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none @error('editPlanName') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                                @error('editPlanName')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Badge Label -->
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">
+                                    Badge Label <span class="text-slate-400 font-normal">(Opsional)</span>
+                                </label>
+                                <input type="text"
+                                       wire:model="editPlanBadge"
+                                       placeholder="Contoh: Terpopuler, Pemula, Enterprise"
+                                       class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                            </div>
+                        </div>
+
+                        <!-- Tarif Dinamis Bulanan & Tahunan -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-orange-50/40 p-4 rounded-xl border border-orange-100">
+                            <div>
+                                <label class="block font-semibold text-slate-800 mb-1">
+                                    Tarif Bulanan (Rp) <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-2 text-slate-400 font-bold text-xs">Rp</span>
+                                    <input type="number"
+                                           step="1000"
+                                           wire:model.live.debounce.300ms="editPlanPriceMonthly"
+                                           placeholder="299000"
+                                           class="w-full pl-10 pr-3.5 py-2 border rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none @error('editPlanPriceMonthly') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                                </div>
+                                <div class="text-[11px] text-orange-600 font-medium mt-1">
+                                    Preview: <strong>Rp {{ number_format((float) str_replace(['.', ',', ' '], '', (string)($editPlanPriceMonthly ?: 0)), 0, ',', '.') }}</strong> / bulan
+                                </div>
+                                @error('editPlanPriceMonthly')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-slate-800 mb-1">
+                                    Tarif Tahunan (Rp) <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-2 text-slate-400 font-bold text-xs">Rp</span>
+                                    <input type="number"
+                                           step="1000"
+                                           wire:model.live.debounce.300ms="editPlanPriceYearly"
+                                           placeholder="2990000"
+                                           class="w-full pl-10 pr-3.5 py-2 border rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none @error('editPlanPriceYearly') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                                </div>
+                                <div class="text-[11px] text-slate-500 mt-1">
+                                    Preview: <strong>Rp {{ number_format((float) str_replace(['.', ',', ' '], '', (string)($editPlanPriceYearly ?: 0)), 0, ',', '.') }}</strong> / tahun
+                                </div>
+                                @error('editPlanPriceYearly')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Batasan Kuota (Limits) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">
+                                    Max Outlet <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <input type="number"
+                                       min="1"
+                                       wire:model="editPlanMaxOutlets"
+                                       class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                                @error('editPlanMaxOutlets')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">
+                                    Max Karyawan <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <input type="number"
+                                       min="1"
+                                       wire:model="editPlanMaxUsers"
+                                       class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                                @error('editPlanMaxUsers')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">
+                                    Max Produk <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <input type="number"
+                                       min="1"
+                                       wire:model="editPlanMaxProducts"
+                                       class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                                @error('editPlanMaxProducts')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Opsi Unggulan / Featured -->
+                        <div class="flex flex-wrap items-center gap-6 pt-2">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox"
+                                       wire:model="editPlanIsFeatured"
+                                       class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-400 cursor-pointer">
+                                <span class="text-xs font-semibold text-slate-700">Tandai sebagai Paket Unggulan / Terpopuler</span>
+                            </label>
+
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox"
+                                       wire:model="editPlanIsActive"
+                                       class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-400 cursor-pointer">
+                                <span class="text-xs font-semibold text-slate-700">Paket Aktif & Tersedia</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: CHECKLIST FITUR PAKET -->
+                    <div class="space-y-3 pt-3 border-t border-slate-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-orange-500 text-xs"></i>
+                                <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Checklist Fitur Paket</span>
+                                <span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 font-bold text-[11px]">
+                                    {{ count($editPlanFeatures) }} dari {{ $allPlatformFeatures->count() }} dipilih
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs">
+                                <button type="button" wire:click="selectAllPlanFeatures" class="text-orange-600 hover:text-orange-700 font-semibold hover:underline">
+                                    Pilih Semua
+                                </button>
+                                <span class="text-slate-300">•</span>
+                                <button type="button" wire:click="deselectAllPlanFeatures" class="text-slate-500 hover:text-slate-700 hover:underline">
+                                    Hapus Pilihan
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Inline Tambah Fitur Baru Bar -->
+                        <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2">
+                            <div class="text-[11px] font-semibold text-slate-600 flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus-circle text-orange-500"></i>
+                                <span>Tambah Fitur Baru Langsung ke Checklist:</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-center gap-2">
+                                <input type="text"
+                                       wire:model="quickAddFeatureName"
+                                       wire:keydown.enter.prevent="addFeatureInline"
+                                       placeholder="Ketik nama fitur baru (misal: Integrasi GrabFood)..."
+                                       class="w-full sm:flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                                <select wire:model="quickAddFeatureCategory"
+                                        class="w-full sm:w-44 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                    <option value="Kasir & Transaksi">Kasir & Transaksi</option>
+                                    <option value="Inventori">Inventori</option>
+                                    <option value="Laporan">Laporan</option>
+                                    <option value="Paket Bundling">Paket Bundling</option>
+                                    <option value="Platform">Platform</option>
+                                    <option value="Integrasi">Integrasi</option>
+                                    <option value="Layanan & Bantuan">Layanan & Bantuan</option>
+                                </select>
+                                <button type="button"
+                                        wire:click="addFeatureInline"
+                                        class="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5 shrink-0 transition">
+                                    <i class="fa-solid fa-check text-[10px]"></i>
+                                    <span>Tambah & Centang</span>
+                                </button>
+                            </div>
+                            @error('quickAddFeatureName')
+                                <div class="text-rose-600 font-medium text-[10px]">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Checklist Items Container -->
+                        <div class="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                            <div class="p-3 bg-slate-50/70 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 flex items-center justify-between">
+                                <span>Centang fitur yang aktif pada paket ini</span>
+                                <span>Aksi Item</span>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto divide-y divide-slate-100 p-1">
+                                @forelse ($allPlatformFeatures as $feat)
+                                    @php
+                                        $isChecked = in_array($feat->name, $editPlanFeatures);
+                                    @endphp
+                                    <div class="flex items-center justify-between p-2.5 rounded-lg transition {{ $isChecked ? 'bg-orange-50/60' : 'hover:bg-slate-50' }}">
+                                        <label class="flex items-center gap-3 flex-1 cursor-pointer select-none">
+                                            <input type="checkbox"
+                                                   wire:click="toggleFeatureInPlan('{{ $feat->name }}')"
+                                                   {{ $isChecked ? 'checked' : '' }}
+                                                   class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-400 focus:ring-offset-0 cursor-pointer">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs font-semibold {{ $isChecked ? 'text-slate-900' : 'text-slate-600' }}">
+                                                    {{ $feat->name }}
+                                                </span>
+                                                @if ($feat->category)
+                                                    <span class="text-[10px] px-2 py-0.5 rounded-full {{ $isChecked ? 'bg-orange-200/70 text-orange-800' : 'bg-slate-100 text-slate-500' }}">
+                                                        {{ $feat->category }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </label>
+
+                                        <!-- Aksi Item: Edit nama fitur & Hapus fitur -->
+                                        <div class="flex items-center gap-1 ml-3 shrink-0">
+                                            <button type="button"
+                                                    wire:click="openEditFeatureModal({{ $feat->id }})"
+                                                    title="Edit nama fitur"
+                                                    class="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition">
+                                                <i class="fa-solid fa-pen text-[10px]"></i>
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="deleteFeature({{ $feat->id }})"
+                                                    wire:confirm="Hapus fitur '{{ $feat->name }}' dari seluruh paket dan platform?"
+                                                    title="Hapus fitur dari platform"
+                                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                                <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="p-6 text-center text-slate-400 italic">
+                                        Belum ada fitur terdaftar. Silakan tambahkan fitur di atas.
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex items-center justify-end gap-3 shrink-0">
+                    <button type="button"
+                            wire:click="closeEditPlanModal"
+                            @click.prevent="$wire.set('showEditPlanModal', false)"
+                            class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button"
+                            wire:click="savePlan"
+                            class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm shadow-orange-500/20 transition flex items-center gap-2">
+                        <span wire:loading.remove wire:target="savePlan">Simpan Perubahan Tarif & Fitur</span>
+                        <span wire:loading wire:target="savePlan" class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                            <span>Menyimpan...</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL KELOLA MASTER FITUR PLATFORM ================= -->
+    @if ($showManageFeaturesModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+             x-data
+             @keydown.escape.window="$wire.closeManageFeaturesModal()"
+             @click.self="$wire.closeManageFeaturesModal()">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full my-8 animate-scale-up flex flex-col max-h-[90vh]"
+                 @click.outside="$wire.closeManageFeaturesModal()">
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 shrink-0 bg-slate-50/50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-base shadow-sm">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Kelola Master Fitur SaaS</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Daftar seluruh fitur yang dapat dicentang pada paket langganan</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            wire:click="closeManageFeaturesModal"
+                            @click.prevent="$wire.set('showManageFeaturesModal', false)"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- Body (Scrollable) -->
+                <div class="overflow-y-auto px-6 py-5 space-y-5 flex-1 text-xs">
+                    <!-- Form Tambah Fitur Baru -->
+                    <div class="p-4 bg-orange-50/50 border border-orange-200/70 rounded-xl space-y-3">
+                        <div class="font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-plus text-orange-500"></i>
+                            <span>Tambah Fitur Baru ke Master Platform</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                            <div class="sm:col-span-7">
+                                <input type="text"
+                                       wire:model="newFeatureName"
+                                       wire:keydown.enter.prevent="createMasterFeature"
+                                       placeholder="Nama fitur (contoh: Multi-Currency, QRIS Dinamis)..."
+                                       class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                                @error('newFeatureName')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="sm:col-span-3">
+                                <select wire:model="newFeatureCategory"
+                                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                    <option value="Kasir & Transaksi">Kasir & Transaksi</option>
+                                    <option value="Inventori">Inventori</option>
+                                    <option value="Laporan">Laporan</option>
+                                    <option value="Paket Bundling">Paket Bundling</option>
+                                    <option value="Platform">Platform</option>
+                                    <option value="Integrasi">Integrasi</option>
+                                    <option value="Layanan & Bantuan">Layanan & Bantuan</option>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <button type="button"
+                                        wire:click="createMasterFeature"
+                                        class="w-full h-full py-2 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5 transition">
+                                    <i class="fa-solid fa-plus text-[10px]"></i>
+                                    <span>Tambah</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Daftar Fitur -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 flex items-center justify-between">
+                            <span>Daftar Fitur ({{ $allPlatformFeatures->count() }})</span>
+                            <span class="text-slate-400 font-normal text-[11px]">Digunakan di Paket</span>
+                        </div>
+                        <div class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                            @forelse ($allPlatformFeatures as $feat)
+                                <div class="px-4 py-3 flex items-center justify-between hover:bg-slate-50/70 transition">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-slate-800">{{ $feat->name }}</span>
+                                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
+                                                {{ $feat->category ?? 'Umum' }}
+                                            </span>
+                                        </div>
+                                        <div class="flex flex-wrap gap-1 items-center">
+                                            @php
+                                                $usedPlans = $featurePlanUsage[$feat->name] ?? [];
+                                            @endphp
+                                            @if (count($usedPlans) > 0)
+                                                @foreach ($usedPlans as $pName)
+                                                    <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200/60">
+                                                        {{ $pName }}
+                                                    </span>
+                                                @endforeach
+                                            @else
+                                                <span class="text-[10px] text-slate-400 italic">Belum digunakan di paket manapun</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-1">
+                                        <button type="button"
+                                                wire:click="openEditFeatureModal({{ $feat->id }})"
+                                                class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-orange-600 hover:border-orange-200 text-xs font-semibold flex items-center gap-1 transition">
+                                            <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                                            <span>Edit</span>
+                                        </button>
+                                        <button type="button"
+                                                wire:click="deleteFeature({{ $feat->id }})"
+                                                wire:confirm="Yakin ingin menghapus fitur '{{ $feat->name }}'? Fitur akan dicabut dari seluruh paket yang memakainya."
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                                title="Hapus Fitur">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="p-8 text-center text-slate-400 italic">Belum ada fitur terdaftar.</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex items-center justify-end shrink-0">
+                    <button type="button"
+                            wire:click="closeManageFeaturesModal"
+                            @click.prevent="$wire.set('showManageFeaturesModal', false)"
+                            class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs transition cursor-pointer">
+                        Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL EDIT NAMA FITUR ================= -->
+    @if ($showEditFeatureModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+             x-data
+             @keydown.escape.window="$wire.closeEditFeatureModal()"
+             @click.self="$wire.closeEditFeatureModal()">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 animate-scale-up space-y-4"
+                 @click.outside="$wire.closeEditFeatureModal()">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-900">Edit Fitur Platform</h3>
+                    </div>
+                    <button type="button"
+                            wire:click="closeEditFeatureModal"
+                            @click.prevent="$wire.set('showEditFeatureModal', false)"
+                            class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3.5 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Nama Fitur <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <input type="text"
+                               wire:model="editingFeatureName"
+                               class="w-full border rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none @error('editingFeatureName') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                        @error('editingFeatureName')
+                            <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Kategori Fitur</label>
+                        <select wire:model="editingFeatureCategory"
+                                class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <option value="Kasir & Transaksi">Kasir & Transaksi</option>
+                            <option value="Inventori">Inventori</option>
+                            <option value="Laporan">Laporan</option>
+                            <option value="Paket Bundling">Paket Bundling</option>
+                            <option value="Platform">Platform</option>
+                            <option value="Integrasi">Integrasi</option>
+                            <option value="Layanan & Bantuan">Layanan & Bantuan</option>
+                        </select>
+                    </div>
+
+                    <div class="p-3 bg-amber-50 border border-amber-200/80 rounded-xl text-amber-800 text-[11px]">
+                        <i class="fa-solid fa-circle-info mr-1 text-amber-600"></i>
+                        Mengubah nama fitur ini akan otomatis memperbarui daftar fitur di seluruh paket yang memakainya.
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button"
+                            wire:click="closeEditFeatureModal"
+                            @click.prevent="$wire.set('showEditFeatureModal', false)"
+                            class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button"
+                            wire:click="updateFeature"
+                            class="px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm transition cursor-pointer">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL TAMBAH PAKET BARU ================= -->
+    @if ($showCreatePlanModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+             x-data
+             @keydown.escape.window="$wire.closeCreatePlanModal()"
+             @click.self="$wire.closeCreatePlanModal()">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full my-8 animate-scale-up flex flex-col max-h-[90vh]"
+                 @click.outside="$wire.closeCreatePlanModal()">
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 shrink-0 bg-slate-50/50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-base shadow-sm">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Tambah Paket Baru</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Daftarkan paket langganan SaaS baru untuk platform Lokara</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            wire:click="closeCreatePlanModal"
+                            @click.prevent="$wire.set('showCreatePlanModal', false)"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="overflow-y-auto px-6 py-5 space-y-5 flex-1 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Nama Paket <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="text"
+                                   wire:model="newPlanName"
+                                   placeholder="Contoh: Enterprise Plus"
+                                   class="w-full border rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none @error('newPlanName') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                            @error('newPlanName')
+                                <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Badge Label</label>
+                            <input type="text"
+                                   wire:model="newPlanBadge"
+                                   placeholder="Contoh: Khusus, Custom"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-orange-50/40 p-4 rounded-xl border border-orange-100">
+                        <div>
+                            <label class="block font-semibold text-slate-800 mb-1">
+                                Tarif Bulanan (Rp) <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="number"
+                                   step="1000"
+                                   wire:model="newPlanPriceMonthly"
+                                   class="w-full px-3.5 py-2 border rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                            @error('newPlanPriceMonthly')
+                                <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-800 mb-1">
+                                Tarif Tahunan (Rp) <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="number"
+                                   step="1000"
+                                   wire:model="newPlanPriceYearly"
+                                   class="w-full px-3.5 py-2 border rounded-xl text-xs font-bold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                            @error('newPlanPriceYearly')
+                                <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Max Outlet</label>
+                            <input type="number" min="1" wire:model="newPlanMaxOutlets" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Max Karyawan</label>
+                            <input type="number" min="1" wire:model="newPlanMaxUsers" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Max Produk</label>
+                            <input type="number" min="1" wire:model="newPlanMaxProducts" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block font-semibold text-slate-700">Checklist Fitur Awal</label>
+                        <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white">
+                            @foreach ($allPlatformFeatures as $f)
+                                <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                    <input type="checkbox"
+                                           wire:click="toggleFeatureInNewPlan('{{ $f->name }}')"
+                                           {{ in_array($f->name, $newPlanFeatures) ? 'checked' : '' }}
+                                           class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                    <span class="text-slate-800">{{ $f->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex items-center justify-end gap-3 shrink-0">
+                    <button type="button"
+                            wire:click="closeCreatePlanModal"
+                            @click.prevent="$wire.set('showCreatePlanModal', false)"
+                            class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button"
+                            wire:click="createPlan"
+                            class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm cursor-pointer">
+                        Buat Paket Sekarang
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL UBAH PRESET TEMPLATE USAHA ================= -->
+    @if ($showEditPresetModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full my-8 animate-scale-up flex flex-col max-h-[90vh]">
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 shrink-0 bg-slate-50/50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-base shadow-sm">
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Ubah Preset Template Usaha</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Template: <span class="font-semibold text-orange-600">{{ $editBtName }}</span> • Atur modul bawaan & konfigurasi tenant</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            wire:click="closeEditPresetModal"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- Alert Validation Error -->
+                @if ($errors->any())
+                    <div class="mx-6 mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500 text-sm mt-0.5 shrink-0"></i>
+                        <div>
+                            <div class="font-bold text-rose-900">Periksa Kembali Data Formulir</div>
+                            <div class="text-[11px] text-rose-600 mt-0.5">Terdapat kolom wajib yang belum valid.</div>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Body (Scrollable) -->
+                <div class="overflow-y-auto px-6 py-5 space-y-6 flex-1 text-xs text-slate-700">
+                    <!-- SECTION 1: INFORMASI UTAMA TEMPLATE -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-store text-orange-500 text-xs"></i>
+                            <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Identitas Template</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                            <div class="sm:col-span-8">
+                                <label class="block font-semibold text-slate-700 mb-1">
+                                    Nama Template Usaha <span class="text-rose-500 font-bold">*</span>
+                                </label>
+                                <input type="text"
+                                       wire:model="editBtName"
+                                       class="w-full border rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none @error('editBtName') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                                @error('editBtName')
+                                    <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="sm:col-span-4">
+                                <label class="block font-semibold text-slate-700 mb-1">Ikon FontAwesome</label>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-sm shrink-0 border border-orange-100">
+                                        <i class="fa-solid {{ $editBtIcon }}"></i>
+                                    </div>
+                                    <select wire:model.live="editBtIcon"
+                                            class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                        <option value="fa-utensils">F&B / Resto (fa-utensils)</option>
+                                        <option value="fa-store">Retail / Toko (fa-store)</option>
+                                        <option value="fa-scissors">Salon / Barbershop (fa-scissors)</option>
+                                        <option value="fa-shirt">Laundry / Jasa (fa-shirt)</option>
+                                        <option value="fa-boxes-stacked">Grosir / Distributor (fa-boxes-stacked)</option>
+                                        <option value="fa-mug-hot">Kafe / Coffee Shop (fa-mug-hot)</option>
+                                        <option value="fa-cart-shopping">Minimarket (fa-cart-shopping)</option>
+                                        <option value="fa-spa">Spa & Beauty (fa-spa)</option>
+                                        <option value="fa-car-side">Bengkel / Otomotif (fa-car-side)</option>
+                                        <option value="fa-paw">Pet Shop (fa-paw)</option>
+                                        <option value="fa-pills">Apotek / Farmasi (fa-pills)</option>
+                                        <option value="fa-bowl-food">Kuliner / Fast Food (fa-bowl-food)</option>
+                                        <option value="fa-shapes">Lainnya (fa-shapes)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Deskripsi Template <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <textarea wire:model="editBtDescription"
+                                      rows="2"
+                                      class="w-full border rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none @error('editBtDescription') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror"></textarea>
+                            @error('editBtDescription')
+                                <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox"
+                                       wire:model="editBtIsActive"
+                                       class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-400 cursor-pointer">
+                                <span class="text-xs font-semibold text-slate-800">Status Template Aktif & Tersedia untuk Registrasi Tenant</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: PRESET MODUL AKTIF (LIST & TAMBAH/HAPUS) -->
+                    <div class="space-y-3 pt-3 border-t border-slate-100">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group text-orange-500 text-xs"></i>
+                                <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Preset Modul Bawaan</span>
+                                <span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 font-bold text-[11px]">
+                                    {{ count($editBtPresetModules) }} aktif
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Bar Tambah Modul Preset Baru -->
+                        <div class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                            <input type="text"
+                                   wire:model="newPresetModuleName"
+                                   wire:keydown.enter.prevent="addPresetModule"
+                                   placeholder="+ Ketik modul baru (misal: Reservasi Meja, Integrasi KDS)..."
+                                   class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                            <button type="button"
+                                    wire:click="addPresetModule"
+                                    class="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5 shrink-0 transition cursor-pointer">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                <span>Tambah Modul</span>
+                            </button>
+                        </div>
+                        @error('newPresetModuleName')
+                            <div class="text-rose-600 font-medium text-[10px]">{{ $message }}</div>
+                        @enderror
+
+                        <!-- Daftar Modul yang Sedang Aktif dalam Preset -->
+                        <div class="space-y-1.5">
+                            <div class="text-[11px] font-semibold text-slate-500">Daftar Modul yang Aktif pada Template Ini:</div>
+                            <div class="border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-48 overflow-y-auto bg-white">
+                                @forelse ($editBtPresetModules as $mod)
+                                    <div class="px-3 py-2 flex items-center justify-between hover:bg-slate-50/60 transition">
+                                        <div class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                            <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+                                            <span>{{ $mod }}</span>
+                                        </div>
+                                        <button type="button"
+                                                wire:click="removePresetModule('{{ $mod }}')"
+                                                title="Hapus dari preset"
+                                                class="text-slate-400 hover:text-rose-600 p-1 transition cursor-pointer">
+                                            <i class="fa-solid fa-xmark text-xs"></i>
+                                        </button>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-slate-400 italic text-xs">
+                                        Belum ada modul aktif pada preset ini. Klik pilihan modul di bawah untuk menambahkan.
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <!-- Pilihan Cepat Modul Populer -->
+                        <div class="p-3 bg-orange-50/40 border border-orange-100 rounded-xl space-y-2">
+                            <div class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-lightbulb text-orange-500"></i>
+                                <span>Pilihan Cepat Modul Standar (Klik untuk Aktifkan / Nonaktifkan):</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                @php
+                                    $presetChoices = [
+                                        'Resep & Bill of Materials (BOM) Gram/ml',
+                                        'Manajemen Meja & Cetak Dapur/Bar',
+                                        'Peringatan Bahan Kedaluwarsa',
+                                        'Barcode Scanning Cepat (EAN-13)',
+                                        'Varian Ukuran & Warna',
+                                        'Multi-Gudang & Grosir',
+                                        'Komisi Pegawai / Kapster',
+                                        'Layanan Jasa & Perawatan',
+                                        'Layanan Kiloan & Satuan',
+                                        'Pelacakan Status Cuci-Kering-Setrika',
+                                        'Harga Bertingkat Grosir',
+                                        'Piutang Penjualan Tempo',
+                                        'Multi-Modifier & Topping Tambahan',
+                                        'Cetak Struk Dapur / KDS',
+                                        'Reservasi & Jadwal Booking',
+                                    ];
+                                @endphp
+                                @foreach ($presetChoices as $choice)
+                                    @php $activeInPreset = in_array($choice, $editBtPresetModules); @endphp
+                                    <button type="button"
+                                            wire:click="togglePresetModule('{{ $choice }}')"
+                                            class="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer flex items-center gap-1.5 {{ $activeInPreset ? 'bg-orange-500 text-white border-orange-600 shadow-xs' : 'bg-white text-slate-600 border-slate-200 hover:border-orange-300 hover:text-slate-900' }}">
+                                        <i class="fa-solid {{ $activeInPreset ? 'fa-check' : 'fa-plus' }} text-[9px]"></i>
+                                        <span>{{ $choice }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: SATUAN STANDAR (DEFAULT UNITS) -->
+                    <div class="space-y-2 pt-3 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-scale-balanced text-orange-500 text-xs"></i>
+                            <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Satuan Standar Produk (Default Units)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500">Satuan dasar yang otomatis tersedia saat tenant dengan template ini membuat produk baru.</p>
+                        <input type="text"
+                               wire:model="editBtDefaultUnits"
+                               placeholder="Contoh: gram, ml, cup, porsi, pcs"
+                               class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono" />
+                        <div class="text-[10px] text-slate-400">Pisahkan dengan tanda koma (contoh: <code>pcs, pack, dus, lusin</code>).</div>
+                    </div>
+
+                    <!-- SECTION 4: TOGGLE FITUR SISTEM SPESIFIK -->
+                    <div class="space-y-2.5 pt-3 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-toggle-on text-orange-500 text-xs"></i>
+                            <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Flag Fitur Sistem</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/70">
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasRecipes" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Modul Resep & Bahan Baku (BOM)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasTables" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Manajemen Meja & Dine-In</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasModifiers" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Modifier & Opsi Topping</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasBarcode" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Barcode Scanner Cepat</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasVariants" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Varian Ukuran / Warna</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasCommissions" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Komisi Pegawai / Kapster</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasOrderStatus" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Pelacakan Status Pesanan / Cuci</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasCreditSales" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Penjualan Tempo & Piutang</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasTieredPricing" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Harga Bertingkat Grosir</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                <input type="checkbox" wire:model="editBtHasServices" class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                <span>Layanan Jasa & Perawatan</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex items-center justify-end gap-3 shrink-0">
+                    <button type="button"
+                            wire:click="closeEditPresetModal"
+                            class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button"
+                            wire:click="saveBusinessTypePreset"
+                            class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm shadow-orange-500/20 transition flex items-center gap-2 cursor-pointer">
+                        <span wire:loading.remove wire:target="saveBusinessTypePreset">Simpan Perubahan Preset</span>
+                        <span wire:loading wire:target="saveBusinessTypePreset" class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                            <span>Menyimpan...</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- ================= MODAL TAMBAH TEMPLATE USAHA BARU ================= -->
+    @if ($showCreateBusinessTypeModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full my-8 animate-scale-up flex flex-col max-h-[90vh]">
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 shrink-0 bg-slate-50/50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-base shadow-sm">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Tambah Template Usaha Baru</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Daftarkan kategori jenis usaha baru untuk onboarding tenant</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            wire:click="closeCreateBusinessTypeModal"
+                            class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="overflow-y-auto px-6 py-5 space-y-4 flex-1 text-xs text-slate-700">
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <div class="sm:col-span-8">
+                            <label class="block font-semibold text-slate-700 mb-1">
+                                Nama Jenis Usaha <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <input type="text"
+                                   wire:model="newBtName"
+                                   placeholder="Contoh: Pet Shop & Klinik Hewan"
+                                   class="w-full border rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none @error('newBtName') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror" />
+                            @error('newBtName')
+                                <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="sm:col-span-4">
+                            <label class="block font-semibold text-slate-700 mb-1">Ikon</label>
+                            <select wire:model="newBtIcon"
+                                    class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <option value="fa-store">Toko (fa-store)</option>
+                                <option value="fa-utensils">Resto / F&B (fa-utensils)</option>
+                                <option value="fa-scissors">Salon (fa-scissors)</option>
+                                <option value="fa-shirt">Laundry (fa-shirt)</option>
+                                <option value="fa-boxes-stacked">Grosir (fa-boxes-stacked)</option>
+                                <option value="fa-paw">Pet Shop (fa-paw)</option>
+                                <option value="fa-pills">Apotek (fa-pills)</option>
+                                <option value="fa-car-side">Bengkel (fa-car-side)</option>
+                                <option value="fa-spa">Spa (fa-spa)</option>
+                                <option value="fa-shapes">Lainnya (fa-shapes)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">
+                            Deskripsi Singkat <span class="text-rose-500 font-bold">*</span>
+                        </label>
+                        <textarea wire:model="newBtDescription"
+                                  rows="2"
+                                  placeholder="Jelaskan kebutuhan dan cakupan bisnis ini..."
+                                  class="w-full border rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none @error('newBtDescription') border-rose-400 ring-1 ring-rose-400 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror"></textarea>
+                        @error('newBtDescription')
+                            <div class="text-rose-600 font-medium text-[10px] mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Satuan Standar Produk (Default Units)</label>
+                        <input type="text"
+                               wire:model="newBtDefaultUnits"
+                               placeholder="pcs, pack, dus"
+                               class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 font-mono focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Preset Modul Awal</label>
+                        <div class="border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto space-y-1.5 bg-slate-50/50">
+                            @php
+                                $commonMods = [
+                                    'Kasir Cepat & Struk WhatsApp',
+                                    'Manajemen Stok Standar',
+                                    'Multi-Metode Bayar',
+                                    'Laporan Penjualan Harian',
+                                    'Barcode Scanner',
+                                    'Resep & Bahan Baku (BOM)',
+                                    'Manajemen Meja Dine-In',
+                                    'Komisi Pegawai',
+                                    'Pelacakan Status Pesanan',
+                                ];
+                            @endphp
+                            @foreach ($commonMods as $cMod)
+                                <label class="flex items-center gap-2 cursor-pointer select-none text-xs">
+                                    <input type="checkbox"
+                                           wire:click="togglePresetModuleInNew('{{ $cMod }}')"
+                                           {{ in_array($cMod, $newBtPresetModules) ? 'checked' : '' }}
+                                           class="w-4 h-4 text-orange-500 rounded border-slate-300">
+                                    <span class="text-slate-800">{{ $cMod }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl flex items-center justify-end gap-3 shrink-0">
+                    <button type="button"
+                            wire:click="closeCreateBusinessTypeModal"
+                            class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button"
+                            wire:click="createBusinessType"
+                            class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm cursor-pointer">
+                        Buat Template Sekarang
+                    </button>
+                </div>
             </div>
         </div>
     @endif
