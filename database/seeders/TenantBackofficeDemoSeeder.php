@@ -6,6 +6,9 @@ use App\Models\Category;
 use App\Models\Discount;
 use App\Models\Expense;
 use App\Models\Ingredient;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\ProductRecipe;
@@ -811,6 +814,186 @@ class TenantBackofficeDemoSeeder extends Seeder
                         'created_at' => $mv['created_at'],
                     ],
                     $mv
+                );
+            }
+
+            // Seed Realistic Completed Orders for Studio Rona (Services & Retail Products)
+            $pGentleman = Product::where('tenant_id', $salonTenant->id)->where('name', 'like', '%Gentleman Haircut%')->first();
+            $pKids = Product::where('tenant_id', $salonTenant->id)->where('name', 'like', '%Kids Haircut%')->first();
+            $pShaving = Product::where('tenant_id', $salonTenant->id)->where('name', 'like', '%Beard Shaving%')->first();
+            $pCreambath = Product::where('tenant_id', $salonTenant->id)->where('name', 'like', '%Creambath Spa%')->first();
+            $pColoring = Product::where('tenant_id', $salonTenant->id)->where('name', 'like', '%Hair Coloring%')->first();
+
+            $salonOrdersData = [
+                [
+                    'order_number' => 'ORD-RONA-' . date('Ym') . '-001',
+                    'order_type' => 'dine_in',
+                    'table_number' => 'Kursi Barber 01',
+                    'created_at' => now()->subDays(3)->setTime(11, 30),
+                    'items' => [
+                        ['product' => $pGentleman, 'qty' => 1, 'price' => 60000],
+                        ['product' => $pPomade, 'qty' => 1, 'price' => 85000],
+                    ],
+                ],
+                [
+                    'order_number' => 'ORD-RONA-' . date('Ym') . '-002',
+                    'order_type' => 'dine_in',
+                    'table_number' => 'Kursi Spa 01',
+                    'created_at' => now()->subDays(2)->setTime(14, 15),
+                    'items' => [
+                        ['product' => $pCreambath, 'qty' => 1, 'price' => 85000],
+                        ['product' => $pTonic, 'qty' => 1, 'price' => 65000],
+                    ],
+                ],
+                [
+                    'order_number' => 'ORD-RONA-' . date('Ym') . '-003',
+                    'order_type' => 'dine_in',
+                    'table_number' => 'Kursi Barber 02',
+                    'created_at' => now()->subDays(2)->setTime(16, 45),
+                    'items' => [
+                        ['product' => $pGentleman, 'qty' => 2, 'price' => 60000],
+                        ['product' => $pShaving, 'qty' => 1, 'price' => 35000],
+                    ],
+                ],
+                [
+                    'order_number' => 'ORD-RONA-' . date('Ym') . '-004',
+                    'order_type' => 'dine_in',
+                    'table_number' => 'Kursi Coloring 01',
+                    'created_at' => now()->subDays(1)->setTime(13, 00),
+                    'items' => [
+                        ['product' => $pColoring, 'qty' => 1, 'price' => 150000],
+                        ['product' => $pSerum, 'qty' => 1, 'price' => 95000],
+                        ['product' => $pShampoo, 'qty' => 1, 'price' => 110000],
+                    ],
+                ],
+                [
+                    'order_number' => 'ORD-RONA-' . date('Ym') . '-005',
+                    'order_type' => 'dine_in',
+                    'table_number' => 'Kursi Barber 01',
+                    'created_at' => now()->subHours(5),
+                    'items' => [
+                        ['product' => $pGentleman, 'qty' => 1, 'price' => 60000],
+                        ['product' => $pPomade, 'qty' => 2, 'price' => 85000],
+                    ],
+                ],
+                [
+                    'order_number' => 'ORD-RONA-' . date('Ym') . '-006',
+                    'order_type' => 'dine_in',
+                    'table_number' => 'Kursi Barber 03',
+                    'created_at' => now()->subHours(2),
+                    'items' => [
+                        ['product' => $pKids, 'qty' => 1, 'price' => 45000],
+                    ],
+                ],
+            ];
+
+            foreach ($salonOrdersData as $oData) {
+                $subtotal = 0;
+                foreach ($oData['items'] as $it) {
+                    $subtotal += ($it['price'] * $it['qty']);
+                }
+                $tax = round($subtotal * 0.11);
+                $total = $subtotal + $tax;
+
+                $order = Order::updateOrCreate(
+                    [
+                        'tenant_id' => $salonTenant->id,
+                        'order_number' => $oData['order_number'],
+                    ],
+                    [
+                        'outlet_id' => $salonOutlet->id,
+                        'user_id' => $salonOwner?->id ?? 1,
+                        'order_type' => $oData['order_type'],
+                        'table_number' => $oData['table_number'],
+                        'subtotal' => $subtotal,
+                        'discount_amount' => 0,
+                        'tax_amount' => $tax,
+                        'service_amount' => 0,
+                        'total_amount' => $total,
+                        'status' => 'completed',
+                        'payment_status' => 'paid',
+                        'paid_at' => $oData['created_at'],
+                        'created_at' => $oData['created_at'],
+                        'updated_at' => $oData['created_at'],
+                    ]
+                );
+
+                foreach ($oData['items'] as $it) {
+                    if ($it['product']) {
+                        OrderItem::updateOrCreate(
+                            [
+                                'order_id' => $order->id,
+                                'product_id' => $it['product']->id,
+                            ],
+                            [
+                                'tenant_id' => $salonTenant->id,
+                                'product_name' => $it['product']->name,
+                                'variant_name' => $it['product']->type === 'service' ? 'Standar Sesi' : 'Reguler',
+                                'qty' => $it['qty'],
+                                'unit_price' => $it['price'],
+                                'subtotal' => $it['price'] * $it['qty'],
+                                'created_at' => $oData['created_at'],
+                                'updated_at' => $oData['created_at'],
+                            ]
+                        );
+                    }
+                }
+
+                OrderPayment::updateOrCreate(
+                    [
+                        'order_id' => $order->id,
+                        'reference_number' => 'PAY-' . $order->order_number,
+                    ],
+                    [
+                        'tenant_id' => $salonTenant->id,
+                        'payment_method' => 'qris',
+                        'amount' => $total,
+                        'cash_tendered' => $total,
+                        'change_due' => 0,
+                        'created_at' => $oData['created_at'],
+                        'updated_at' => $oData['created_at'],
+                    ]
+                );
+            }
+
+            // Seed Expenses for Studio Rona
+            $salonExpenses = [
+                [
+                    'category' => 'Sewa Tempat',
+                    'title' => 'Sewa Ruko Studio Rona Gubeng Oktober 2026',
+                    'amount' => 3500000,
+                    'expense_date' => now()->startOfMonth()->toDateString(),
+                    'payment_method' => 'Transfer Bank',
+                    'notes' => 'Pembayaran sewa ruko lantai 1',
+                ],
+                [
+                    'category' => 'Listrik & Air',
+                    'title' => 'Tagihan Listrik PLN 3 AC & Water Heater Salon',
+                    'amount' => 850000,
+                    'expense_date' => now()->subDays(8)->toDateString(),
+                    'payment_method' => 'Transfer Bank',
+                    'notes' => 'Listrik token 5500 VA',
+                ],
+                [
+                    'category' => 'Operasional',
+                    'title' => 'Laundry Handuk Microfiber & Jubah Keramas Mingguan',
+                    'amount' => 220000,
+                    'expense_date' => now()->subDays(3)->toDateString(),
+                    'payment_method' => 'Kas Toko / Tunai',
+                    'notes' => '120 pcs handuk salon',
+                ],
+            ];
+
+            foreach ($salonExpenses as $se) {
+                Expense::updateOrCreate(
+                    [
+                        'tenant_id' => $salonTenant->id,
+                        'title' => $se['title'],
+                    ],
+                    array_merge($se, [
+                        'tenant_id' => $salonTenant->id,
+                        'outlet_id' => $salonOutlet->id,
+                    ])
                 );
             }
         }

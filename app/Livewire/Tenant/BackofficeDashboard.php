@@ -439,6 +439,8 @@ class BackofficeDashboard extends Component
             ->latest('created_at')
             ->first();
 
+        $financeData = $this->getFinanceBreakdownData();
+
         return view('livewire.tenant.backoffice-dashboard', [
             'tenant' => $tenant,
             'allTenants' => $allTenants,
@@ -486,6 +488,7 @@ class BackofficeDashboard extends Component
             'lastOpnameMovement' => $lastOpnameMovement,
             'shiftTemplates' => $this->getShiftTemplates(),
             'shiftHistory' => Shift::with(['user', 'outlet'])->where('tenant_id', $this->tenantId)->latest()->take(10)->get(),
+            'financeData' => $financeData,
         ])->layout('layouts.app', ['title' => 'Admin Back Office - ' . ($tenant->name ?? 'Lokara POS')]);
     }
 }
