@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Auth;
 
 trait HasStock
 {
+    // Sub-view toggle: 'catalog' (Saldo Persediaan Produk) vs 'ledger' (Kartu Mutasi & Audit)
+    public string $stockActiveSubTab = 'catalog';
+    public string $stockProductStatusFilter = 'all'; // 'all', 'safe', 'low', 'empty'
+
     // Filter & Search Properties
     public string $stockSearch = '';
     public string $stockTypeFilter = 'all'; // 'all', 'opname', 'sale_pos', 'purchase', 'waste', 'adjustment'
@@ -204,6 +208,22 @@ trait HasStock
         }
 
         $this->showOpnameModal = false;
+    }
+
+    public function setStockSubTab(string $subTab): void
+    {
+        $this->stockActiveSubTab = $subTab;
+    }
+
+    public function viewProductMovements(int $productId): void
+    {
+        $product = Product::where('tenant_id', $this->tenantId)->find($productId);
+        if ($product) {
+            $this->stockActiveSubTab = 'ledger';
+            $this->stockItemTypeFilter = 'product';
+            $this->stockSearch = $product->name;
+            $this->showToast("Menampilkan riwayat kartu mutasi untuk '{$product->name}'.", 'info');
+        }
     }
 
     public function resetStockFilters(): void

@@ -946,7 +946,8 @@ class TenantBackofficeTest extends TestCase
 
         $component = Livewire::actingAs($salonOwner, 'web')
             ->test(BackofficeDashboard::class)
-            ->set('activeTab', 'stock');
+            ->set('activeTab', 'stock')
+            ->set('stockActiveSubTab', 'ledger');
 
         // 1. Search Filter
         $component->set('stockSearch', 'UnikXYZ')
@@ -981,5 +982,29 @@ class TenantBackofficeTest extends TestCase
             ->assertSet('stockDateFilter', 'all')
             ->assertSet('stockStartDate', null)
             ->assertSet('stockEndDate', null);
+    }
+
+    public function test_page_refresh_preserves_active_tab_and_does_not_reset_to_dashboard()
+    {
+        $salonOwner = User::where('tenant_id', 3)->where('role', 'owner')->first();
+
+        // 1. Test via query string parameter ?tab=stock
+        $this->actingAs($salonOwner, 'web')
+            ->get('/app?tab=stock')
+            ->assertOk()
+            ->assertSee('Stok & Opname Produk Ritel Salon');
+
+        // 2. Test switching tab updates session and Livewire keeps activeTab
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'stock')
+            ->assertSet('activeTab', 'stock');
+
+        $this->assertEquals('stock', session('tenant_active_tab'));
+
+        // 3. Test mounting without query string falls back to session
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->assertSet('activeTab', 'stock');
     }
 }

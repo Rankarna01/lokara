@@ -870,6 +870,46 @@ class TenantBackofficeDemoSeeder extends Seeder
                 ]
             );
 
+            $putryShampoo = Product::updateOrCreate(
+                ['tenant_id' => $putryTenant->id, 'name' => 'Shampoo Salon Keratin Putry 500ml'],
+                [
+                    'category_id' => $putryCat->id,
+                    'category_tag' => 'Produk • Perawatan',
+                    'type' => 'item',
+                    'slug' => 'shampoo-salon-keratin-putry',
+                    'sku' => 'PUTRY-SHAMPOO',
+                    'base_price' => 105000,
+                    'cost_price' => 52000,
+                    'stock_quantity' => 8,
+                    'minimum_stock' => 5,
+                    'unit' => 'botol',
+                    'track_stock' => true,
+                    'image_url' => 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
+            $putryMist = Product::updateOrCreate(
+                ['tenant_id' => $putryTenant->id, 'name' => 'Hair Mist Vitamin Spray Putry 150ml'],
+                [
+                    'category_id' => $putryCat->id,
+                    'category_tag' => 'Produk • Vitamin',
+                    'type' => 'item',
+                    'slug' => 'hair-mist-vitamin-spray-putry',
+                    'sku' => 'PUTRY-MIST',
+                    'base_price' => 55000,
+                    'cost_price' => 26000,
+                    'stock_quantity' => 2,
+                    'minimum_stock' => 5,
+                    'unit' => 'botol',
+                    'track_stock' => true,
+                    'image_url' => 'https://images.unsplash.com/photo-1608248597359-5975e533037f?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
             $putryUser = User::where('tenant_id', $putryTenant->id)->first();
             StockMovement::updateOrCreate(
                 [
@@ -902,6 +942,40 @@ class TenantBackofficeDemoSeeder extends Seeder
                     'reference_note' => 'Stok Opname Awal: Saldo fisik serum display Putry Beauty care',
                     'created_at' => now()->subDays(2)->setTime(10, 15, 0),
                     'updated_at' => now()->subDays(2)->setTime(10, 15, 0),
+                ]
+            );
+
+            StockMovement::updateOrCreate(
+                [
+                    'tenant_id' => $putryTenant->id,
+                    'product_id' => $putryShampoo->id,
+                    'type' => 'purchase',
+                ],
+                [
+                    'outlet_id' => $putryOutlet->id,
+                    'user_id' => $putryUser?->id,
+                    'qty' => 8,
+                    'balance_after' => 8,
+                    'reference_note' => 'Penerimaan Stok Produk dari Supplier Pusat',
+                    'created_at' => now()->subDay()->setTime(14, 0, 0),
+                    'updated_at' => now()->subDay()->setTime(14, 0, 0),
+                ]
+            );
+
+            StockMovement::updateOrCreate(
+                [
+                    'tenant_id' => $putryTenant->id,
+                    'product_id' => $putryMist->id,
+                    'type' => 'opname',
+                ],
+                [
+                    'outlet_id' => $putryOutlet->id,
+                    'user_id' => $putryUser?->id,
+                    'qty' => 2,
+                    'balance_after' => 2,
+                    'reference_note' => 'Stok Opname: Sisa 2 botol display (Stok Menipis - Butuh Restock)',
+                    'created_at' => now()->subHours(5),
+                    'updated_at' => now()->subHours(5),
                 ]
             );
         }

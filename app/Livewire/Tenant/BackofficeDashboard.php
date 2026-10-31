@@ -29,6 +29,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -47,6 +48,7 @@ class BackofficeDashboard extends Component
     use HasOutletsAndStaff;
     use HasShifts;
 
+    #[Url(as: 'tab', keep: true)]
     public string $activeTab = 'dashboard';
     public ?int $tenantId = null;
     public ?int $selectedOutletId = null;
@@ -92,11 +94,20 @@ class BackofficeDashboard extends Component
             $this->policyEnforceLock = (bool) ($policies['enforce_lock'] ?? true);
             $this->policyRequireReconciliation = (bool) ($policies['require_reconciliation'] ?? true);
         }
+
+        // Restore active tab from query string or session on refresh
+        if (request()->has('tab') && !empty(request()->query('tab'))) {
+            $this->activeTab = (string) request()->query('tab');
+            session(['tenant_active_tab' => $this->activeTab]);
+        } elseif (session()->has('tenant_active_tab') && !empty(session('tenant_active_tab'))) {
+            $this->activeTab = (string) session('tenant_active_tab');
+        }
     }
 
     public function switchTab(string $tab): void
     {
         $this->activeTab = $tab;
+        session(['tenant_active_tab' => $tab]);
     }
 
     public function switchOutlet(int $outletId): void
@@ -123,8 +134,9 @@ class BackofficeDashboard extends Component
         $this->selectedCategoryFilter = 'all';
         $this->selectedServiceCategoryFilter = 'all';
 
-        if ($tenant->isSalon() && in_array($this->activeTab, ['recipes', 'stock'])) {
+        if ($tenant->isSalon() && $this->activeTab === 'recipes') {
             $this->activeTab = 'services';
+            session(['tenant_active_tab' => 'services']);
         }
 
         $this->showToast("Mode Super Admin: Menampilkan tenant '{$tenant->name}' ({$tenant->businessType?->name}).", 'info');
@@ -386,10 +398,35 @@ class BackofficeDashboard extends Component
 
         // Stock Summary Stats
         $isSalon = $tenant && ($tenant->businessType?->slug === 'salon' || $tenant->business_type === 'salon');
-        $directProducts = Product::where('tenant_id', $this->tenantId)->where('type', 'item')->get();
+        $directProducts = Product::with('category')->where('tenant_id', $this->tenantId)->where('type', 'item')->get();
+        if ($directProducts->isEmpty()) {
+            // Fallback: If no 'item' type exists, get all products
+            $directProducts = Product::with('category')->where('tenant_id', $this->tenantId)->get();
+        }
+
         $totalDirectProductsCount = $directProducts->count();
         $totalDirectStockQty = (float) $directProducts->sum('stock_quantity');
         $lowStockDirectProducts = $directProducts->filter(fn($p) => (float)$p->stock_quantity <= (float)($p->minimum_stock ?: 5))->count();
+        $totalInventoryAssetValue = (float) $directProducts->sum(fn($p) => (float)$p->stock_quantity * (float)$p->cost_price);
+
+        // Filter direct products for the Stock Inventory Catalog view
+        $filteredDirectProducts = $directProducts;
+        if ($this->stockProductStatusFilter === 'safe') {
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => (float)$p->stock_quantity > (float)($p->minimum_stock ?: 5));
+        } elseif ($this->stockProductStatusFilter === 'low') {
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => (float)$p->stock_quantity > 0 && (float)$p->stock_quantity <= (float)($p->minimum_stock ?: 5));
+        } elseif ($this->stockProductStatusFilter === 'empty') {
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => (float)$p->stock_quantity <= 0);
+        }
+
+        if (!empty($this->stockSearch) && $this->stockActiveSubTab === 'catalog') {
+            $term = strtolower(trim($this->stockSearch));
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => 
+                str_contains(strtolower($p->name), $term) || 
+                str_contains(strtolower($p->sku ?? ''), $term) ||
+                str_contains(strtolower($p->category?->name ?? ''), $term)
+            );
+        }
 
         $totalOpnameCountThisMonth = StockMovement::where('tenant_id', $this->tenantId)
             ->where('type', 'opname')
@@ -440,9 +477,11 @@ class BackofficeDashboard extends Component
             'stockMovements' => $stockMovements,
             'isSalon' => $isSalon,
             'directProducts' => $directProducts,
+            'filteredDirectProducts' => $filteredDirectProducts,
             'totalDirectProductsCount' => $totalDirectProductsCount,
             'totalDirectStockQty' => $totalDirectStockQty,
             'lowStockDirectProducts' => $lowStockDirectProducts,
+            'totalInventoryAssetValue' => $totalInventoryAssetValue,
             'totalOpnameCountThisMonth' => $totalOpnameCountThisMonth,
             'lastOpnameMovement' => $lastOpnameMovement,
             'shiftTemplates' => $this->getShiftTemplates(),
