@@ -2,7 +2,9 @@
 const CACHE_NAME = 'lokara-pos-cache-v1';
 const PRECACHE_ASSETS = [
     '/manifest.json',
+    '/images/logo-app.png',
     '/images/logo-lokarapos.png',
+    '/images/opengraph.png',
 ];
 
 self.addEventListener('install', (event) => {

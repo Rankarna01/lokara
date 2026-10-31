@@ -13,8 +13,27 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Lokara POS">
-    <link rel="apple-touch-icon" href="/images/logo-lokarapos.png">
-    <link rel="icon" type="image/png" href="/images/logo-lokarapos.png">
+    
+    <!-- Favicon & Touch Icons -->
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-app.png') }}">
+    <link rel="shortcut icon" href="{{ asset('images/logo-app.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo-app.png') }}">
+
+    <!-- Open Graph (OG) Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $title ?? 'Lokara POS - Smart Point of Sale & Multi-Tenant Management' }}">
+    <meta property="og:description" content="Sistem Kasir Pintar Multi-Tenant POS modern dengan manajemen pesanan, inventori, laporan laba rugi, dan dukungan PWA mobile.">
+    <meta property="og:image" content="{{ asset('images/opengraph.png') }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:site_name" content="Lokara POS">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $title ?? 'Lokara POS - Smart Point of Sale & Multi-Tenant Management' }}">
+    <meta name="twitter:description" content="Sistem Kasir Pintar Multi-Tenant POS modern dengan manajemen pesanan, inventori, laporan laba rugi, dan dukungan PWA mobile.">
+    <meta name="twitter:image" content="{{ asset('images/opengraph.png') }}">
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

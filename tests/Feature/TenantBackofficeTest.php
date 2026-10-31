@@ -1520,4 +1520,18 @@ class TenantBackofficeTest extends TestCase
             ->assertSee('pwaInstallManager()', false)
             ->assertSee('Install App');
     }
+
+    public function test_layout_renders_favicon_and_opengraph_meta_tags()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+
+        $this->actingAs($owner)
+            ->get('/app')
+            ->assertStatus(200)
+            ->assertSee('images/logo-app.png')
+            ->assertSee('images/opengraph.png')
+            ->assertSee('property="og:image"', false)
+            ->assertSee('property="og:title"', false)
+            ->assertSee('name="twitter:card"', false);
+    }
 }
