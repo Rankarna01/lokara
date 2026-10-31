@@ -42,6 +42,11 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);

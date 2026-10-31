@@ -46,3 +46,9 @@
 <!-- 16. Modal Tambah / Edit Template Shift -->
 @include('livewire.tenant.partials.modals.shift_template')
 
+<!-- 17. Modal Detail Transaksi POS -->
+@include('livewire.tenant.partials.modals.transaction_detail')
+
+<!-- 18. Modal Cetak Struk Thermal POS -->
+@include('livewire.tenant.partials.modals.print_receipt')
+

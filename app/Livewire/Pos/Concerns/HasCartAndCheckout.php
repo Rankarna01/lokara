@@ -220,13 +220,20 @@ trait HasCartAndCheckout
         ];
 
         // Save order to MySQL DB
-        $tenant = Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
-        if ($tenant) {
+        $user = Auth::user();
+        $tenantId = $user?->tenant_id ?? (Tenant::where('slug', 'kopiruangpagi')->first()?->id ?? Tenant::first()?->id);
+        $outletId = $this->selectedOutletId;
+        if (! $outletId && $tenantId) {
+            $outletId = $user?->outlet_id ?? Outlet::where('tenant_id', $tenantId)->first()?->id;
+        }
+
+        if ($tenantId) {
             $order = Order::create([
-                'tenant_id' => $tenant->id,
-                'outlet_id' => $this->selectedOutletId ?? 1,
+                'tenant_id' => $tenantId,
+                'outlet_id' => $outletId ?? 1,
                 'customer_id' => $this->selectedCustomer['id'] ?? null,
-                'user_id' => Auth::id() ?? 1,
+                'shift_id' => $this->activeShiftId,
+                'user_id' => $user?->id ?? 1,
                 'order_number' => $orderNumber,
                 'order_type' => $this->orderType,
                 'table_number' => $this->orderType === 'dine_in' ? $this->selectedTable : null,
@@ -242,7 +249,7 @@ trait HasCartAndCheckout
 
             foreach ($this->cart as $item) {
                 OrderItem::create([
-                    'tenant_id' => $tenant->id,
+                    'tenant_id' => $tenantId,
                     'order_id' => $order->id,
                     'product_id' => $item['product_id'],
                     'product_name' => $item['name'],
@@ -251,10 +258,28 @@ trait HasCartAndCheckout
                     'unit_price' => $item['price'],
                     'subtotal' => $item['subtotal'],
                 ]);
+
+                // Decrement stock for retail items that track stock
+                $product = Product::where('id', $item['product_id'])->where('tenant_id', $tenantId)->first();
+                if ($product && $product->track_stock) {
+                    $product->decrement('stock_quantity', (float) $item['qty']);
+                    \App\Models\StockMovement::create([
+                        'tenant_id' => $tenantId,
+                        'outlet_id' => $this->selectedOutletId ?? 1,
+                        'product_id' => $product->id,
+                        'ingredient_id' => null,
+                        'user_id' => $user?->id ?? 1,
+                        'type' => 'sale_pos',
+                        'qty' => -((float) $item['qty']),
+                        'balance_after' => (float) $product->fresh()->stock_quantity,
+                        'reference_note' => "Penjualan POS #{$order->order_number}",
+                        'created_at' => Carbon::now(),
+                    ]);
+                }
             }
 
             OrderPayment::create([
-                'tenant_id' => $tenant->id,
+                'tenant_id' => $tenantId,
                 'order_id' => $order->id,
                 'payment_method' => $this->paymentMethod,
                 'amount' => $totals['total'],

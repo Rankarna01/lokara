@@ -57,8 +57,6 @@ class BackofficeDashboard extends Component
     public string $searchProduct = '';
     public string $selectedCategoryFilter = 'all';
     public string $searchIngredient = '';
-    public string $searchTransaction = '';
-    public string $transactionStatusFilter = 'all';
 
     // Toast
     public string $toastMessage = '';
@@ -256,15 +254,12 @@ class BackofficeDashboard extends Component
         }
         $ingredients = $ingredientsQuery->get();
 
-        // 4. Transactions Data
-        $transactionsQuery = Order::with(['items', 'payments'])->where('tenant_id', $this->tenantId);
-        if ($this->transactionStatusFilter !== 'all') {
-            $transactionsQuery->where('status', $this->transactionStatusFilter);
-        }
-        if (!empty($this->searchTransaction)) {
-            $transactionsQuery->where('order_number', 'like', '%' . $this->searchTransaction . '%');
-        }
-        $transactions = $transactionsQuery->orderBy('id', 'desc')->take(20)->get();
+        // 4. Transactions Data & Analytics
+        $txData = $this->getFilteredTransactionsData();
+        $transactions = $txData['transactions'];
+        $totalFilteredTransactionsCount = $txData['totalFilteredCount'];
+        $viewingTransaction = $txData['viewingTransaction'];
+        $transactionAnalytics = $this->getTransactionAnalyticsData();
 
         // 5. Suppliers & Purchase Orders Data (Filtered)
         $poQuery = PurchaseOrder::with(['supplier', 'outlet', 'items'])
@@ -464,6 +459,9 @@ class BackofficeDashboard extends Component
             'discounts' => $discounts,
             'ingredients' => $ingredients,
             'transactions' => $transactions,
+            'totalFilteredTransactionsCount' => $totalFilteredTransactionsCount,
+            'viewingTransaction' => $viewingTransaction,
+            'transactionAnalytics' => $transactionAnalytics,
             'suppliers' => $suppliers,
             'allSuppliersList' => $allSuppliersList,
             'purchaseOrders' => $purchaseOrders,

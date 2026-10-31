@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Livewire\Tenant\BackofficeDashboard;
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Ingredient;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
@@ -1006,5 +1009,280 @@ class TenantBackofficeTest extends TestCase
         Livewire::actingAs($salonOwner, 'web')
             ->test(BackofficeDashboard::class)
             ->assertSet('activeTab', 'stock');
+    }
+
+    public function test_salon_laba_rugi_has_two_tabs_for_products_and_services_with_filtering_and_searching()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        if (!$salonOwner) {
+            $salonTenant = Tenant::where('slug', 'studiorona')->first();
+            $salonOwner = User::where('tenant_id', $salonTenant->id)->first();
+        }
+
+        $component = Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->assertSet('activeTab', 'finance')
+            ->assertSet('financeSubTab', 'products')
+            ->assertSee('Ringkasan Laba Rugi Salon', false)
+            ->assertSee('1. Penjualan Produk Master')
+            ->assertSee('2. Penjualan Master Layanan')
+            ->assertSee('Pomade Strong Matte Clay 100g');
+
+        // 1. Test Switch to Tab 2: Penjualan Master Layanan
+        $component->call('setFinanceSubTab', 'services')
+            ->assertSet('financeSubTab', 'services')
+            ->assertSee('Rincian Laba Rugi Master Layanan Jasa')
+            ->assertSee('Gentleman Haircut & Styling')
+            ->assertSee('Modal Bahan')
+            ->assertSee('Komisi Kapster')
+            ->assertSee('Laba Bersih Layanan');
+
+        // 2. Test Searching in Master Layanan
+        $component->set('financeSearch', 'Creambath')
+            ->assertSee('Creambath Spa & Head Massage')
+            ->assertDontSee('Gentleman Haircut & Styling');
+
+        // 3. Test Switch back to Tab 1: Penjualan Produk Master & Search
+        $component->call('setFinanceSubTab', 'products')
+            ->assertSet('financeSubTab', 'products')
+            ->set('financeSearch', 'Shampoo')
+            ->assertSee('Shampoo Anti-Dandruff Professional 500ml')
+            ->assertDontSee('Pomade Strong Matte Clay 100g');
+
+        // 4. Test Sorting & Date Filtering
+        $component->set('financeSortBy', 'qty_desc')
+            ->set('financeDateFilter', 'all')
+            ->assertSet('financeSortBy', 'qty_desc')
+            ->assertSet('financeDateFilter', 'all');
+
+        // 5. Test Reset Filters
+        $component->call('resetFinanceFilters')
+            ->assertSet('financeSearch', '')
+            ->assertSet('financeCategoryFilter', 'all')
+            ->assertSet('financeDateFilter', 'this_month')
+            ->assertSet('financeSortBy', 'profit_desc');
+    }
+
+    public function test_transaction_history_tab_renders_with_relations_chart_and_metrics()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::find($owner->tenant_id);
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+        $product = Product::where('tenant_id', $tenant->id)->first();
+
+        // Ensure order has complete relations
+        $customer = Customer::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Budi Santoso',
+            'phone' => '081299887766',
+        ]);
+
+        $order = Order::create([
+            'tenant_id' => $tenant->id,
+            'outlet_id' => $outlet->id,
+            'customer_id' => $customer->id,
+            'user_id' => $owner->id,
+            'order_number' => 'ORD-TEST-001',
+            'order_type' => 'dine_in',
+            'table_number' => '05',
+            'subtotal' => 50000,
+            'discount_amount' => 5000,
+            'tax_amount' => 4500,
+            'service_amount' => 0,
+            'total_amount' => 49500,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'paid_at' => Carbon::now(),
+            'created_at' => Carbon::now(),
+        ]);
+
+        OrderItem::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'qty' => 2,
+            'unit_price' => 25000,
+            'subtotal' => 50000,
+        ]);
+
+        OrderPayment::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'payment_method' => 'cash',
+            'amount' => 49500,
+            'cash_tendered' => 50000,
+            'change_due' => 500,
+            'reference_number' => 'REF-TEST-001',
+        ]);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions')
+            ->assertSet('activeTab', 'transactions')
+            ->assertSee('Riwayat Transaksi Penjualan')
+            ->assertSee('Audit log struk belanja')
+            ->assertSee('Total Omset')
+            ->assertSee('Transaksi Lunas')
+            ->assertSee('Rata-rata Struk (AOV)')
+            ->assertSee('Pembayaran Terfavorit')
+            ->assertSee('Tren Penjualan & Frekuensi Transaksi POS', false)
+            ->assertSee('Sebaran Metode Bayar')
+            ->assertSee('Distribusi Tipe Pesanan')
+            ->assertSee('ORD-TEST-001')
+            ->assertSee('Budi Santoso');
+
+        // Test metric switch in chart
+        $component->call('setTransactionTrendMetric', 'count')
+            ->assertSet('transactionTrendMetric', 'count')
+            ->call('setTransactionTrendMetric', 'revenue')
+            ->assertSet('transactionTrendMetric', 'revenue');
+
+        // Test period switch in chart
+        $component->call('setTransactionTrendPeriod', '14_days')
+            ->assertSet('transactionTrendPeriod', '14_days')
+            ->call('setTransactionTrendPeriod', '7_days')
+            ->assertSet('transactionTrendPeriod', '7_days');
+    }
+
+    public function test_transaction_filters_by_search_status_payment_method_and_date()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::find($owner->tenant_id);
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+        $product = Product::where('tenant_id', $tenant->id)->first();
+
+        $order = Order::create([
+            'tenant_id' => $tenant->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $owner->id,
+            'order_number' => 'ORD-FILTER-002',
+            'order_type' => 'dine_in',
+            'table_number' => '02',
+            'subtotal' => 60000,
+            'discount_amount' => 0,
+            'tax_amount' => 6000,
+            'service_amount' => 0,
+            'total_amount' => 66000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'paid_at' => Carbon::now(),
+            'created_at' => Carbon::now(),
+        ]);
+
+        OrderItem::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'qty' => 1,
+            'unit_price' => 60000,
+            'subtotal' => 60000,
+        ]);
+
+        OrderPayment::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'payment_method' => 'cash',
+            'amount' => 66000,
+            'cash_tendered' => 70000,
+            'change_due' => 4000,
+            'reference_number' => 'REF-FILTER-002',
+        ]);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions')
+            ->set('searchTransaction', 'ORD-FILTER-002')
+            ->assertSee('ORD-FILTER-002')
+            ->set('searchTransaction', 'NON_EXISTENT_ORDER_9999')
+            ->assertSee('Tidak Ada Transaksi Ditemukan')
+            ->call('resetTransactionFilters')
+            ->assertSet('searchTransaction', '')
+            ->assertSet('transactionStatusFilter', 'all')
+            ->assertSet('transactionPaymentMethodFilter', 'all')
+            ->assertSet('transactionDateFilter', '30_days');
+
+        // Test Status Filter
+        $component->set('transactionStatusFilter', 'completed')
+            ->assertSet('transactionStatusFilter', 'completed');
+
+        // Test Payment Method Filter
+        $component->set('transactionPaymentMethodFilter', 'cash')
+            ->assertSet('transactionPaymentMethodFilter', 'cash');
+
+        // Test Custom Date Filter
+        $component->call('setTransactionDateFilter', 'custom')
+            ->assertSet('transactionDateFilter', 'custom')
+            ->set('transactionStartDate', '2026-10-01')
+            ->set('transactionEndDate', '2026-10-31')
+            ->assertSet('transactionStartDate', '2026-10-01');
+    }
+
+    public function test_transaction_detail_modal_and_print_receipt_modal()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::find($owner->tenant_id);
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+        $product = Product::where('tenant_id', $tenant->id)->first();
+
+        $order = Order::create([
+            'tenant_id' => $tenant->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $owner->id,
+            'order_number' => 'ORD-MODAL-003',
+            'order_type' => 'dine_in',
+            'table_number' => '03',
+            'subtotal' => 40000,
+            'discount_amount' => 0,
+            'tax_amount' => 4000,
+            'service_amount' => 0,
+            'total_amount' => 44000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'paid_at' => Carbon::now(),
+            'created_at' => Carbon::now(),
+        ]);
+
+        OrderItem::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'qty' => 1,
+            'unit_price' => 40000,
+            'subtotal' => 40000,
+        ]);
+
+        OrderPayment::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'payment_method' => 'cash',
+            'amount' => 44000,
+            'cash_tendered' => 50000,
+            'change_due' => 6000,
+            'reference_number' => 'REF-MODAL-003',
+        ]);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions')
+            ->call('viewTransactionDetail', $order->id)
+            ->assertSet('showTransactionDetailModal', true)
+            ->assertSet('selectedTransactionId', $order->id)
+            ->assertSee($order->order_number)
+            ->assertSee('Rincian Item Pesanan')
+            ->call('closeTransactionDetailModal')
+            ->assertSet('showTransactionDetailModal', false);
+
+        // Test Print Receipt Modal
+        $component->call('openPrintReceiptModal', $order->id)
+            ->assertSet('showPrintReceiptModal', true)
+            ->assertSet('selectedTransactionId', $order->id)
+            ->assertSee('Preview Struk Kasir')
+            ->assertSee('Cetak Sekarang')
+            ->call('closePrintReceiptModal')
+            ->assertSet('showPrintReceiptModal', false);
     }
 }
