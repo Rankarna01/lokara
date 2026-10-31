@@ -8,7 +8,7 @@
                                         Modul Salon & Barbershop
                                     </span>
                                 </div>
-                                <p class="text-xs text-slate-500 mt-0.5">Kelola tarif potong rambut, perawatan spa, durasi waktu pengerjaan, dan skema komisi kapster/stylist.</p>
+                                <p class="text-xs text-slate-500 mt-0.5">Kelola tarif potong rambut, perawatan spa, durasi waktu pengerjaan, modal bahan, dan foto layanan.</p>
                             </div>
                             <div class="flex items-center gap-2.5">
                                 <button wire:click="switchTab('products')"

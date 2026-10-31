@@ -130,7 +130,7 @@
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'settings' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-sliders w-5 text-center {{ $activeTab === 'settings' ? 'text-orange-500' : 'text-slate-400' }}"></i>
-                            <span>Cabang, Staf & Shift</span>
+                            <span>{{ $isSalon ? 'Cabang & Staf' : 'Cabang, Staf & Shift' }}</span>
                         </div>
                     </button>
                 </nav>

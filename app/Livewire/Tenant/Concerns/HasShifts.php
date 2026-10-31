@@ -20,8 +20,17 @@ trait HasShifts
     public bool $policyEnforceLock = true;
     public bool $policyRequireReconciliation = true;
 
+    // Salon & Barbershop Shift Section Toggle (Hidden by default for Salon)
+    public bool $showSalonShiftSection = false;
+
+    public function toggleSalonShiftSection(): void
+    {
+        $this->showSalonShiftSection = ! $this->showSalonShiftSection;
+    }
+
     public function openNewShiftTemplateModal(): void
     {
+        $this->showSalonShiftSection = true;
         $this->editingShiftTemplateId = null;
         $this->shiftTemplateName = '';
         $this->shiftTemplateStartTime = '07:00';

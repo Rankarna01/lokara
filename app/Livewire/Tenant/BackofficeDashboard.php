@@ -3,6 +3,7 @@
 namespace App\Livewire\Tenant;
 
 use App\Livewire\Tenant\Concerns\HasCategories;
+use App\Livewire\Tenant\Concerns\HasCustomers;
 use App\Livewire\Tenant\Concerns\HasDiscounts;
 use App\Livewire\Tenant\Concerns\HasExpenses;
 use App\Livewire\Tenant\Concerns\HasOrdersAndVoid;
@@ -47,6 +48,7 @@ class BackofficeDashboard extends Component
     use HasOrdersAndVoid;
     use HasOutletsAndStaff;
     use HasShifts;
+    use HasCustomers;
 
     #[Url(as: 'tab', keep: true)]
     public string $activeTab = 'dashboard';
@@ -259,6 +261,9 @@ class BackofficeDashboard extends Component
         $transactions = $txData['transactions'];
         $totalFilteredTransactionsCount = $txData['totalFilteredCount'];
         $viewingTransaction = $txData['viewingTransaction'];
+        $serviceTransactionsCount = $txData['serviceCount'] ?? 0;
+        $productTransactionsCount = $txData['productCount'] ?? 0;
+        $allTransactionsCount = $txData['allCount'] ?? 0;
         $transactionAnalytics = $this->getTransactionAnalyticsData();
 
         // 5. Suppliers & Purchase Orders Data (Filtered)
@@ -330,7 +335,11 @@ class BackofficeDashboard extends Component
         $expenses = Expense::where('tenant_id', $this->tenantId)->orderBy('expense_date', 'desc')->get();
 
         // 7. Customers / CRM Data
-        $customers = Customer::where('tenant_id', $this->tenantId)->orderBy('points', 'desc')->get();
+        $crmData = $this->getFilteredCustomersData();
+        $customers = $crmData['customers'];
+        $totalCustomersCount = $crmData['totalCustomersCount'];
+        $viewingCustomer = $crmData['viewingCustomer'];
+        $crmStats = $crmData['crmStats'];
 
         // 8. Staff / Cashiers Data
         $cashiers = User::with('outlet')->where('tenant_id', $this->tenantId)->orderBy('role')->get();
@@ -461,6 +470,9 @@ class BackofficeDashboard extends Component
             'transactions' => $transactions,
             'totalFilteredTransactionsCount' => $totalFilteredTransactionsCount,
             'viewingTransaction' => $viewingTransaction,
+            'serviceTransactionsCount' => $serviceTransactionsCount,
+            'productTransactionsCount' => $productTransactionsCount,
+            'allTransactionsCount' => $allTransactionsCount,
             'transactionAnalytics' => $transactionAnalytics,
             'suppliers' => $suppliers,
             'allSuppliersList' => $allSuppliersList,
@@ -473,6 +485,9 @@ class BackofficeDashboard extends Component
             'viewingPo' => $viewingPo,
             'expenses' => $expenses,
             'customers' => $customers,
+            'totalCustomersCount' => $totalCustomersCount,
+            'viewingCustomer' => $viewingCustomer,
+            'crmStats' => $crmStats,
             'cashiers' => $cashiers,
             'stockMovements' => $stockMovements,
             'isSalon' => $isSalon,

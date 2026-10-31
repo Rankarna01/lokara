@@ -52,3 +52,9 @@
 <!-- 18. Modal Cetak Struk Thermal POS -->
 @include('livewire.tenant.partials.modals.print_receipt')
 
+<!-- 19. Modal Tambah / Edit Pelanggan CRM -->
+@include('livewire.tenant.partials.modals.customer')
+
+<!-- 20. Modal Profil Lengkap & Riwayat Transaksi Pelanggan CRM -->
+@include('livewire.tenant.partials.modals.customer_detail')
+

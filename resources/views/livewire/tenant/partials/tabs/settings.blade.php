@@ -228,23 +228,63 @@
                         </div>
 
                         <!-- Section 3: Master Shift, Jadwal & Rekonsiliasi Kas Laci -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
-                                        <i class="fa-solid fa-business-time"></i>
+                        @if($isSalon && !$showSalonShiftSection)
+                            <!-- Khusus Modul Salon & Barbershop: Master Shift Disembunyikan secara Default -->
+                            <div class="bg-gradient-to-r from-orange-50/70 to-amber-50/50 p-5 rounded-2xl border border-orange-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div class="flex items-center gap-3.5">
+                                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-base shadow-xs shrink-0">
+                                        <i class="fa-solid fa-scissors"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-bold text-slate-900 text-sm">Master Shift & Kebijakan Kasir</h3>
-                                        <p class="text-[11px] text-slate-400">Atur template jadwal shift kerja, kebijakan buka/tutup kasir, serta modal kas awal laci.</p>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-bold text-slate-900 text-sm">Modul Salon & Barbershop (Operasional Fleksibel)</h3>
+                                            <span class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Khusus Salon</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">
+                                            Layanan jasa salon beroperasi tanpa sistem shift kasir bergilir (komisi kapster / stylist dihitung langsung per transaksi layanan).
+                                        </p>
                                     </div>
                                 </div>
-                                <button wire:click="openNewShiftTemplateModal"
-                                    class="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-2 shrink-0">
-                                    <i class="fa-solid fa-plus text-xs"></i>
-                                    <span>+ Tambah Template Shift</span>
-                                </button>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button wire:click="toggleSalonShiftSection"
+                                        class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-2">
+                                        <i class="fa-solid fa-business-time text-orange-500"></i>
+                                        <span>Tampilkan Master Shift</span>
+                                    </button>
+                                    <button wire:click="openNewShiftTemplateModal"
+                                        class="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-2">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                        <span>+ Tambah Template Shift</span>
+                                    </button>
+                                </div>
                             </div>
+                        @else
+                            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                                <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+                                            <i class="fa-solid fa-business-time"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-900 text-sm">Master Shift & Kebijakan Kasir</h3>
+                                            <p class="text-[11px] text-slate-400">Atur template jadwal shift kerja, kebijakan buka/tutup kasir, serta modal kas awal laci.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        @if($isSalon)
+                                            <button wire:click="toggleSalonShiftSection"
+                                                class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition flex items-center gap-1.5">
+                                                <i class="fa-solid fa-eye-slash text-xs"></i>
+                                                <span>Sembunyikan Shift</span>
+                                            </button>
+                                        @endif
+                                        <button wire:click="openNewShiftTemplateModal"
+                                            class="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-2 shrink-0">
+                                            <i class="fa-solid fa-plus text-xs"></i>
+                                            <span>+ Tambah Template Shift</span>
+                                        </button>
+                                    </div>
+                                </div>
 
                             <div class="p-5 space-y-6">
                                 <!-- Kebijakan & Aturan Kasir -->
@@ -391,4 +431,5 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                     </div>

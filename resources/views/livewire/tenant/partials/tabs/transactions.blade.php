@@ -316,6 +316,63 @@
         </div>
     </div>
 
+    @if ($tenant?->isSalon() || $tenant?->hasFeature('has_services') || $isSalon)
+        <!-- Salon & Barbershop Dual Tab Selector (Layanan vs Produk) -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-scissors"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                            <span>Kategori Riwayat Transaksi:</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200">
+                                Modul Salon & Barbershop
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Pemisahan audit transaksi antara pengerjaan layanan jasa (stylist/kapster) dan penjualan produk retail.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 bg-slate-100/90 p-1 rounded-xl self-start md:self-auto overflow-x-auto max-w-full">
+                    <!-- Tab Layanan Jasa -->
+                    <button wire:click="setTransactionTypeTab('services')"
+                            type="button"
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap {{ $transactionTypeTab === 'services' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                        <i class="fa-solid fa-scissors text-xs"></i>
+                        <span>Penjualan Layanan (Jasa)</span>
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold {{ $transactionTypeTab === 'services' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600' }}">
+                            {{ $serviceTransactionsCount }}
+                        </span>
+                    </button>
+
+                    <!-- Tab Produk Retail -->
+                    <button wire:click="setTransactionTypeTab('products')"
+                            type="button"
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap {{ $transactionTypeTab === 'products' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                        <i class="fa-solid fa-box text-xs"></i>
+                        <span>Penjualan Produk (Retail)</span>
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold {{ $transactionTypeTab === 'products' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600' }}">
+                            {{ $productTransactionsCount }}
+                        </span>
+                    </button>
+
+                    <!-- Tab Semua Transaksi -->
+                    <button wire:click="setTransactionTypeTab('all')"
+                            type="button"
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap {{ $transactionTypeTab === 'all' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                        <i class="fa-solid fa-receipt text-xs"></i>
+                        <span>Semua Transaksi</span>
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold {{ $transactionTypeTab === 'all' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600' }}">
+                            {{ $allTransactionsCount }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- 4. Filter & Search Controls -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -481,14 +538,30 @@
 
                             <!-- Item Pesanan -->
                             <td class="py-3.5 px-4">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px] mb-0.5">
-                                    <i class="fa-solid fa-cube text-[9px] text-slate-400"></i>
-                                    {{ $tx->items->count() }} Macam Item
-                                </span>
-                                <div class="text-[11px] text-slate-500 truncate max-w-xs" title="{{ $tx->items->map(fn($i) => $i->qty . 'x ' . $i->product_name)->implode(', ') }}">
+                                @php
+                                    $hasServiceItems = $tx->items->contains(fn($i) => $i->product?->type === 'service');
+                                    $hasProductItems = $tx->items->contains(fn($i) => $i->product?->type !== 'service');
+                                @endphp
+                                <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px]">
+                                        <i class="fa-solid fa-cube text-[9px] text-slate-400"></i>
+                                        {{ $tx->items->count() }} Macam Item
+                                    </span>
+                                    @if($hasServiceItems)
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200">
+                                            <i class="fa-solid fa-scissors text-[9px]"></i> Layanan
+                                        </span>
+                                    @endif
+                                    @if($hasProductItems)
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                            <i class="fa-solid fa-box text-[9px]"></i> Produk
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="text-[11px] text-slate-600 truncate max-w-xs" title="{{ $tx->items->map(fn($i) => $i->qty . 'x ' . $i->product_name)->implode(', ') }}">
                                     {{ $tx->items->take(2)->map(fn($i) => ((float)$i->qty == (int)$i->qty ? (int)$i->qty : $i->qty) . 'x ' . $i->product_name)->implode(', ') }}
                                     @if($tx->items->count() > 2)
-                                        <span class="text-slate-400">+{{ $tx->items->count() - 2 }} lainnya</span>
+                                        <span class="text-slate-400 font-medium">+{{ $tx->items->count() - 2 }} lainnya</span>
                                     @endif
                                 </div>
                             </td>

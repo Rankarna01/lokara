@@ -10,6 +10,7 @@ trait HasOrdersAndVoid
 {
     // Transactions Filters
     public string $searchTransaction = '';
+    public string $transactionTypeTab = 'all'; // all, services, products (Khusus Salon & Barbershop)
     public string $transactionStatusFilter = 'all'; // all, completed, hold, voided
     public string $transactionPaymentMethodFilter = 'all'; // all, cash, qris, transfer, debit, credit
     public string $transactionOrderTypeFilter = 'all'; // all, dine_in, take_away, delivery
@@ -35,9 +36,15 @@ trait HasOrdersAndVoid
     public string $voidPin = '';
     public string $voidReason = 'Kesalahan pesanan';
 
+    public function setTransactionTypeTab(string $tab): void
+    {
+        $this->transactionTypeTab = in_array($tab, ['all', 'services', 'products']) ? $tab : 'all';
+    }
+
     public function resetTransactionFilters(): void
     {
         $this->searchTransaction = '';
+        $this->transactionTypeTab = 'all';
         $this->transactionStatusFilter = 'all';
         $this->transactionPaymentMethodFilter = 'all';
         $this->transactionOrderTypeFilter = 'all';
@@ -117,59 +124,52 @@ trait HasOrdersAndVoid
      */
     protected function getFilteredTransactionsData(): array
     {
-        $query = Order::with([
-            'items.product',
-            'payments',
-            'customer',
-            'user',
-            'outlet',
-            'shift',
-        ])->where('tenant_id', $this->tenantId);
+        $baseQuery = Order::where('tenant_id', $this->tenantId);
 
         if ($this->selectedOutletId) {
-            $query->where('outlet_id', $this->selectedOutletId);
+            $baseQuery->where('outlet_id', $this->selectedOutletId);
         }
 
         if ($this->transactionStatusFilter !== 'all') {
-            $query->where('status', $this->transactionStatusFilter);
+            $baseQuery->where('status', $this->transactionStatusFilter);
         }
 
         if ($this->transactionPaymentMethodFilter !== 'all') {
-            $query->whereHas('payments', function ($q) {
+            $baseQuery->whereHas('payments', function ($q) {
                 $q->where('payment_method', $this->transactionPaymentMethodFilter);
             });
         }
 
         if ($this->transactionOrderTypeFilter !== 'all') {
-            $query->where('order_type', $this->transactionOrderTypeFilter);
+            $baseQuery->where('order_type', $this->transactionOrderTypeFilter);
         }
 
         // Date Filter
         if ($this->transactionDateFilter === 'today') {
-            $query->whereBetween('created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
+            $baseQuery->whereBetween('created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
         } elseif ($this->transactionDateFilter === 'yesterday') {
-            $query->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+            $baseQuery->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
         } elseif ($this->transactionDateFilter === '7_days') {
-            $query->where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay());
+            $baseQuery->where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay());
         } elseif ($this->transactionDateFilter === '30_days') {
-            $query->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay());
+            $baseQuery->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay());
         } elseif ($this->transactionDateFilter === 'this_month') {
-            $query->where('created_at', '>=', Carbon::now()->startOfMonth()->startOfDay());
+            $baseQuery->where('created_at', '>=', Carbon::now()->startOfMonth()->startOfDay());
         } elseif ($this->transactionDateFilter === 'custom') {
             if (!empty($this->transactionStartDate)) {
                 $start = Carbon::parse($this->transactionStartDate . ' ' . ($this->transactionStartTime ?: '00:00:00'));
-                $query->where('created_at', '>=', $start);
+                $baseQuery->where('created_at', '>=', $start);
             }
             if (!empty($this->transactionEndDate)) {
                 $end = Carbon::parse($this->transactionEndDate . ' ' . ($this->transactionEndTime ?: '23:59:59'));
-                $query->where('created_at', '<=', $end);
+                $baseQuery->where('created_at', '<=', $end);
             }
         }
 
         // Search Filter
         if (!empty($this->searchTransaction)) {
             $search = trim($this->searchTransaction);
-            $query->where(function ($q) use ($search) {
+            $baseQuery->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
                   ->orWhere('table_number', 'like', "%{$search}%")
                   ->orWhere('notes', 'like', "%{$search}%")
@@ -187,6 +187,36 @@ trait HasOrdersAndVoid
                   ->orWhereHas('payments', function ($pq) use ($search) {
                       $pq->where('reference_number', 'like', "%{$search}%");
                   });
+            });
+        }
+
+        // Global counts for tabs (Layanan vs Produk vs Semua)
+        $allCount = (clone $baseQuery)->count();
+        $serviceCount = (clone $baseQuery)->whereHas('items.product', function ($pq) {
+            $pq->where('type', 'service');
+        })->count();
+        $productCount = (clone $baseQuery)->whereHas('items.product', function ($pq) {
+            $pq->where('type', '!=', 'service');
+        })->count();
+
+        // Target Query with items eager-loaded
+        $query = (clone $baseQuery)->with([
+            'items.product',
+            'payments',
+            'customer',
+            'user',
+            'outlet',
+            'shift',
+        ]);
+
+        // Filter Type Tab (Khusus Salon & Barbershop: Penjualan Layanan vs Penjualan Produk)
+        if ($this->transactionTypeTab === 'services') {
+            $query->whereHas('items.product', function ($pq) {
+                $pq->where('type', 'service');
+            });
+        } elseif ($this->transactionTypeTab === 'products') {
+            $query->whereHas('items.product', function ($pq) {
+                $pq->where('type', '!=', 'service');
             });
         }
 
@@ -209,6 +239,9 @@ trait HasOrdersAndVoid
             'transactions' => $transactions,
             'totalFilteredCount' => $totalFilteredCount,
             'viewingTransaction' => $viewingTransaction,
+            'allCount' => $allCount,
+            'serviceCount' => $serviceCount,
+            'productCount' => $productCount,
         ];
     }
 

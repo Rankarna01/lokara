@@ -1285,4 +1285,144 @@ class TenantBackofficeTest extends TestCase
             ->call('closePrintReceiptModal')
             ->assertSet('showPrintReceiptModal', false);
     }
+
+    public function test_salon_transaction_history_has_separate_tabs_for_services_and_products()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        if (!$salonOwner) {
+            $salonTenant = Tenant::where('slug', 'studiorona')->first();
+            $salonOwner = User::where('tenant_id', $salonTenant->id)->first();
+        }
+        $this->assertNotNull($salonOwner, 'Salon owner should exist in seeders.');
+
+        $component = Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions')
+            ->assertSee('Riwayat Transaksi Penjualan')
+            ->assertSee('Modul Salon & Barbershop', false)
+            ->assertSee('Penjualan Layanan (Jasa)')
+            ->assertSee('Penjualan Produk (Retail)')
+            ->assertSee('Semua Transaksi');
+
+        // Test filtering to services
+        $component->call('setTransactionTypeTab', 'services')
+            ->assertSet('transactionTypeTab', 'services');
+
+        // Test filtering to retail products
+        $component->call('setTransactionTypeTab', 'products')
+            ->assertSet('transactionTypeTab', 'products');
+
+        // Test filtering back to all
+        $component->call('setTransactionTypeTab', 'all')
+            ->assertSet('transactionTypeTab', 'all');
+
+        // Test reset transaction filters resets transactionTypeTab
+        $component->call('setTransactionTypeTab', 'services')
+            ->call('resetTransactionFilters')
+            ->assertSet('transactionTypeTab', 'all');
+    }
+
+    public function test_crm_customers_crud_and_detail_view_with_order_history()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::find($owner->tenant_id);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'crm')
+            ->assertSet('activeTab', 'crm')
+            ->assertSee('Pelanggan & CRM Loyalti', false)
+            ->assertSee('Total Pelanggan')
+            ->assertSee('Total Poin Loyalti');
+
+        // 1. Open New Customer Modal & Create
+        $component->call('openNewCustomerModal')
+            ->assertSet('showCustomerModal', true)
+            ->set('customerName', 'Dewi Lestari')
+            ->set('customerPhone', '081234567899')
+            ->set('customerEmail', 'dewi@example.com')
+            ->set('customerGender', 'female')
+            ->set('customerBirthDate', '1995-08-17')
+            ->set('customerAddress', 'Jl. Sudirman No. 10, Jakarta')
+            ->set('customerMembershipTier', 'gold')
+            ->set('customerPoints', 750)
+            ->set('customerNotes', 'Preferensi oat milk dan tanpa gula')
+            ->call('saveCustomer')
+            ->assertSet('showCustomerModal', false);
+
+        $this->assertDatabaseHas('customers', [
+            'tenant_id' => $tenant->id,
+            'name' => 'Dewi Lestari',
+            'phone' => '081234567899',
+            'membership_tier' => 'gold',
+            'points' => 750,
+        ]);
+
+        $customer = Customer::where('tenant_id', $tenant->id)->where('name', 'Dewi Lestari')->first();
+
+        // 2. Search & Filter
+        $component->set('searchCustomer', 'Dewi')
+            ->assertSee('Dewi Lestari')
+            ->assertSee('750 Pts')
+            ->set('searchCustomer', 'NON_EXISTENT_NAME_XYZ')
+            ->assertSee('Tidak Ada Pelanggan Ditemukan')
+            ->call('resetCustomerFilters')
+            ->assertSet('searchCustomer', '');
+
+        // 3. View Customer Detail Modal
+        $component->call('viewCustomerDetail', $customer->id)
+            ->assertSet('showCustomerDetailModal', true)
+            ->assertSet('selectedCustomerId', $customer->id)
+            ->assertSee('Dewi Lestari')
+            ->assertSee('Preferensi oat milk')
+            ->call('closeCustomerDetailModal')
+            ->assertSet('showCustomerDetailModal', false);
+
+        // 4. Edit Customer
+        $component->call('editCustomer', $customer->id)
+            ->assertSet('showCustomerModal', true)
+            ->assertSet('editingCustomerId', $customer->id)
+            ->set('customerPoints', 900)
+            ->call('saveCustomer')
+            ->assertSet('showCustomerModal', false);
+
+        $this->assertEquals(900, $customer->fresh()->points);
+
+        // 5. Delete Customer
+        $component->call('deleteCustomer', $customer->id);
+        $this->assertDatabaseMissing('customers', [
+            'id' => $customer->id,
+        ]);
+    }
+
+    public function test_salon_settings_hides_shift_section_by_default_and_allows_toggling()
+    {
+        $salonOwner = User::where('tenant_id', 3)->where('role', 'owner')->first();
+        if (!$salonOwner) {
+            $salonTenant = Tenant::where('slug', 'studiorona')->first();
+            $salonOwner = User::where('tenant_id', $salonTenant->id)->first();
+        }
+
+        $component = Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'settings')
+            ->assertSet('activeTab', 'settings')
+            ->assertSet('showSalonShiftSection', false)
+            ->assertSee('Modul Salon & Barbershop (Operasional Fleksibel)', false)
+            ->assertSee('Tampilkan Master Shift')
+            ->assertDontSee('Kebijakan Operasional Kasir');
+
+        // Toggle to reveal master shift section
+        $component->call('toggleSalonShiftSection')
+            ->assertSet('showSalonShiftSection', true)
+            ->assertSee('Master Shift & Kebijakan Kasir', false)
+            ->assertSee('Sembunyikan Shift')
+            ->call('toggleSalonShiftSection')
+            ->assertSet('showSalonShiftSection', false);
+
+        // Clicking openNewShiftTemplateModal should also reveal shift and open modal
+        $component->call('openNewShiftTemplateModal')
+            ->assertSet('showSalonShiftSection', true)
+            ->assertSet('showShiftTemplateModal', true);
+    }
 }
