@@ -47,7 +47,9 @@ trait HasCartAndCheckout
 
     public function addToCart(int $productId)
     {
-        if (! $this->activeShiftId) {
+        $isSalon = method_exists($this, 'isSalonTenant') && $this->isSalonTenant();
+
+        if (! $this->activeShiftId && ! $isSalon) {
             $this->showOpenShiftModal = true;
             $this->notify('Sistem kasir sedang ditutup! Anda wajib membuka shift terlebih dahulu sebelum melayani pesanan.', 'error');
             return;
@@ -195,7 +197,9 @@ trait HasCartAndCheckout
 
     public function processPayment()
     {
-        if (! $this->activeShiftId) {
+        $isSalon = method_exists($this, 'isSalonTenant') && $this->isSalonTenant();
+
+        if (! $this->activeShiftId && ! $isSalon) {
             $this->showPaymentModal = false;
             $this->showOpenShiftModal = true;
             $this->notify('Sistem kasir sedang ditutup! Anda wajib membuka shift terlebih dahulu.', 'error');

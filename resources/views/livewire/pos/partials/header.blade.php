@@ -30,21 +30,29 @@
             </button>
         </div>
 
-        <!-- Shift Status Pill -->
-        @if ($activeShiftId)
-            <button wire:click="openShiftManagement"
-                    title="Lihat status shift & kas laci"
-                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold hover:bg-emerald-100 transition shadow-2xs">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Shift Aktif: Rp{{ number_format($shiftStartingCash, 0, ',', '.') }}</span>
-            </button>
+        <!-- Shift Status Pill (Khusus non-salon, salon tidak menggunakan shift) -->
+        @if (! ($isSalon ?? false) && ! ($tenant?->isSalon()))
+            @if ($activeShiftId)
+                <button wire:click="openShiftManagement"
+                        title="Lihat status shift & kas laci"
+                        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold hover:bg-emerald-100 transition shadow-2xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Shift Aktif: Rp{{ number_format($shiftStartingCash, 0, ',', '.') }}</span>
+                </button>
+            @else
+                <button wire:click="openShiftManagement"
+                        title="Sistem kasir ditutup! Buka shift kasir & isi modal awal untuk mulai transaksi"
+                        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold hover:bg-rose-100 transition shadow-2xs">
+                    <i class="fa-solid fa-lock text-rose-600 text-[10px]"></i>
+                    <span>Sistem Ditutup (Belum Buka Shift)</span>
+                </button>
+            @endif
         @else
-            <button wire:click="openShiftManagement"
-                    title="Sistem kasir ditutup! Buka shift kasir & isi modal awal untuk mulai transaksi"
-                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold hover:bg-rose-100 transition shadow-2xs">
-                <i class="fa-solid fa-lock text-rose-600 text-[10px]"></i>
-                <span>Sistem Ditutup (Belum Buka Shift)</span>
-            </button>
+            <!-- Badge Salon & Barbershop -->
+            <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-700 text-[11px] font-bold">
+                <i class="fa-solid fa-scissors text-[10px]"></i>
+                <span>Salon & Barbershop POS</span>
+            </div>
         @endif
     </div>
 

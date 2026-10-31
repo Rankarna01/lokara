@@ -135,7 +135,10 @@ class Tenant extends Model
 
     public function isSalon(): bool
     {
-        return $this->businessType?->slug === 'salon' || $this->hasFeature('has_services');
+        return $this->businessType?->slug === 'salon' 
+            || ($this->attributes['business_type'] ?? null) === 'salon'
+            || $this->hasFeature('has_services')
+            || (isset($this->settings['business_type']) && $this->settings['business_type'] === 'salon');
     }
 }
 

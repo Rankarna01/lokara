@@ -28,29 +28,71 @@
         <!-- 1. LEFT SIDEBAR (POS SPECIFIC NAVIGATION) -->
         @include('livewire.pos.partials.sidebar')
 
-        <!-- 2. CENTER SECTION: CATALOG & PRODUCT GRID / ORDERS VIEW -->
-        <main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
+        <!-- 2. WORKSPACE CONTAINER (HEADER + SCROLLABLE AREA) -->
+        <div class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
             @include('livewire.pos.partials.header')
-            @if ($activeNav === 'pesanan')
-                @include('livewire.pos.partials.orders-view')
-            @else
-                @include('livewire.pos.partials.catalog')
-            @endif
-        </main>
 
-        <!-- 3. RIGHT PANEL: ORDER CART (PESANAN BARU) -->
-        @include('livewire.pos.partials.cart')
+            <!-- SCROLLABLE WORKSPACE: HORIZONTAL ON DESKTOP (CART ON RIGHT), VERTICAL ON TABLET / RESPONSIVE (CART BELOW) -->
+            <div class="flex-1 flex flex-col xl:flex-row overflow-y-auto xl:overflow-hidden min-w-0">
+                <!-- CENTER SECTION: CATALOG & PRODUCT GRID / ORDERS VIEW -->
+                <main class="flex-1 flex flex-col min-w-0 bg-surface xl:overflow-y-auto">
+                    @if ($activeNav === 'pesanan')
+                        @include('livewire.pos.partials.orders-view')
+                    @else
+                        @include('livewire.pos.partials.catalog')
+                    @endif
+                </main>
+
+                <!-- 3. ORDER CART (PESANAN BARU): SIDEBAR ON XL, BELOW CATALOG ON TABLET -->
+                @include('livewire.pos.partials.cart')
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Quick Cart Bar for Tablet / Mobile (< xl) -->
+    <div class="xl:hidden fixed bottom-4 inset-x-4 z-40 max-w-lg mx-auto bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-800 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold">{{ array_sum(array_column($cart, 'qty')) }} Item Pesanan</div>
+                <div class="text-[11px] text-orange-400 font-semibold">Total: Rp{{ number_format($totals['total'], 0, ',', '.') }}</div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="button"
+                    @click="document.getElementById('pos-cart-panel')?.scrollIntoView({ behavior: 'smooth' })"
+                    class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+                <span>Lihat Keranjang</span>
+            </button>
+            @if (! $activeShiftId && ! ($isSalon ?? false) && ! ($tenant?->isSalon()))
+                <button type="button" wire:click="$set('showOpenShiftModal', true)"
+                        class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition">
+                    Buka Shift
+                </button>
+            @else
+                <button type="button" wire:click="openPaymentModal"
+                        class="px-4 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1">
+                    <span>Bayar</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+            @endif
+        </div>
     </div>
 
     <!-- ================= MODALS ================= -->
-    @include('livewire.pos.partials.open-shift-modal')
+    @if (! ($isSalon ?? false) && ! ($tenant?->isSalon()))
+        @include('livewire.pos.partials.open-shift-modal')
+        @include('livewire.pos.partials.shift-modal')
+    @endif
     @include('livewire.pos.partials.printer-modal')
     @include('livewire.pos.partials.payment-modal')
     @include('livewire.pos.partials.success-modal')
     @include('livewire.pos.partials.variant-modal')
     @include('livewire.pos.partials.barcode-modal')
     @include('livewire.pos.partials.hold-modal')
-    @include('livewire.pos.partials.shift-modal')
     @include('livewire.pos.partials.transactions-modal')
     @include('livewire.pos.partials.customer-modal')
     @include('livewire.pos.partials.help-modal')

@@ -47,21 +47,23 @@
                 @endif
             </button>
 
-            <!-- Shift & Kas -->
-            <button wire:click="openShiftManagement"
-                    class="w-full flex items-center rounded-lg font-medium transition-colors text-left relative text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    :class="sidebarExpanded ? 'px-3.5 py-2.5 gap-3' : 'px-2 py-2.5 justify-center'"
-                    title="Shift Kasir & Kas Laci">
-                <i class="fa-solid fa-cash-register text-sm w-4 text-center shrink-0 text-slate-400"></i>
-                <span x-show="sidebarExpanded" x-transition.opacity.duration.200ms class="truncate">Shift & Kas</span>
-                @if ($activeShiftId)
-                    <span x-show="sidebarExpanded" class="ml-auto w-2 h-2 rounded-full bg-emerald-500" title="Shift Aktif"></span>
-                    <span x-show="!sidebarExpanded" class="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-emerald-500"></span>
-                @else
-                    <span x-show="sidebarExpanded" class="ml-auto text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.2 rounded font-bold">Buka</span>
-                    <span x-show="!sidebarExpanded" class="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-amber-500"></span>
-                @endif
-            </button>
+            <!-- Shift & Kas (Khusus non-salon, salon tidak menggunakan shift) -->
+            @if (! ($isSalon ?? false) && ! ($tenant?->isSalon()))
+                <button wire:click="openShiftManagement"
+                        class="w-full flex items-center rounded-lg font-medium transition-colors text-left relative text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        :class="sidebarExpanded ? 'px-3.5 py-2.5 gap-3' : 'px-2 py-2.5 justify-center'"
+                        title="Shift Kasir & Kas Laci">
+                    <i class="fa-solid fa-cash-register text-sm w-4 text-center shrink-0 text-slate-400"></i>
+                    <span x-show="sidebarExpanded" x-transition.opacity.duration.200ms class="truncate">Shift & Kas</span>
+                    @if ($activeShiftId)
+                        <span x-show="sidebarExpanded" class="ml-auto w-2 h-2 rounded-full bg-emerald-500" title="Shift Aktif"></span>
+                        <span x-show="!sidebarExpanded" class="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-emerald-500"></span>
+                    @else
+                        <span x-show="sidebarExpanded" class="ml-auto text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.2 rounded font-bold">Buka</span>
+                        <span x-show="!sidebarExpanded" class="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-amber-500"></span>
+                    @endif
+                </button>
+            @endif
 
             <!-- Transaksi -->
             <button wire:click="$set('showTransactionsModal', true)"

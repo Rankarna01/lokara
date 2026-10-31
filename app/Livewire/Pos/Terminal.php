@@ -37,6 +37,21 @@ class Terminal extends Component
     // Toast
     public string $toastMessage = '';
 
+    public function getCurrentTenant(): ?Tenant
+    {
+        $user = Auth::user();
+        if ($user && $user->tenant_id) {
+            return Tenant::find($user->tenant_id);
+        }
+        return Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
+    }
+
+    public function isSalonTenant(): bool
+    {
+        $tenant = $this->getCurrentTenant();
+        return $tenant ? $tenant->isSalon() : false;
+    }
+
     public function mount()
     {
         $user = Auth::user();
@@ -57,7 +72,12 @@ class Terminal extends Component
         }
 
         $tenantId = $user?->tenant_id ?? (Tenant::where('slug', 'kopiruangpagi')->first()?->id ?? 1);
-        $this->checkActiveShift($tenantId);
+        if (! $this->isSalonTenant()) {
+            $this->checkActiveShift($tenantId);
+        } else {
+            $this->activeShiftId = null;
+            $this->showOpenShiftModal = false;
+        }
 
         // Default demo cart
         $this->cart = [
@@ -227,6 +247,7 @@ class Terminal extends Component
 
         return view('livewire.pos.terminal', [
             'tenant' => $tenant,
+            'isSalon' => $this->isSalonTenant(),
             'products' => $products,
             'categories' => $categories,
             'allMenuCount' => $allMenuCount,

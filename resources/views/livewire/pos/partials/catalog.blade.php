@@ -1,8 +1,8 @@
 <!-- ================= CATALOG CONTENT AREA ================= -->
-<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<div class="p-4 sm:p-5 lg:p-6 space-y-4 sm:space-y-5">
 
-    @if (! $activeShiftId)
-        <!-- Warning: Kasir Belum Buka Shift / Sistem Ditutup -->
+    @if (! $activeShiftId && ! ($isSalon ?? false))
+        <!-- Warning: Kasir Belum Buka Shift / Sistem Ditutup (Hanya untuk F&B / Retail, disembunyikan untuk Salon & Barbershop) -->
         <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div class="flex items-center gap-3.5">
                 <div class="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-xs shrink-0">
@@ -26,29 +26,31 @@
         </div>
     @endif
 
-    <!-- 1. Horizontal Category Tabs Bar -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+    <!-- 1. Horizontal Category Tabs Bar (Ringkas & Lebih Kecil) -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
         <!-- Tab: Semua Menu -->
         <button wire:click="setCategory('all')"
-                class="p-3.5 rounded-xl border text-left transition flex items-center gap-3.5 {{ $selectedCategory === 'all' ? 'bg-white border-orange-500 ring-1 ring-orange-500 shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300' }}">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $selectedCategory === 'all' ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600' }}">
-                <i class="fa-solid fa-shapes text-base"></i>
+                type="button"
+                class="px-3 py-2 rounded-xl border text-left transition flex items-center gap-2 shrink-0 cursor-pointer {{ $selectedCategory === 'all' ? 'bg-orange-500 border-orange-500 text-white shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300 text-slate-700' }}">
+            <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 {{ $selectedCategory === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                <i class="fa-solid fa-shapes text-[11px]"></i>
             </div>
-            <div>
-                <div class="font-bold text-xs {{ $selectedCategory === 'all' ? 'text-orange-600' : 'text-slate-800' }}">Semua Menu</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">{{ $allMenuCount }} item</div>
+            <div class="flex items-center gap-1.5 whitespace-nowrap">
+                <span class="font-bold text-xs">{{ ($isSalon ?? false) ? 'Semua Katalog' : 'Semua Menu' }}</span>
+                <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded-full {{ $selectedCategory === 'all' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $allMenuCount }}</span>
             </div>
         </button>
 
         @foreach ($categories as $cat)
             <button wire:click="setCategory('{{ $cat->slug }}')"
-                    class="p-3.5 rounded-xl border text-left transition flex items-center gap-3.5 {{ $selectedCategory === $cat->slug ? 'bg-white border-orange-500 ring-1 ring-orange-500 shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300' }}">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $selectedCategory === $cat->slug ? 'bg-orange-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600' }}">
-                    <i class="fa-solid {{ $cat->icon ?: 'fa-tag' }} text-base"></i>
+                    type="button"
+                    class="px-3 py-2 rounded-xl border text-left transition flex items-center gap-2 shrink-0 cursor-pointer {{ $selectedCategory === $cat->slug ? 'bg-orange-500 border-orange-500 text-white shadow-xs' : 'bg-white border-slate-200/80 hover:border-slate-300 text-slate-700' }}">
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 {{ $selectedCategory === $cat->slug ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                    <i class="fa-solid {{ $cat->icon ?: 'fa-tag' }} text-[11px]"></i>
                 </div>
-                <div>
-                    <div class="font-bold text-xs {{ $selectedCategory === $cat->slug ? 'text-orange-600' : 'text-slate-800' }}">{{ $cat->name }}</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">{{ $cat->products_count }} item</div>
+                <div class="flex items-center gap-1.5 whitespace-nowrap">
+                    <span class="font-bold text-xs">{{ $cat->name }}</span>
+                    <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded-full {{ $selectedCategory === $cat->slug ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $cat->products_count }}</span>
                 </div>
             </button>
         @endforeach
@@ -57,8 +59,8 @@
     <!-- 2. Section Header: Title & Scan Barcode Button -->
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-sm font-bold text-slate-900">Katalog Menu</h2>
-            <p class="text-[11px] text-slate-400 mt-0.5">Pilih produk untuk menambahkan ke pesanan</p>
+            <h2 class="text-sm font-bold text-slate-900">{{ ($isSalon ?? false) ? 'Katalog Layanan & Produk' : 'Katalog Menu' }}</h2>
+            <p class="text-[11px] text-slate-400 mt-0.5">{{ ($isSalon ?? false) ? 'Pilih layanan salon atau produk perawatan untuk menambahkan ke pesanan' : 'Pilih produk untuk menambahkan ke pesanan' }}</p>
         </div>
 
         <button wire:click="$set('showBarcodeModal', true)"
@@ -68,8 +70,8 @@
         </button>
     </div>
 
-    <!-- 3. Product Cards Grid (3 Columns) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- 3. Product Cards Grid (Responsive Grid) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-3.5">
         @forelse ($products as $product)
             <div wire:click="addToCart({{ $product->id }})"
                  class="group bg-white border border-slate-200/80 hover:border-orange-300 rounded-xl p-3 flex items-center justify-between transition cursor-pointer shadow-xs hover:shadow-sm">

@@ -1,153 +1,158 @@
-<div class="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 antialiased text-slate-800" x-data="{ showPassword: false }">
+<div class="min-h-screen bg-slate-100/90 flex items-center justify-center p-4 sm:p-6 lg:p-8 antialiased text-slate-800" x-data="{ showPassword: false, showDemoAccounts: false }">
 
-    <!-- Top Logo & Heading -->
-    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div class="inline-flex items-center gap-2.5 mb-3">
-            <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
-                <i class="fa-solid fa-shapes text-lg"></i>
-            </div>
-            <div class="flex items-center">
-                <span class="text-2xl font-bold tracking-tight text-slate-900">Lokara</span>
-                <span class="ml-1.5 px-1.5 py-0.5 rounded text-[11px] font-extrabold uppercase bg-orange-500 text-white tracking-wider">POS</span>
+    <!-- Card Login 2 Sisi Sederhana & Bersih (Inspirasi Gambar 2) -->
+    <div class="max-w-4xl w-full bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200/80 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+
+        <!-- ================= SISI KIRI: MASKOT DARI GAMBAR OG ================= -->
+        <div class="hidden md:flex p-3 sm:p-4 bg-slate-50 items-center justify-center">
+            <div class="w-full h-full rounded-2xl overflow-hidden relative shadow-xs flex items-center justify-center bg-white border border-slate-200/60 min-h-[460px]">
+                <img src="{{ asset('images/opengraph.png') }}"
+                     alt="Maskot Lokara POS"
+                     class="w-full h-full object-cover object-right" />
             </div>
         </div>
-        <h2 class="text-xl font-bold tracking-tight text-slate-900">Masuk ke Sistem Lokara POS</h2>
-        <p class="mt-1 text-xs text-slate-500">Pilih akun untuk masuk ke Platform Admin, Tenant Back Office, atau Layar Kasir</p>
-    </div>
 
-    <!-- Login Card -->
-    <div class="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div class="bg-white py-8 px-6 sm:px-8 border border-slate-200/80 rounded-2xl shadow-sm space-y-6">
+        <!-- ================= SISI KANAN: FORM PUTIH BERSIH & MINIMALIS ================= -->
+        <div class="p-8 sm:p-10 lg:p-12 flex flex-col justify-between bg-white">
+            <div class="space-y-6">
 
-            <!-- Quick Demo Login Bar -->
-            <div class="p-3.5 bg-orange-50/60 border border-orange-100 rounded-xl space-y-2">
-                <div class="flex items-center justify-between text-xs font-semibold text-orange-800">
-                    <span class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt text-orange-500"></i> Akun Demo Siap Pakai per Role:
-                    </span>
-                    <span class="text-[10px] text-orange-600 bg-orange-100/60 px-1.5 py-0.5 rounded font-mono">1-Klik Isi</span>
+                <!-- Logo & Brand Minimalis -->
+                <div class="flex items-center gap-2.5">
+                    <img src="{{ asset('images/logo-app.png') }}" alt="Lokara POS" class="w-9 h-9 object-contain" />
+                    <span class="text-xl font-black text-slate-900 tracking-tight">Lokara <span class="text-orange-500">POS</span></span>
                 </div>
-                <div class="grid grid-cols-3 gap-1.5 text-xs">
-                    <button type="button" wire:click="fillDemoAdmin"
-                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
-                            <i class="fa-solid fa-shield text-[10px] text-orange-500"></i> Super Admin
-                        </div>
-                        <div class="text-[9px] text-slate-400 truncate">Platform SaaS</div>
-                    </button>
-                    <button type="button" wire:click="fillDemoOwner"
-                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
-                            <i class="fa-solid fa-store text-[10px] text-amber-500"></i> Owner Tenant
-                        </div>
-                        <div class="text-[9px] text-slate-400 truncate">Kopi Ruang Pagi</div>
-                    </button>
-                    <button type="button" wire:click="fillDemoSalonOwner"
-                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
-                            <i class="fa-solid fa-scissors text-[10px] text-purple-500"></i> Owner Salon
-                        </div>
-                        <div class="text-[9px] text-slate-400 truncate">Studio Rona</div>
-                    </button>
-                    <button type="button" wire:click="fillDemoCashier"
-                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
-                            <i class="fa-solid fa-cash-register text-[10px] text-emerald-500"></i> Kasir Toko
-                        </div>
-                        <div class="text-[9px] text-slate-400 truncate">Dina • Outlet 1</div>
-                    </button>
-                    <button type="button" wire:click="fillDemoCashier2"
-                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
-                            <i class="fa-solid fa-location-dot text-[10px] text-blue-500"></i> Kasir Cabang
-                        </div>
-                        <div class="text-[9px] text-slate-400 truncate">Budi • Kemang</div>
-                    </button>
-                    <button type="button" wire:click="fillDemoSalonStaff"
-                            class="p-2 bg-white border border-orange-200 rounded-lg text-slate-700 hover:border-orange-500 hover:text-orange-600 font-medium text-left transition shadow-2xs">
-                        <div class="font-bold text-[11px] text-slate-900 flex items-center gap-1">
-                            <i class="fa-solid fa-user-tie text-[10px] text-rose-500"></i> Kapster
-                        </div>
-                        <div class="text-[9px] text-slate-400 truncate">Doni • Studio Rona</div>
-                    </button>
-                </div>
-            </div>
 
-            <!-- Login Form -->
-            <form wire:submit.prevent="login" class="space-y-4">
-
-                <!-- Email Input -->
+                <!-- Header Sederhana Tanpa Badge Informasi -->
                 <div>
-                    <label for="email" class="block text-xs font-semibold text-slate-700 mb-1.5">Alamat Email</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-regular fa-envelope text-xs"></i>
-                        </div>
-                        <input id="email"
-                               type="email"
-                               wire:model.defer="email"
-                               placeholder="nama@kopiruangpagi.id"
-                               class="w-full pl-9 pr-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition" />
-                    </div>
-                    @error('email')
-                        <p class="mt-1 text-[11px] text-rose-500 font-medium">{{ $message }}</p>
-                    @enderror
+                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">
+                        Masuk ke Sistem Lokara POS
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Masukkan email dan kata sandi akun Anda
+                    </p>
                 </div>
 
-                <!-- Password Input -->
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label for="password" class="block text-xs font-semibold text-slate-700">Kata Sandi</label>
-                        <span class="text-[11px] text-slate-400">Default: password</span>
-                    </div>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-solid fa-lock text-xs"></i>
+                <!-- Form Login -->
+                <form wire:submit.prevent="login" class="space-y-4">
+
+                    <!-- Input Email -->
+                    <div class="space-y-1.5">
+                        <label for="email" class="block text-xs font-semibold text-slate-700">
+                            Alamat Email <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-regular fa-envelope text-sm"></i>
+                            </div>
+                            <input id="email"
+                                   type="email"
+                                   wire:model.defer="email"
+                                   placeholder="nama@email.com"
+                                   autocomplete="email"
+                                   autofocus
+                                   class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition" />
                         </div>
-                        <input id="password"
-                               :type="showPassword ? 'text' : 'password'"
-                               wire:model.defer="password"
-                               placeholder="••••••••"
-                               class="w-full pl-9 pr-10 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition" />
-                        <button type="button"
-                                @click="showPassword = !showPassword"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition">
-                            <i class="fa-regular" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                        @error('email')
+                            <p class="text-xs text-rose-500 font-medium flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-circle-exclamation text-[11px]"></i> {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
+                    <!-- Input Password -->
+                    <div class="space-y-1.5">
+                        <label for="password" class="block text-xs font-semibold text-slate-700">
+                            Kata Sandi <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <input id="password"
+                                   :type="showPassword ? 'text' : 'password'"
+                                   wire:model.defer="password"
+                                   placeholder="Masukkan kata sandi..."
+                                   autocomplete="current-password"
+                                   class="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition" />
+                            <button type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition"
+                                    title="Tampilkan / Sembunyikan Kata Sandi">
+                                <i class="fa-regular text-sm" :class="showPassword ? 'fa-eye-slash text-orange-500' : 'fa-eye'"></i>
+                            </button>
+                        </div>
+                        @error('password')
+                            <p class="text-xs text-rose-500 font-medium flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-circle-exclamation text-[11px]"></i> {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
+                    <!-- Ingat Sesi Saya -->
+                    <div class="flex items-center justify-between text-xs pt-0.5">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox"
+                                   wire:model="remember"
+                                   class="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 transition cursor-pointer" />
+                            <span class="text-slate-600 font-medium text-xs">Ingat sesi saya</span>
+                        </label>
+                    </div>
+
+                    <!-- Tombol Masuk -->
+                    <div class="pt-2">
+                        <button type="submit"
+                                class="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl text-xs sm:text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-[0.99] shadow-sm shadow-orange-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all cursor-pointer">
+                            <span wire:loading.remove>Masuk ke Aplikasi</span>
+                            <span wire:loading class="flex items-center gap-2">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Memverifikasi...
+                            </span>
+                            <i wire:loading.remove class="fa-solid fa-arrow-right text-xs"></i>
                         </button>
                     </div>
-                    @error('password')
-                        <p class="mt-1 text-[11px] text-rose-500 font-medium">{{ $message }}</p>
-                    @enderror
-                </div>
+                </form>
 
-                <!-- Remember Me -->
-                <div class="flex items-center justify-between text-xs">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox"
-                               wire:model="remember"
-                               class="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
-                        <span class="text-slate-600">Ingat sesi saya</span>
-                    </label>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="pt-2">
-                    <button type="submit"
-                            class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 shadow-sm shadow-orange-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition">
-                        <span wire:loading.remove>Masuk ke Aplikasi</span>
-                        <span wire:loading class="flex items-center gap-2">
-                            <i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...
-                        </span>
-                        <i wire:loading.remove class="fa-solid fa-arrow-right text-xs"></i>
+                <!-- Akses Demo Cepat (Tersedia Rapi & Tersembunyi di Accordion Bawah) -->
+                <div class="pt-1">
+                    <button type="button"
+                            @click="showDemoAccounts = !showDemoAccounts"
+                            class="text-[11px] text-slate-400 hover:text-slate-600 transition flex items-center gap-1.5 mx-auto font-medium">
+                        <i class="fa-solid fa-bolt text-[10px] text-orange-400"></i>
+                        <span x-text="showDemoAccounts ? 'Sembunyikan Akun Demo' : 'Pilihan Akun Demo Login'"></span>
+                        <i class="fa-solid fa-chevron-down text-[9px] transition-transform" :class="showDemoAccounts ? 'rotate-180' : ''"></i>
                     </button>
-                </div>
-            </form>
 
-            <div class="pt-4 border-t border-slate-100 text-center">
-                <p class="text-[11px] text-slate-400">
-                    &copy; 2026 Lokara POS Multi-Tenant SaaS. Hak Cipta Dilindungi.
+                    <div x-show="showDemoAccounts" x-transition class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Klik untuk Mengisi Otomatis:</div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button type="button" wire:click="fillDemoAdmin"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
+                                🔑 Super Admin
+                            </button>
+                            <button type="button" wire:click="fillDemoOwner"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
+                                ☕ Owner F&B
+                            </button>
+                            <button type="button" wire:click="fillDemoSalonOwner"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
+                                ✂️ Owner Salon
+                            </button>
+                            <button type="button" wire:click="fillDemoCashier"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
+                                🛒 Kasir POS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Hak Cipta Sederhana -->
+            <div class="pt-6 border-t border-slate-100 text-center">
+                <p class="text-[11px] text-slate-400 font-medium">
+                    &copy; 2026 Lokara POS. Hak Cipta Dilindungi.
                 </p>
             </div>
         </div>
+
     </div>
 </div>

@@ -45,6 +45,12 @@ trait HasShiftAndCash
 
     public function checkActiveShift(int $tenantId)
     {
+        if (method_exists($this, 'isSalonTenant') && $this->isSalonTenant()) {
+            $this->activeShiftId = null;
+            $this->showOpenShiftModal = false;
+            return;
+        }
+
         $shift = Shift::where('tenant_id', $tenantId)
             ->where('outlet_id', $this->selectedOutletId)
             ->whereNull('closed_at')
@@ -66,6 +72,10 @@ trait HasShiftAndCash
 
     public function openShiftManagement()
     {
+        if (method_exists($this, 'isSalonTenant') && $this->isSalonTenant()) {
+            return;
+        }
+
         if (!$this->activeShiftId) {
             $this->openShiftTime = now()->format('d/m/Y - H:i') . ' WIB';
             $this->showOpenShiftModal = true;

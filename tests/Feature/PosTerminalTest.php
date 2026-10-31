@@ -256,5 +256,38 @@ class PosTerminalTest extends TestCase
             ->assertSee('togglePosSidebar', false)
             ->assertSee('Perkecil / Perbesar Sidebar POS');
     }
+
+    public function test_salon_pos_terminal_hides_shift_and_allows_transactions_without_shift()
+    {
+        $salonStaff = User::where('email', 'doni.barber@studiorona.id')->first();
+        if (!$salonStaff) {
+            $salonTenant = Tenant::where('slug', 'studiorona')->first();
+            $salonStaff = User::where('tenant_id', $salonTenant->id)->first();
+        }
+
+        $this->actingAs($salonStaff)
+            ->get('/pos')
+            ->assertStatus(200)
+            ->assertDontSee('Shift & Kas')
+            ->assertDontSee('Sistem Kasir Ditutup')
+            ->assertDontSee('Shift Belum Dibuka')
+            ->assertDontSee('Buka Shift Terlebih Dahulu')
+            ->assertSee('pos-cart-panel', false)
+            ->assertSee('Lihat Keranjang')
+            ->assertSee('Katalog Layanan & Produk');
+
+        // Salon staff can add product to cart directly without opening shift
+        $salonProduct = Product::where('tenant_id', $salonStaff->tenant_id)->first();
+
+        $component = Livewire::actingAs($salonStaff, 'web')
+            ->test(Terminal::class)
+            ->assertSet('activeShiftId', null)
+            ->assertSet('showOpenShiftModal', false);
+
+        if ($salonProduct) {
+            $component->call('addToCart', $salonProduct->id)
+                ->assertSet('showOpenShiftModal', false);
+        }
+    }
 }
 

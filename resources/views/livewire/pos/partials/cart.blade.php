@@ -1,5 +1,6 @@
-<!-- ================= 3. RIGHT PANEL: ORDER CART (PESANAN BARU) ================= -->
-<aside class="w-80 lg:w-96 bg-white border-l border-slate-200/80 flex flex-col justify-between flex-shrink-0 h-full">
+<!-- ================= 3. ORDER CART (PESANAN BARU): SIDEBAR DI DESKTOP, DI BAWAH PADA TABLET / RESPONSIVE ================= -->
+<aside id="pos-cart-panel"
+       class="w-full xl:w-96 bg-white border-t xl:border-t-0 xl:border-l border-slate-200/80 flex flex-col justify-between flex-shrink-0 xl:h-full">
 
     <!-- Cart Header -->
     <div class="p-4 border-b border-slate-100 flex items-center justify-between">
@@ -161,7 +162,7 @@
             </div>
         </div>
 
-        @if (! $activeShiftId)
+        @if (! $activeShiftId && ! ($isSalon ?? false) && ! ($tenant?->isSalon()))
             <!-- Locked State: Shift Belum Dibuka -->
             <button type="button" wire:click="$set('showOpenShiftModal', true)"
                     class="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-slate-900 hover:bg-slate-800 shadow-sm flex items-center justify-center gap-2 transition">
