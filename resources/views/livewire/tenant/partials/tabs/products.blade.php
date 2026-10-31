@@ -93,6 +93,7 @@
                                             <th class="py-3 px-4 text-right">Harga Jual</th>
                                             <th class="py-3 px-4 text-right">HPP (Modal)</th>
                                             <th class="py-3 px-4 text-center">Margin %</th>
+                                            <th class="py-3 px-4 text-center">Stok Fisik</th>
                                             <th class="py-3 px-4 text-center">Status</th>
                                             <th class="py-3 px-4 text-right">Aksi</th>
                                         </tr>
@@ -142,12 +143,33 @@
                                                     </span>
                                                 </td>
                                                 <td class="py-3.5 px-4 text-center">
+                                                    @if($p->track_stock)
+                                                        @php
+                                                            $stk = (float)($p->stock_quantity ?? 0);
+                                                            $minStk = (float)($p->minimum_stock ?? 5);
+                                                        @endphp
+                                                        <button type="button" wire:click="openOpnameModal({{ $p->id }}, 'product')"
+                                                            title="Klik untuk Opname Stok {{ $p->name }}"
+                                                            class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full transition {{ $stk <= $minStk ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' }}">
+                                                            <i class="fa-solid fa-boxes-stacked text-[10px]"></i>
+                                                            <span>{{ number_format($stk, 0, ',', '.') }} {{ $p->unit ?: 'pcs' }}</span>
+                                                        </button>
+                                                    @else
+                                                        <span class="text-[11px] text-slate-400">Tak Dibatasi</span>
+                                                    @endif
+                                                </td>
+                                                <td class="py-3.5 px-4 text-center">
                                                     <button wire:click="toggleProductAvailability({{ $p->id }})"
                                                         class="text-xs font-semibold px-2.5 py-1 rounded-lg transition {{ $p->is_available ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200' }}">
                                                         {{ $p->is_available ? 'Tersedia' : 'Habis' }}
                                                     </button>
                                                 </td>
-                                                <td class="py-3.5 px-4 text-right space-x-1">
+                                                <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
+                                                    <button wire:click="openOpnameModal({{ $p->id }}, 'product')"
+                                                        title="Opname Fisik Produk"
+                                                        class="p-1.5 text-xs text-orange-600 hover:text-white hover:bg-orange-500 rounded-lg transition">
+                                                        <i class="fa-solid fa-clipboard-check"></i>
+                                                    </button>
                                                     <button wire:click="openRecipeModal({{ $p->id }})"
                                                         title="Atur Resep BOM & HPP"
                                                         class="p-1.5 text-xs text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg">
@@ -162,7 +184,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
+                                                <td colspan="8" class="py-8 text-center text-slate-400 text-sm">
                                                     Tidak ada menu yang sesuai filter.
                                                 </td>
                                             </tr>

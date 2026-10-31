@@ -150,3 +150,4 @@ trait HasShiftAndCash
         $this->notify('Perintah ESC/POS dikirim: Laci kasir fisik (Cash Drawer RJ11) terbuka.');
     }
 }
+

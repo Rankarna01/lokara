@@ -27,6 +27,7 @@ use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -327,8 +328,79 @@ class BackofficeDashboard extends Component
         // 8. Staff / Cashiers Data
         $cashiers = User::with('outlet')->where('tenant_id', $this->tenantId)->orderBy('role')->get();
 
-        // 9. Stock Movements (Kartu Stok)
-        $stockMovements = StockMovement::with(['ingredient', 'outlet'])->where('tenant_id', $this->tenantId)->orderBy('id', 'desc')->take(15)->get();
+        // 9. Stock Movements (Kartu Stok & Audit Opname) with Comprehensive Filters
+        $stockMovementsQuery = StockMovement::with(['ingredient', 'product.category', 'outlet', 'user'])
+            ->where('tenant_id', $this->tenantId);
+
+        // Search filter: Item Name, SKU, or Reference Note
+        if (!empty($this->stockSearch)) {
+            $term = '%' . trim($this->stockSearch) . '%';
+            $stockMovementsQuery->where(function ($q) use ($term) {
+                $q->where('reference_note', 'like', $term)
+                    ->orWhereHas('product', function ($pq) use ($term) {
+                        $pq->where('name', 'like', $term)->orWhere('sku', 'like', $term);
+                    })
+                    ->orWhereHas('ingredient', function ($iq) use ($term) {
+                        $iq->where('name', 'like', $term)->orWhere('sku', 'like', $term);
+                    });
+            });
+        }
+
+        // Mutation Type Filter
+        if ($this->stockTypeFilter !== 'all') {
+            $stockMovementsQuery->where('type', $this->stockTypeFilter);
+        }
+
+        // Item Type Filter (Direct Product vs Raw Ingredient)
+        if ($this->stockItemTypeFilter === 'product') {
+            $stockMovementsQuery->whereNotNull('product_id');
+        } elseif ($this->stockItemTypeFilter === 'ingredient') {
+            $stockMovementsQuery->whereNotNull('ingredient_id');
+        }
+
+        // Date & Time Filter
+        if ($this->stockDateFilter === 'today') {
+            $stockMovementsQuery->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
+        } elseif ($this->stockDateFilter === 'yesterday') {
+            $stockMovementsQuery->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+        } elseif ($this->stockDateFilter === '7_days') {
+            $stockMovementsQuery->where('created_at', '>=', Carbon::now()->subDays(7)->startOfDay());
+        } elseif ($this->stockDateFilter === '30_days') {
+            $stockMovementsQuery->where('created_at', '>=', Carbon::now()->subDays(30)->startOfDay());
+        } elseif ($this->stockDateFilter === 'this_month') {
+            $stockMovementsQuery->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+        } elseif ($this->stockDateFilter === 'custom') {
+            if (!empty($this->stockStartDate)) {
+                $startTime = !empty($this->stockStartTime) ? $this->stockStartTime . ':00' : '00:00:00';
+                $startDateTime = Carbon::parse($this->stockStartDate . ' ' . $startTime);
+                $stockMovementsQuery->where('created_at', '>=', $startDateTime);
+            }
+            if (!empty($this->stockEndDate)) {
+                $endTime = !empty($this->stockEndTime) ? $this->stockEndTime . ':59' : '23:59:59';
+                $endDateTime = Carbon::parse($this->stockEndDate . ' ' . $endTime);
+                $stockMovementsQuery->where('created_at', '<=', $endDateTime);
+            }
+        }
+
+        $stockMovements = $stockMovementsQuery->orderBy('created_at', 'desc')->orderBy('id', 'desc')->get();
+
+        // Stock Summary Stats
+        $isSalon = $tenant && ($tenant->businessType?->slug === 'salon' || $tenant->business_type === 'salon');
+        $directProducts = Product::where('tenant_id', $this->tenantId)->where('type', 'item')->get();
+        $totalDirectProductsCount = $directProducts->count();
+        $totalDirectStockQty = (float) $directProducts->sum('stock_quantity');
+        $lowStockDirectProducts = $directProducts->filter(fn($p) => (float)$p->stock_quantity <= (float)($p->minimum_stock ?: 5))->count();
+
+        $totalOpnameCountThisMonth = StockMovement::where('tenant_id', $this->tenantId)
+            ->where('type', 'opname')
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->count();
+
+        $lastOpnameMovement = StockMovement::where('tenant_id', $this->tenantId)
+            ->where('type', 'opname')
+            ->latest('created_at')
+            ->first();
 
         return view('livewire.tenant.backoffice-dashboard', [
             'tenant' => $tenant,
@@ -366,6 +438,13 @@ class BackofficeDashboard extends Component
             'customers' => $customers,
             'cashiers' => $cashiers,
             'stockMovements' => $stockMovements,
+            'isSalon' => $isSalon,
+            'directProducts' => $directProducts,
+            'totalDirectProductsCount' => $totalDirectProductsCount,
+            'totalDirectStockQty' => $totalDirectStockQty,
+            'lowStockDirectProducts' => $lowStockDirectProducts,
+            'totalOpnameCountThisMonth' => $totalOpnameCountThisMonth,
+            'lastOpnameMovement' => $lastOpnameMovement,
             'shiftTemplates' => $this->getShiftTemplates(),
             'shiftHistory' => Shift::with(['user', 'outlet'])->where('tenant_id', $this->tenantId)->latest()->take(10)->get(),
         ])->layout('layouts.app', ['title' => 'Admin Back Office - ' . ($tenant->name ?? 'Lokara POS')]);

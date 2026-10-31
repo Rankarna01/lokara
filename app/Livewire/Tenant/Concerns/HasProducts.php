@@ -17,6 +17,10 @@ trait HasProducts
     public float $productCostPrice = 0;
     public string $productImageUrl = '';
     public $productImageFile = null;
+    public float $productStockQuantity = 0;
+    public float $productMinStock = 5;
+    public string $productUnit = 'pcs';
+    public bool $productTrackStock = true;
     public bool $productIsActive = true;
     public bool $productIsAvailable = true;
 
@@ -35,6 +39,10 @@ trait HasProducts
         $this->productCategoryTag = $product->category_tag ?? 'Kopi • Ice';
         $this->productBasePrice = (float) $product->base_price;
         $this->productCostPrice = (float) $product->cost_price;
+        $this->productStockQuantity = (float) ($product->stock_quantity ?? 0);
+        $this->productMinStock = (float) ($product->minimum_stock ?? 5);
+        $this->productUnit = $product->unit ?? 'pcs';
+        $this->productTrackStock = (bool) ($product->track_stock ?? true);
         $this->productImageUrl = $product->image_url ?? '';
         $this->productImageFile = null;
         $this->productIsActive = (bool) $product->is_active;
@@ -70,6 +78,10 @@ trait HasProducts
                 'category_tag' => $this->productCategoryTag,
                 'base_price' => $this->productBasePrice,
                 'cost_price' => $this->productCostPrice,
+                'stock_quantity' => $this->productStockQuantity,
+                'minimum_stock' => $this->productMinStock,
+                'unit' => $this->productUnit ?: 'pcs',
+                'track_stock' => $this->productTrackStock,
                 'image_url' => $this->productImageUrl ?: null,
                 'is_active' => $this->productIsActive,
                 'is_available' => $this->productIsAvailable,
@@ -87,6 +99,10 @@ trait HasProducts
                 'barcode' => '899' . rand(100000000, 999999999),
                 'base_price' => $this->productBasePrice,
                 'cost_price' => $this->productCostPrice,
+                'stock_quantity' => $this->productStockQuantity,
+                'minimum_stock' => $this->productMinStock,
+                'unit' => $this->productUnit ?: 'pcs',
+                'track_stock' => $this->productTrackStock,
                 'image_url' => $this->productImageUrl ?: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=300&h=300&q=80',
                 'is_active' => $this->productIsActive,
                 'is_available' => $this->productIsAvailable,
@@ -115,6 +131,10 @@ trait HasProducts
         $this->productCategoryTag = 'Kopi • Ice';
         $this->productBasePrice = 20000;
         $this->productCostPrice = 7000;
+        $this->productStockQuantity = 0;
+        $this->productMinStock = 5;
+        $this->productUnit = 'pcs';
+        $this->productTrackStock = true;
         $this->productImageFile = null;
         $this->productImageUrl = '';
         $this->productIsActive = true;

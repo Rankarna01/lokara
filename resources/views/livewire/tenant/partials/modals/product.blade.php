@@ -124,6 +124,38 @@
                         </div>
                     </div>
 
+                    <!-- Stok & Satuan Persediaan Langsung -->
+                    <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-boxes-stacked text-orange-500"></i>
+                                <span>Manajemen Stok Produk</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 font-medium">
+                                <input type="checkbox" wire:model="productTrackStock" class="rounded text-orange-500 focus:ring-orange-500">
+                                <span>Lacak Stok</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2.5 pt-1">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Stok Fisik Awal</label>
+                                <input type="number" min="0" wire:model="productStockQuantity"
+                                    class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:ring-1 focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Batas Min. Stok</label>
+                                <input type="number" min="0" wire:model="productMinStock"
+                                    class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Satuan Unit</label>
+                                <input type="text" wire:model="productUnit" placeholder="pcs, botol, jar"
+                                    class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:ring-1 focus:ring-orange-500">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex items-center gap-4 pt-2">
                         <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
                             <input type="checkbox" wire:model="productIsAvailable" class="rounded text-orange-500 focus:ring-orange-500">

@@ -31,5 +31,41 @@ class StockMovement extends Model
     {
         return $this->belongsTo(Ingredient::class);
     }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function getItemNameAttribute(): string
+    {
+        return $this->product?->name ?? $this->ingredient?->name ?? 'Item #' . $this->id;
+    }
+
+    public function getItemSkuAttribute(): string
+    {
+        return $this->product?->sku ?? $this->ingredient?->sku ?? '-';
+    }
+
+    public function getItemUnitAttribute(): string
+    {
+        return $this->product?->unit ?? $this->ingredient?->usage_unit ?? 'pcs';
+    }
+
+    public function getItemTypeLabelAttribute(): string
+    {
+        if ($this->product_id) {
+            return 'Produk Langsung';
+        }
+        if ($this->ingredient_id) {
+            return 'Bahan Baku';
+        }
+        return 'Item';
+    }
 }
 

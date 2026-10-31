@@ -278,3 +278,4 @@ trait HasCartAndCheckout
         $this->selectedCustomer = null;
     }
 }
+

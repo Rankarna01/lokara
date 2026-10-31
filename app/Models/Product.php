@@ -16,6 +16,9 @@ class Product extends Model
     protected $casts = [
         'base_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'stock_quantity' => 'decimal:2',
+        'minimum_stock' => 'decimal:2',
+        'track_stock' => 'boolean',
         'duration_minutes' => 'integer',
         'commission_value' => 'decimal:2',
         'is_active' => 'boolean',
@@ -58,5 +61,10 @@ class Product extends Model
     public function recipes(): HasMany
     {
         return $this->hasMany(ProductRecipe::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
     }
 }

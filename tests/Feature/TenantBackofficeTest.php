@@ -10,9 +10,11 @@ use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Tenant;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -862,5 +864,122 @@ class TenantBackofficeTest extends TestCase
             ->assertSet('searchPo', '')
             ->assertSet('poStatusFilter', 'all')
             ->assertSet('poDateFilter', 'all');
+    }
+
+    public function test_salon_stock_opname_manages_direct_products_with_timestamp_and_audit()
+    {
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $salonOwner = User::where('tenant_id', $salonTenant->id)->where('role', 'owner')->first();
+
+        $product = Product::where('tenant_id', $salonTenant->id)
+            ->where('type', 'item')
+            ->first();
+        $this->assertNotNull($product, 'Salon retail product should exist');
+
+        $auditTime = '2026-10-31T14:30';
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openOpnameModal', $product->id)
+            ->assertSet('showOpnameModal', true)
+            ->assertSet('opnameItemType', 'product')
+            ->assertSet('opnameProductId', $product->id)
+            ->set('opnamePhysicalQty', 22)
+            ->set('opnameRecordedAt', $auditTime)
+            ->set('opnameReasonCategory', 'Pemeriksaan Rutin')
+            ->set('opnameReason', 'Audit fisik rutin rak display styling')
+            ->call('executeOpname')
+            ->assertSet('showOpnameModal', false);
+
+        $product->refresh();
+        $this->assertEquals(22, (float) $product->stock_quantity);
+
+        // Verify StockMovement recorded accurately
+        $movement = StockMovement::where('tenant_id', $salonTenant->id)
+            ->where('product_id', $product->id)
+            ->where('type', 'opname')
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($movement);
+        $this->assertEquals(22, (float) $movement->balance_after);
+        $this->assertEquals($salonOwner->id, $movement->user_id);
+        $this->assertStringContainsString('Stok Opname Produk', $movement->reference_note);
+        $this->assertStringContainsString('Audit fisik rutin rak display styling', $movement->reference_note);
+        $this->assertEquals('2026-10-31 14:30:00', $movement->created_at->format('Y-m-d H:i:s'));
+    }
+
+    public function test_stock_movement_filters_by_search_type_item_type_and_date_time_range()
+    {
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $salonOwner = User::where('tenant_id', $salonTenant->id)->where('role', 'owner')->first();
+        $outlet = Outlet::where('tenant_id', $salonTenant->id)->first();
+
+        $product = Product::where('tenant_id', $salonTenant->id)->where('type', 'item')->first();
+
+        // Create explicit stock movements for testing filters
+        $mv1 = StockMovement::create([
+            'tenant_id' => $salonTenant->id,
+            'outlet_id' => $outlet->id,
+            'product_id' => $product->id,
+            'user_id' => $salonOwner->id,
+            'type' => 'opname',
+            'qty' => 5,
+            'balance_after' => 25,
+            'reference_note' => 'Opname UnikXYZ Test Marker',
+            'created_at' => Carbon::parse('2026-10-25 10:15:00'),
+            'updated_at' => Carbon::parse('2026-10-25 10:15:00'),
+        ]);
+
+        $mv2 = StockMovement::create([
+            'tenant_id' => $salonTenant->id,
+            'outlet_id' => $outlet->id,
+            'product_id' => $product->id,
+            'user_id' => $salonOwner->id,
+            'type' => 'sale_pos',
+            'qty' => -3,
+            'balance_after' => 22,
+            'reference_note' => 'Penjualan POS Kasir Reguler',
+            'created_at' => Carbon::parse('2026-10-30 16:30:00'),
+            'updated_at' => Carbon::parse('2026-10-30 16:30:00'),
+        ]);
+
+        $component = Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->set('activeTab', 'stock');
+
+        // 1. Search Filter
+        $component->set('stockSearch', 'UnikXYZ')
+            ->assertSee('Opname UnikXYZ Test Marker')
+            ->assertDontSee('Penjualan POS Kasir Reguler');
+
+        // 2. Mutation Type Filter
+        $component->set('stockSearch', '')
+            ->set('stockTypeFilter', 'sale_pos')
+            ->assertSee('Penjualan POS Kasir Reguler')
+            ->assertDontSee('Opname UnikXYZ Test Marker');
+
+        // 3. Item Type Filter
+        $component->set('stockTypeFilter', 'all')
+            ->set('stockItemTypeFilter', 'product')
+            ->assertSee($product->name);
+
+        // 4. Custom Date and Time Filter
+        $component->set('stockDateFilter', 'custom')
+            ->set('stockStartDate', '2026-10-24')
+            ->set('stockStartTime', '00:00')
+            ->set('stockEndDate', '2026-10-26')
+            ->set('stockEndTime', '23:59')
+            ->assertSee('Opname UnikXYZ Test Marker')
+            ->assertDontSee('Penjualan POS Kasir Reguler');
+
+        // 5. Reset Filters
+        $component->call('resetStockFilters')
+            ->assertSet('stockSearch', '')
+            ->assertSet('stockTypeFilter', 'all')
+            ->assertSet('stockItemTypeFilter', 'all')
+            ->assertSet('stockDateFilter', 'all')
+            ->assertSet('stockStartDate', null)
+            ->assertSet('stockEndDate', null);
     }
 }

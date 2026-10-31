@@ -532,7 +532,7 @@ class TenantBackofficeDemoSeeder extends Seeder
             }
 
             // Retail Items in Salon
-            Product::updateOrCreate(
+            $pPomade = Product::updateOrCreate(
                 ['tenant_id' => $salonTenant->id, 'name' => 'Pomade Strong Matte Clay 100g'],
                 [
                     'category_id' => $catRetail->id,
@@ -542,13 +542,17 @@ class TenantBackofficeDemoSeeder extends Seeder
                     'sku' => 'PRD-POMADE',
                     'base_price' => 85000,
                     'cost_price' => 45000,
+                    'stock_quantity' => 24,
+                    'minimum_stock' => 5,
+                    'unit' => 'jar',
+                    'track_stock' => true,
                     'image_url' => 'https://images.unsplash.com/photo-1597354984706-aec992b7d526?auto=format&fit=crop&w=300&h=300&q=80',
                     'is_active' => true,
                     'is_available' => true,
                 ]
             );
 
-            Product::updateOrCreate(
+            $pTonic = Product::updateOrCreate(
                 ['tenant_id' => $salonTenant->id, 'name' => 'Tonic Hair & Scalp Refresher 100ml'],
                 [
                     'category_id' => $catRetail->id,
@@ -558,13 +562,17 @@ class TenantBackofficeDemoSeeder extends Seeder
                     'sku' => 'PRD-TONIC',
                     'base_price' => 65000,
                     'cost_price' => 30000,
+                    'stock_quantity' => 15,
+                    'minimum_stock' => 5,
+                    'unit' => 'botol',
+                    'track_stock' => true,
                     'image_url' => 'https://images.unsplash.com/photo-1608248597359-5975e533037f?auto=format&fit=crop&w=300&h=300&q=80',
                     'is_active' => true,
                     'is_available' => true,
                 ]
             );
 
-            Product::updateOrCreate(
+            $pShampoo = Product::updateOrCreate(
                 ['tenant_id' => $salonTenant->id, 'name' => 'Shampoo Anti-Dandruff Professional 500ml'],
                 [
                     'category_id' => $catRetail->id,
@@ -574,13 +582,17 @@ class TenantBackofficeDemoSeeder extends Seeder
                     'sku' => 'PRD-SHAMPOO',
                     'base_price' => 110000,
                     'cost_price' => 55000,
+                    'stock_quantity' => 8,
+                    'minimum_stock' => 5,
+                    'unit' => 'botol',
+                    'track_stock' => true,
                     'image_url' => 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=300&h=300&q=80',
                     'is_active' => true,
                     'is_available' => true,
                 ]
             );
 
-            Product::updateOrCreate(
+            $pSerum = Product::updateOrCreate(
                 ['tenant_id' => $salonTenant->id, 'name' => 'Serum Keratin Hair Repair 50ml'],
                 [
                     'category_id' => $catRetail->id,
@@ -590,6 +602,10 @@ class TenantBackofficeDemoSeeder extends Seeder
                     'sku' => 'PRD-SERUM',
                     'base_price' => 95000,
                     'cost_price' => 48000,
+                    'stock_quantity' => 3,
+                    'minimum_stock' => 5,
+                    'unit' => 'botol',
+                    'track_stock' => true,
                     'image_url' => 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&h=300&q=80',
                     'is_active' => true,
                     'is_available' => true,
@@ -706,6 +722,186 @@ class TenantBackofficeDemoSeeder extends Seeder
                     'status' => 'received',
                     'total_amount' => 450000,
                     'notes' => 'Handuk hitam microfiber 50 pcs untuk area cuci rambut',
+                ]
+            );
+
+            // Seed realistic Stock Movements for Salon Retail Items with clear timestamps
+            $salonOwner = User::where('tenant_id', $salonTenant->id)->first();
+            $movementsData = [
+                [
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'product_id' => $pPomade->id,
+                    'user_id' => $salonOwner?->id,
+                    'type' => 'opname',
+                    'qty' => 30,
+                    'balance_after' => 30,
+                    'reference_note' => 'Stok Opname Awal: Audit saldo fisik display rak styling pomade',
+                    'created_at' => now()->subDays(6)->setTime(9, 15, 0),
+                    'updated_at' => now()->subDays(6)->setTime(9, 15, 0),
+                ],
+                [
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'product_id' => $pPomade->id,
+                    'user_id' => $salonOwner?->id,
+                    'type' => 'sale_pos',
+                    'qty' => -6,
+                    'balance_after' => 24,
+                    'reference_note' => 'Penjualan POS: 6 jar pomade ke pelanggan reguler',
+                    'created_at' => now()->subDays(2)->setTime(16, 45, 0),
+                    'updated_at' => now()->subDays(2)->setTime(16, 45, 0),
+                ],
+                [
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'product_id' => $pTonic->id,
+                    'user_id' => $salonOwner?->id,
+                    'type' => 'opname',
+                    'qty' => 15,
+                    'balance_after' => 15,
+                    'reference_note' => 'Stok Opname: Pemeriksaan stok mingguan rak perawatan rambut',
+                    'created_at' => now()->subDays(3)->setTime(10, 30, 0),
+                    'updated_at' => now()->subDays(3)->setTime(10, 30, 0),
+                ],
+                [
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'product_id' => $pShampoo->id,
+                    'user_id' => $salonOwner?->id,
+                    'type' => 'purchase',
+                    'qty' => 10,
+                    'balance_after' => 10,
+                    'reference_note' => 'Penerimaan PO-202610-001 dari PT L\'Oreal Professional Indonesia',
+                    'created_at' => now()->subDays(5)->setTime(14, 20, 0),
+                    'updated_at' => now()->subDays(5)->setTime(14, 20, 0),
+                ],
+                [
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'product_id' => $pShampoo->id,
+                    'user_id' => $salonOwner?->id,
+                    'type' => 'sale_pos',
+                    'qty' => -2,
+                    'balance_after' => 8,
+                    'reference_note' => 'Penjualan Kasir POS: 2 botol shampoo anti-dandruff',
+                    'created_at' => now()->subDays(1)->setTime(15, 10, 0),
+                    'updated_at' => now()->subDays(1)->setTime(15, 10, 0),
+                ],
+                [
+                    'tenant_id' => $salonTenant->id,
+                    'outlet_id' => $salonOutlet->id,
+                    'product_id' => $pSerum->id,
+                    'user_id' => $salonOwner?->id,
+                    'type' => 'opname',
+                    'qty' => -2,
+                    'balance_after' => 3,
+                    'reference_note' => 'Stok Opname Produk: Selisih -2 botol. Alasan: 1 botol tester display habis, 1 botol kemasan pecah (PIC: ' . ($salonOwner?->name ?? 'Staf') . ')',
+                    'created_at' => now()->subHours(4),
+                    'updated_at' => now()->subHours(4),
+                ],
+            ];
+
+            foreach ($movementsData as $mv) {
+                StockMovement::updateOrCreate(
+                    [
+                        'tenant_id' => $mv['tenant_id'],
+                        'product_id' => $mv['product_id'],
+                        'type' => $mv['type'],
+                        'created_at' => $mv['created_at'],
+                    ],
+                    $mv
+                );
+            }
+        }
+
+        // Also check if Putry Beauty Care exists (e.g. tenant 8) and seed salon retail items & movements
+        $putryTenant = Tenant::where('name', 'like', '%Putry Beauty%')->first();
+        if ($putryTenant && $putryTenant->id !== ($salonTenant->id ?? 0)) {
+            $putryOutlet = Outlet::where('tenant_id', $putryTenant->id)->first() ?? Outlet::create([
+                'tenant_id' => $putryTenant->id,
+                'name' => 'Outlet Utama',
+                'slug' => 'outlet-utama-putry',
+                'is_active' => true,
+            ]);
+
+            $putryCat = Category::firstOrCreate(
+                ['tenant_id' => $putryTenant->id, 'slug' => 'produk-ritel-putry'],
+                ['name' => 'Produk Ritel & Skincare', 'icon' => 'fa-spray-can-sparkles']
+            );
+
+            $putryPomade = Product::updateOrCreate(
+                ['tenant_id' => $putryTenant->id, 'name' => 'Hair Clay Styling Putry 100g'],
+                [
+                    'category_id' => $putryCat->id,
+                    'category_tag' => 'Produk • Styling',
+                    'type' => 'item',
+                    'slug' => 'hair-clay-styling-putry',
+                    'sku' => 'PUTRY-CLAY',
+                    'base_price' => 75000,
+                    'cost_price' => 38000,
+                    'stock_quantity' => 18,
+                    'minimum_stock' => 5,
+                    'unit' => 'jar',
+                    'track_stock' => true,
+                    'image_url' => 'https://images.unsplash.com/photo-1597354984706-aec992b7d526?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
+            $putrySerum = Product::updateOrCreate(
+                ['tenant_id' => $putryTenant->id, 'name' => 'Serum Glowing Hair & Scalp Putry 60ml'],
+                [
+                    'category_id' => $putryCat->id,
+                    'category_tag' => 'Produk • Serum',
+                    'type' => 'item',
+                    'slug' => 'serum-hair-scalp-putry',
+                    'sku' => 'PUTRY-SERUM',
+                    'base_price' => 90000,
+                    'cost_price' => 45000,
+                    'stock_quantity' => 12,
+                    'minimum_stock' => 5,
+                    'unit' => 'botol',
+                    'track_stock' => true,
+                    'image_url' => 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&h=300&q=80',
+                    'is_active' => true,
+                    'is_available' => true,
+                ]
+            );
+
+            $putryUser = User::where('tenant_id', $putryTenant->id)->first();
+            StockMovement::updateOrCreate(
+                [
+                    'tenant_id' => $putryTenant->id,
+                    'product_id' => $putryPomade->id,
+                    'type' => 'opname',
+                ],
+                [
+                    'outlet_id' => $putryOutlet->id,
+                    'user_id' => $putryUser?->id,
+                    'qty' => 18,
+                    'balance_after' => 18,
+                    'reference_note' => 'Stok Opname Awal: Saldo fisik produk ritel display Putry Beauty care',
+                    'created_at' => now()->subDays(2)->setTime(10, 0, 0),
+                    'updated_at' => now()->subDays(2)->setTime(10, 0, 0),
+                ]
+            );
+
+            StockMovement::updateOrCreate(
+                [
+                    'tenant_id' => $putryTenant->id,
+                    'product_id' => $putrySerum->id,
+                    'type' => 'opname',
+                ],
+                [
+                    'outlet_id' => $putryOutlet->id,
+                    'user_id' => $putryUser?->id,
+                    'qty' => 12,
+                    'balance_after' => 12,
+                    'reference_note' => 'Stok Opname Awal: Saldo fisik serum display Putry Beauty care',
+                    'created_at' => now()->subDays(2)->setTime(10, 15, 0),
+                    'updated_at' => now()->subDays(2)->setTime(10, 15, 0),
                 ]
             );
         }
