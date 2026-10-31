@@ -27,91 +27,116 @@
         </div>
     </div>
 
-    <!-- 4 Summary Stat Cards -->
+    <!-- 4 Summary Stat Cards (Clean, Sleek, Professional) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Total Catalog Items -->
-        <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition">
-            <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
-                <span class="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span class="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-box-archive"></i>
-                    </span>
-                    <span>{{ $isSalon ? 'Katalog Produk Ritel' : 'Bahan Baku Aktif' }}</span>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Katalog Produk</span>
+                <span class="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center text-xs shadow-2xs">
+                    <i class="fa-solid fa-box-archive"></i>
                 </span>
-                <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[10px]">Aktif</span>
             </div>
-            <div class="text-2xl font-bold text-slate-900 mt-1">
-                {{ $isSalon ? $totalDirectProductsCount : $ingredients->count() }}
-                <span class="text-xs font-semibold text-slate-400 font-normal">{{ $isSalon ? 'Produk' : 'Item' }}</span>
+            <div class="my-3">
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                        {{ $isSalon ? $totalDirectProductsCount : $ingredients->count() }}
+                    </span>
+                    <span class="text-xs font-semibold text-slate-500">
+                        {{ $isSalon ? 'Produk Ritel' : 'Bahan Baku' }}
+                    </span>
+                </div>
             </div>
-            <div class="text-[11px] text-slate-400 mt-1">
-                {{ $isSalon ? 'Pomade, hair tonic, shampoo & serum' : 'Biji kopi, susu, sirup & kemasan' }}
+            <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400 text-[11px]">Status Katalog:</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Aktif Kasir</span>
+                </span>
             </div>
         </div>
 
         <!-- Card 2: Total Units & Asset Value -->
-        <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition">
-            <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
-                <span class="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-cubes-stacked"></i>
-                    </span>
-                    <span>Total Saldo Fisik</span>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Saldo Fisik</span>
+                <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center text-xs shadow-2xs">
+                    <i class="fa-solid fa-cubes-stacked"></i>
                 </span>
-                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold text-[10px]">Akumulasi</span>
             </div>
-            <div class="text-2xl font-bold text-slate-900 mt-1">
-                {{ number_format($isSalon ? $totalDirectStockQty : (float)$ingredients->sum('current_stock'), 0, ',', '.') }}
-                <span class="text-xs font-semibold text-slate-400 font-normal">{{ $isSalon ? 'Unit Fisik' : 'Satuan' }}</span>
+            <div class="my-3">
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                        {{ number_format($isSalon ? $totalDirectStockQty : (float)$ingredients->sum('current_stock'), 0, ',', '.') }}
+                    </span>
+                    <span class="text-xs font-semibold text-slate-500">
+                        {{ $isSalon ? 'Unit Barang' : 'Satuan' }}
+                    </span>
+                </div>
             </div>
-            <div class="text-[11px] text-slate-500 font-medium mt-1">
-                Estimasi Aset: <span class="text-slate-800 font-bold">Rp {{ number_format($totalInventoryAssetValue, 0, ',', '.') }}</span>
+            <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400 text-[11px]">Nilai Aset Modal:</span>
+                <span class="font-bold text-slate-800 text-[11px] whitespace-nowrap">
+                    Rp {{ number_format($totalInventoryAssetValue, 0, ',', '.') }}
+                </span>
             </div>
         </div>
 
         <!-- Card 3: Low Stock Warning -->
-        <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition">
-            <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
-                <span class="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span class="w-6 h-6 rounded-lg {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500' }} flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Peringatan Stok</span>
+                <span class="w-8 h-8 rounded-xl {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100' }} flex items-center justify-center text-xs shadow-2xs">
+                    <i class="fa-solid {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'fa-triangle-exclamation' : 'fa-circle-check' }}"></i>
+                </span>
+            </div>
+            <div class="my-3">
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-3xl font-extrabold tracking-tight {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'text-rose-600' : 'text-slate-900' }}">
+                        {{ $isSalon ? $lowStockDirectProducts : $lowStockIngredients->count() }}
                     </span>
-                    <span>Peringatan Stok</span>
-                </span>
-                <span class="px-2 py-0.5 rounded-full {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'bg-rose-50 text-rose-600 font-bold' : 'bg-emerald-50 text-emerald-600 font-bold' }} text-[10px]">
-                    {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'Perlu Restock' : 'Aman' }}
-                </span>
+                    <span class="text-xs font-semibold {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'text-rose-600' : 'text-slate-500' }}">
+                        {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'Perlu Restock' : 'Item Tipis' }}
+                    </span>
+                </div>
             </div>
-            <div class="text-2xl font-bold {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'text-rose-600' : 'text-slate-900' }} mt-1">
-                {{ $isSalon ? $lowStockDirectProducts : $lowStockIngredients->count() }}
-                <span class="text-xs font-semibold text-slate-400 font-normal">Item Tipis</span>
-            </div>
-            <div class="text-[11px] text-slate-400 mt-1">
-                {{ ($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0 ? 'Di bawah batas minimum (segera PO)' : 'Semua stok dalam batas aman' }}
+            <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400 text-[11px]">Kondisi Stok:</span>
+                @if (($isSalon ? $lowStockDirectProducts : $lowStockIngredients->count()) > 0)
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                        <span>Segera PO Pemasok</span>
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>Semua Aman</span>
+                    </span>
+                @endif
             </div>
         </div>
 
         <!-- Card 4: Monthly Opname Audit -->
-        <div class="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition">
-            <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
-                <span class="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-clipboard-check"></i>
-                    </span>
-                    <span>Audit Opname Bulan Ini</span>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Audit Opname</span>
+                <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-xs shadow-2xs">
+                    <i class="fa-solid fa-clipboard-check"></i>
                 </span>
-                <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-bold text-[10px]">Audit Trail</span>
             </div>
-            <div class="text-2xl font-bold text-slate-900 mt-1">
-                {{ $totalOpnameCountThisMonth }}
-                <span class="text-xs font-semibold text-slate-400 font-normal">Kali Sesi</span>
+            <div class="my-3">
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                        {{ $totalOpnameCountThisMonth }}
+                    </span>
+                    <span class="text-xs font-semibold text-slate-500">Sesi Bulan Ini</span>
+                </div>
             </div>
-            <div class="text-[11px] text-slate-400 mt-1">
-                @if ($lastOpnameMovement)
-                    Terakhir: <span class="text-slate-700 font-semibold">{{ $lastOpnameMovement->created_at->format('d/m/Y H:i') }} WIB</span>
-                @else
-                    Belum ada audit opname bulan ini
-                @endif
+            <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400 text-[11px]">Audit Terakhir:</span>
+                <span class="font-semibold text-slate-700 text-[11px] truncate max-w-[130px]" title="{{ $lastOpnameMovement ? $lastOpnameMovement->created_at->format('d/m/Y H:i') . ' WIB' : 'Belum ada' }}">
+                    {{ $lastOpnameMovement ? $lastOpnameMovement->created_at->format('d/m/Y H:i') : 'Belum ada' }}
+                </span>
             </div>
         </div>
     </div>
@@ -227,36 +252,36 @@
                                 </td>
 
                                 <!-- Category & SKU -->
-                                <td class="py-3.5 px-4 text-xs">
+                                <td class="py-3.5 px-4 text-xs whitespace-nowrap">
                                     <div class="font-semibold text-slate-700">{{ $prod->category?->name ?? 'Ritel' }}</div>
                                     <div class="text-[10px] text-slate-400 mt-0.5 font-mono">{{ $prod->sku ?? 'PRD-'.$prod->id }}</div>
                                 </td>
 
                                 <!-- Selling Price -->
-                                <td class="py-3.5 px-4 text-right font-bold text-slate-900 text-xs">
+                                <td class="py-3.5 px-4 text-right font-bold text-slate-900 text-xs whitespace-nowrap">
                                     Rp {{ number_format($prod->base_price, 0, ',', '.') }}
                                 </td>
 
                                 <!-- Cost Price -->
-                                <td class="py-3.5 px-4 text-right text-xs text-slate-500">
+                                <td class="py-3.5 px-4 text-right text-xs text-slate-500 whitespace-nowrap">
                                     Rp {{ number_format($prod->cost_price, 0, ',', '.') }}
                                 </td>
 
                                 <!-- Current Physical Stock -->
-                                <td class="py-3.5 px-4 text-center">
-                                    <div class="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-bold {{ $isEmpty ? 'bg-rose-50 text-rose-700 border border-rose-200' : ($isLow ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200') }}">
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap {{ $isEmpty ? 'bg-rose-50 text-rose-700 border border-rose-200' : ($isLow ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200') }}">
                                         <i class="fa-solid fa-boxes-stacked text-[10px]"></i>
                                         <span>{{ number_format($stockVal, 0, ',', '.') }} {{ $prod->unit ?: 'pcs' }}</span>
                                     </div>
                                 </td>
 
                                 <!-- Min Stock -->
-                                <td class="py-3.5 px-4 text-center text-xs font-medium text-slate-500">
+                                <td class="py-3.5 px-4 text-center text-xs font-medium text-slate-500 whitespace-nowrap">
                                     {{ (int)$minVal }} {{ $prod->unit ?: 'pcs' }}
                                 </td>
 
                                 <!-- Asset Value -->
-                                <td class="py-3.5 px-4 text-right text-xs font-bold text-slate-800">
+                                <td class="py-3.5 px-4 text-right text-xs font-bold text-slate-800 whitespace-nowrap">
                                     Rp {{ number_format($assetRp, 0, ',', '.') }}
                                 </td>
 
