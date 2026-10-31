@@ -92,7 +92,7 @@
     @livewireScripts
     @stack('scripts')
 
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker Registration & Install Manager -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
@@ -102,6 +102,73 @@
                     console.log('PWA ServiceWorker registration failed: ', err);
                 });
             });
+        }
+
+        // Global PWA Prompt Listener
+        let deferredPwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+            window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+        });
+
+        window.addEventListener('appinstalled', function() {
+            deferredPwaPrompt = null;
+            localStorage.setItem('lokara_pwa_installed', 'true');
+            window.dispatchEvent(new CustomEvent('pwa-installed'));
+        });
+
+        function pwaInstallManager() {
+            return {
+                canInstall: false,
+                showIosModal: false,
+                isIos: false,
+                init: function() {
+                    var isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                        || window.navigator.standalone === true 
+                        || document.referrer.includes('android-app://');
+
+                    if (isStandalone || localStorage.getItem('lokara_pwa_installed') === 'true') {
+                        this.canInstall = false;
+                        return;
+                    }
+
+                    var ua = (window.navigator.userAgent || '').toLowerCase();
+                    this.isIos = /iphone|ipad|ipod/.test(ua);
+                    this.canInstall = true;
+
+                    var self = this;
+                    window.addEventListener('pwa-prompt-ready', function() {
+                        if (!isStandalone && localStorage.getItem('lokara_pwa_installed') !== 'true') {
+                            self.canInstall = true;
+                        }
+                    });
+
+                    window.addEventListener('pwa-installed', function() {
+                        self.canInstall = false;
+                    });
+                },
+                promptInstall: function() {
+                    var self = this;
+                    if (deferredPwaPrompt) {
+                        deferredPwaPrompt.prompt();
+                        deferredPwaPrompt.userChoice.then(function(choice) {
+                            if (choice && choice.outcome === 'accepted') {
+                                self.canInstall = false;
+                                localStorage.setItem('lokara_pwa_installed', 'true');
+                            }
+                            deferredPwaPrompt = null;
+                        });
+                    } else {
+                        this.showIosModal = true;
+                    }
+                },
+                markAsInstalled: function() {
+                    this.canInstall = false;
+                    this.showIosModal = false;
+                    localStorage.setItem('lokara_pwa_installed', 'true');
+                }
+            };
         }
     </script>
 </body>

@@ -1,9 +1,17 @@
             <!-- Top Header Navbar (Matching Image 1) -->
             <header class="h-16 bg-white border-b border-slate-200/80 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30">
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
                     <!-- Mobile Hamburger -->
                     <button wire:click="toggleSidebar" class="lg:hidden text-slate-500 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-100">
                         <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+
+                    <!-- Desktop Sidebar Toggler -->
+                    <button type="button" @click="toggleSidebarExpanded()"
+                        class="hidden lg:flex w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200 items-center justify-center transition shadow-2xs"
+                        title="Perkecil / Perbesar Sidebar">
+                        <i class="fa-solid fa-bars text-sm" x-show="!sidebarExpanded"></i>
+                        <i class="fa-solid fa-bars-staggered text-sm" x-show="sidebarExpanded"></i>
                     </button>
 
                     <!-- Breadcrumbs -->

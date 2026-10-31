@@ -248,5 +248,13 @@ class PosTerminalTest extends TestCase
             ->assertSet('activeShiftId', null)
             ->assertCount('cart', 0);
     }
+
+    public function test_pos_renders_sidebar_toggler()
+    {
+        $this->get('/pos')
+            ->assertStatus(200)
+            ->assertSee('togglePosSidebar', false)
+            ->assertSee('Perkecil / Perbesar Sidebar POS');
+    }
 }
 

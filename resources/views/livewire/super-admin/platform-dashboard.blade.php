@@ -1,4 +1,13 @@
-<div class="min-h-screen bg-surface flex flex-col antialiased text-dark" x-data="{ userMenuOpen: false, dateDropdownOpen: false }">
+<div class="min-h-screen bg-surface flex flex-col antialiased text-dark" 
+     x-data="{ 
+         sidebarExpanded: (localStorage.getItem('sa_sidebar_expanded') !== 'false'),
+         toggleSidebarExpanded() {
+             this.sidebarExpanded = !this.sidebarExpanded;
+             localStorage.setItem('sa_sidebar_expanded', this.sidebarExpanded);
+         },
+         userMenuOpen: false, 
+         dateDropdownOpen: false 
+     }">
 
     <!-- Toast Notification -->
     @include('livewire.super-admin.partials.toast')

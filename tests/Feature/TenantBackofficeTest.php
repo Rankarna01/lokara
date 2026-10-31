@@ -1508,4 +1508,16 @@ class TenantBackofficeTest extends TestCase
         $swResponse->assertStatus(200);
         $this->assertFileExists(public_path('sw.js'));
     }
+
+    public function test_tenant_header_has_pwa_install_button_and_sidebar_toggler()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+
+        $this->actingAs($owner)
+            ->get('/app')
+            ->assertStatus(200)
+            ->assertSee('toggleSidebar()', false)
+            ->assertSee('pwaInstallManager()', false)
+            ->assertSee('Install App');
+    }
 }

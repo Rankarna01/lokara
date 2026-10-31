@@ -1,4 +1,11 @@
-<div class="min-h-screen bg-slate-50 flex flex-col antialiased text-slate-800" x-data="{ sidebarOpen: true }">
+<div class="min-h-screen bg-slate-50 flex flex-col antialiased text-slate-800" 
+     x-data="{ 
+         sidebarOpen: (localStorage.getItem('tenant_sidebar_open') !== 'false'),
+         toggleSidebar() {
+             this.sidebarOpen = !this.sidebarOpen;
+             localStorage.setItem('tenant_sidebar_open', this.sidebarOpen);
+         }
+     }">
     <!-- TOAST NOTIFICATION -->
     @include('livewire.tenant.partials.toast')
 

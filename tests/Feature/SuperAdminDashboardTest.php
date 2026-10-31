@@ -226,4 +226,12 @@ class SuperAdminDashboardTest extends TestCase
             ->call('closeCreateTenantModal')
             ->assertSet('showCreateTenantModal', false);
     }
+
+    public function test_superadmin_renders_sidebar_toggler()
+    {
+        $this->get('/admin')
+            ->assertStatus(200)
+            ->assertSee('toggleSidebarExpanded', false)
+            ->assertSee('Perkecil / Perbesar Sidebar');
+    }
 }

@@ -1,5 +1,10 @@
 <div class="h-screen w-screen overflow-hidden bg-surface flex flex-col antialiased text-dark select-none"
      x-data="{
+         sidebarExpanded: (localStorage.getItem('pos_sidebar_expanded') !== 'false'),
+         togglePosSidebar() {
+             this.sidebarExpanded = !this.sidebarExpanded;
+             localStorage.setItem('pos_sidebar_expanded', this.sidebarExpanded);
+         },
          outletDropdownOpen: false,
          tableDropdownOpen: false,
          cartMenuOpen: false

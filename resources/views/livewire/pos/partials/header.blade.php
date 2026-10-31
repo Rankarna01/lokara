@@ -1,10 +1,18 @@
 <!-- ================= TOP HEADER NAVBAR ================= -->
-<header class="h-16 bg-white border-b border-slate-200/80 px-6 flex items-center justify-between flex-shrink-0">
-    <!-- Left: Breadcrumb -->
-    <div class="flex items-center gap-2 text-xs text-slate-400 font-normal">
-        <span>POS Terminal</span>
-        <span class="text-slate-300">/</span>
-        <span class="text-slate-800 font-semibold capitalize">{{ $activeNav }}</span>
+<header class="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between flex-shrink-0">
+    <!-- Left: Toggler & Breadcrumb -->
+    <div class="flex items-center gap-3">
+        <button type="button" @click="togglePosSidebar()"
+                class="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200 flex items-center justify-center transition shadow-2xs"
+                title="Perkecil / Perbesar Sidebar POS">
+            <i class="fa-solid fa-bars text-sm" x-show="!sidebarExpanded"></i>
+            <i class="fa-solid fa-bars-staggered text-sm" x-show="sidebarExpanded"></i>
+        </button>
+        <div class="flex items-center gap-2 text-xs text-slate-400 font-normal">
+            <span class="hidden sm:inline">POS Terminal</span>
+            <span class="text-slate-300 hidden sm:inline">/</span>
+            <span class="text-slate-800 font-semibold capitalize">{{ $activeNav }}</span>
+        </div>
     </div>
 
     <!-- Center: Search Input with Barcode Icon & Shift Badge -->
