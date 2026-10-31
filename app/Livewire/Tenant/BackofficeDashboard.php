@@ -14,6 +14,7 @@ use App\Livewire\Tenant\Concerns\HasRecipes;
 use App\Livewire\Tenant\Concerns\HasServices;
 use App\Livewire\Tenant\Concerns\HasShifts;
 use App\Livewire\Tenant\Concerns\HasStock;
+use App\Livewire\Tenant\Concerns\HasStoreSettings;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Discount;
@@ -49,6 +50,7 @@ class BackofficeDashboard extends Component
     use HasOutletsAndStaff;
     use HasShifts;
     use HasCustomers;
+    use HasStoreSettings;
 
     #[Url(as: 'tab', keep: true)]
     public string $activeTab = 'dashboard';
@@ -94,6 +96,8 @@ class BackofficeDashboard extends Component
             $this->policyEnforceLock = (bool) ($policies['enforce_lock'] ?? true);
             $this->policyRequireReconciliation = (bool) ($policies['require_reconciliation'] ?? true);
         }
+
+        $this->initStoreSettings();
 
         // Restore active tab from query string or session on refresh
         if (request()->has('tab') && !empty(request()->query('tab'))) {

@@ -22,6 +22,20 @@ Route::match(['get', 'post'], '/logout', function () {
 Route::get('/pos', Terminal::class)->name('pos.terminal');
 Route::get('/app/pos', Terminal::class);
 
+// Progressive Web App (PWA) Manifest & Service Worker
+Route::get('/manifest.json', function () {
+    return response()->file(public_path('manifest.json'), [
+        'Content-Type' => 'application/manifest+json; charset=utf-8',
+    ]);
+});
+
+Route::get('/sw.js', function () {
+    return response()->file(public_path('sw.js'), [
+        'Content-Type' => 'application/javascript; charset=utf-8',
+        'Service-Worker-Allowed' => '/',
+    ]);
+});
+
 // Tenant Admin / Back Office (Modul 02, 03, 04, 05, 06, 08, 09)
 Route::get('/app', BackofficeDashboard::class)->name('tenant.dashboard');
 Route::get('/tenant', BackofficeDashboard::class);

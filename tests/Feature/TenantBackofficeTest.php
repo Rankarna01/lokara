@@ -1425,4 +1425,87 @@ class TenantBackofficeTest extends TestCase
             ->assertSet('showSalonShiftSection', true)
             ->assertSet('showShiftTemplateModal', true);
     }
+
+    public function test_settings_sub_tabs_and_receipt_customization()
+    {
+        Storage::fake('public');
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = $owner->tenant;
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'settings')
+            ->assertSet('settingsSubTab', 'general')
+            ->call('switchSettingsSubTab', 'receipt')
+            ->assertSet('settingsSubTab', 'receipt')
+            ->assertSee('Kustomisasi Struk Thermal')
+            ->set('receiptStoreName', 'Kopi Ruang Pagi Signature')
+            ->set('receiptTagline', 'Artisan Coffee & Eatery')
+            ->set('receiptPaperSize', '80mm')
+            ->set('receiptHeaderNotes', 'Selamat Menikmati Racikan Kami')
+            ->set('receiptFooterNotes', 'Terima Kasih Banyak, Ditunggu Kembali!')
+            ->set('receiptWifiInfo', 'RuangPagi_VIP / 12345678')
+            ->set('receiptSocialMedia', '@kopiruangpagi')
+            ->set('storeLogoFile', UploadedFile::fake()->image('store_logo.png'))
+            ->call('saveReceiptSettings');
+
+        $tenant->refresh();
+        $this->assertEquals('Kopi Ruang Pagi Signature', $tenant->settings['receipt_store_name']);
+        $this->assertEquals('Artisan Coffee & Eatery', $tenant->settings['receipt_tagline']);
+        $this->assertEquals('80mm', $tenant->settings['receipt_paper_size']);
+        $this->assertEquals('RuangPagi_VIP / 12345678', $tenant->settings['receipt_wifi_info']);
+        $this->assertNotEmpty($tenant->settings['receipt_logo_url']);
+
+        // Test remove logo
+        $component->call('removeStoreLogo');
+        $tenant->refresh();
+        $this->assertNull($tenant->settings['receipt_logo_url'] ?? null);
+    }
+
+    public function test_settings_payment_methods_and_qris_upload()
+    {
+        Storage::fake('public');
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = $owner->tenant;
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'settings')
+            ->call('switchSettingsSubTab', 'payments')
+            ->assertSet('settingsSubTab', 'payments')
+            ->assertSee('3. Metode Bayar & Upload QRIS', false)
+            ->set('paymentQrisMerchantName', 'Kopi Ruang Pagi Official')
+            ->set('paymentQrisNmid', 'ID9988776655')
+            ->set('paymentBankName', 'BCA')
+            ->set('paymentBankAccountNumber', '7700-1122-3344')
+            ->set('paymentBankAccountHolder', 'PT Kopi Ruang Pagi')
+            ->set('paymentTransferActive', true)
+            ->set('qrisImageFile', UploadedFile::fake()->image('qris_barcode.png'))
+            ->call('savePaymentSettings');
+
+        $tenant->refresh();
+        $this->assertEquals('Kopi Ruang Pagi Official', $tenant->settings['payment_qris_merchant_name']);
+        $this->assertEquals('ID9988776655', $tenant->settings['payment_qris_nmid']);
+        $this->assertEquals('7700-1122-3344', $tenant->settings['payment_bank_account_number']);
+        $this->assertNotEmpty($tenant->settings['payment_qris_image_url']);
+
+        // Test remove QRIS image
+        $component->call('removeQrisImage');
+        $tenant->refresh();
+        $this->assertNull($tenant->settings['payment_qris_image_url'] ?? null);
+    }
+
+    public function test_pwa_manifest_and_service_worker_available()
+    {
+        $response = $this->get('/manifest.json');
+        $response->assertStatus(200);
+        $this->assertFileExists(public_path('manifest.json'));
+        $manifest = json_decode(file_get_contents(public_path('manifest.json')), true);
+        $this->assertEquals('Lokara POS & Backoffice', $manifest['name']);
+        $this->assertEquals('Lokara POS', $manifest['short_name']);
+
+        $swResponse = $this->get('/sw.js');
+        $swResponse->assertStatus(200);
+        $this->assertFileExists(public_path('sw.js'));
+    }
 }

@@ -19,23 +19,38 @@
             </div>
 
             <!-- Payment Method Tabs -->
-            <div class="grid grid-cols-3 gap-2 text-xs">
+            @php
+                $tSettings = $tenant->settings ?? [];
+                $qrisImg = $tSettings['payment_qris_image_url'] ?? null;
+                $qrisMerchant = $tSettings['payment_qris_merchant_name'] ?? $tenant->name ?? 'LOKARA POS';
+                $qrisNmid = $tSettings['payment_qris_nmid'] ?? 'ID102030405060';
+                $bankName = $tSettings['payment_bank_name'] ?? 'BCA';
+                $bankNo = $tSettings['payment_bank_account_number'] ?? '8801-2993-1122';
+                $bankHolder = $tSettings['payment_bank_account_holder'] ?? ($tenant->name ?? 'PT Lokara Indonesia');
+            @endphp
+            <div class="grid grid-cols-4 gap-1.5 text-xs">
                 <button type="button" wire:click="$set('paymentMethod', 'cash')"
-                        class="py-2.5 px-2 rounded-xl border text-center font-bold flex flex-col items-center gap-1 transition {{ $paymentMethod === 'cash' ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' }}">
-                    <i class="fa-solid fa-money-bill-wave text-sm"></i>
-                    <span>Tunai</span>
+                        class="py-2 px-1 rounded-xl border text-center font-bold flex flex-col items-center gap-1 transition {{ $paymentMethod === 'cash' ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' }}">
+                    <i class="fa-solid fa-money-bill-wave text-xs"></i>
+                    <span class="text-[11px]">Tunai</span>
                 </button>
 
                 <button type="button" wire:click="$set('paymentMethod', 'qris')"
-                        class="py-2.5 px-2 rounded-xl border text-center font-bold flex flex-col items-center gap-1 transition {{ $paymentMethod === 'qris' ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' }}">
-                    <i class="fa-solid fa-qrcode text-sm"></i>
-                    <span>QRIS</span>
+                        class="py-2 px-1 rounded-xl border text-center font-bold flex flex-col items-center gap-1 transition {{ $paymentMethod === 'qris' ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' }}">
+                    <i class="fa-solid fa-qrcode text-xs"></i>
+                    <span class="text-[11px]">QRIS</span>
+                </button>
+
+                <button type="button" wire:click="$set('paymentMethod', 'transfer')"
+                        class="py-2 px-1 rounded-xl border text-center font-bold flex flex-col items-center gap-1 transition {{ $paymentMethod === 'transfer' ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' }}">
+                    <i class="fa-solid fa-building-columns text-xs"></i>
+                    <span class="text-[11px]">Transfer</span>
                 </button>
 
                 <button type="button" wire:click="$set('paymentMethod', 'debit')"
-                        class="py-2.5 px-2 rounded-xl border text-center font-bold flex flex-col items-center gap-1 transition {{ $paymentMethod === 'debit' ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' }}">
-                    <i class="fa-solid fa-credit-card text-sm"></i>
-                    <span>Debit / EDC</span>
+                        class="py-2 px-1 rounded-xl border text-center font-bold flex flex-col items-center gap-1 transition {{ $paymentMethod === 'debit' ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' }}">
+                    <i class="fa-solid fa-credit-card text-xs"></i>
+                    <span class="text-[11px]">EDC/Kartu</span>
                 </button>
             </div>
 
@@ -63,18 +78,48 @@
                 </div>
             @elseif ($paymentMethod === 'qris')
                 <!-- QRIS Dynamic Display -->
-                <div class="text-center py-4 space-y-3">
-                    <div class="w-44 h-44 mx-auto p-2 border border-slate-200 rounded-2xl bg-white shadow-xs flex items-center justify-center">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=00020101021226670016ID.LOKARAPOS.WWW01189360099999999999990215INV-20261029-015802ID5916Kopi Ruang Pagi6013Jakarta Selatan"
-                             alt="QRIS Dinamis"
-                             class="w-full h-full object-contain" />
+                <div class="text-center py-3 space-y-2.5">
+                    <div class="w-44 h-44 mx-auto p-2 border border-slate-200 rounded-2xl bg-white shadow-xs flex items-center justify-center overflow-hidden">
+                        @if ($qrisImg)
+                            <img src="{{ $qrisImg }}" alt="QRIS {{ $qrisMerchant }}" class="w-full h-full object-contain" />
+                        @else
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=00020101021226670016ID.LOKARAPOS.WWW01189360099999999999990215INV-{{ date('Ymd-His') }}ID5916{{ urlencode(substr($qrisMerchant, 0, 16)) }}6013Jakarta"
+                                 alt="QRIS Dinamis"
+                                 class="w-full h-full object-contain" />
+                        @endif
                     </div>
-                    <p class="text-xs text-slate-500">Scan QRIS menggunakan GoPay, OVO, Dana, BCA, atau Livin Mandiri</p>
+                    <div>
+                        <div class="font-bold text-slate-800 text-xs">{{ $qrisMerchant }}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">NMID: {{ $qrisNmid }}</div>
+                    </div>
+                    <p class="text-[11px] text-slate-500">Scan QRIS menggunakan GoPay, OVO, Dana, BCA, atau Livin Mandiri</p>
+                </div>
+            @elseif ($paymentMethod === 'transfer')
+                <!-- Bank Transfer Account Details -->
+                <div class="py-3 space-y-3 text-xs">
+                    <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700">Rekening Transfer</span>
+                            <span class="text-[10px] font-mono font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{{ $bankName }}</span>
+                        </div>
+                        <div class="text-slate-700">
+                            <div class="text-[10px] text-slate-400">Nomor Rekening:</div>
+                            <div class="font-mono text-base font-bold text-slate-900 tracking-wider">{{ $bankNo }}</div>
+                        </div>
+                        <div class="text-slate-700">
+                            <div class="text-[10px] text-slate-400">Atas Nama:</div>
+                            <div class="font-bold text-slate-800">{{ $bankHolder }}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Nomor Referensi Transfer / 4 Digit Terakhir</label>
+                        <input type="text" placeholder="Contoh: TRF-9821 / Ref 1042" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono text-xs" />
+                    </div>
                 </div>
             @else
                 <div class="py-4 space-y-2 text-xs">
                     <label class="block font-semibold text-slate-700">Nomor Approval / Referensi EDC</label>
-                    <input type="text" placeholder="Contoh: APPR-889901" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                    <input type="text" placeholder="Contoh: APPR-889901" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono text-xs" />
                 </div>
             @endif
 

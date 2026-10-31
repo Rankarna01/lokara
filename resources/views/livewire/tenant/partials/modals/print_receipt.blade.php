@@ -14,13 +14,38 @@
             </div>
 
             <!-- Receipt Paper View (Thermal 58mm/80mm style) -->
+            @php
+                $tSettings = $tenant->settings ?? [];
+                $paperSize = $tSettings['receipt_paper_size'] ?? '58mm';
+                $showLogo = $tSettings['receipt_show_logo'] ?? true;
+                $logoUrl = $tSettings['receipt_logo_url'] ?? null;
+                $storeName = $tSettings['receipt_store_name'] ?? $tenant->name ?? 'LOKARA POS';
+                $tagline = $tSettings['receipt_tagline'] ?? '';
+                $headerNotes = $tSettings['receipt_header_notes'] ?? '';
+                $footerNotes = $tSettings['receipt_footer_notes'] ?? 'Terima Kasih Atas Kunjungan Anda!';
+                $wifiInfo = $tSettings['receipt_wifi_info'] ?? '';
+                $socialMedia = $tSettings['receipt_social_media'] ?? '';
+                $showCustomer = $tSettings['receipt_show_customer'] ?? true;
+                $showCashier = $tSettings['receipt_show_cashier'] ?? true;
+                $showTable = $tSettings['receipt_show_table'] ?? true;
+            @endphp
             <div class="p-6 bg-slate-100 flex justify-center">
-                <div id="printableThermalReceipt" class="bg-white w-full max-w-[340px] p-5 shadow-md border border-slate-200/80 rounded-lg text-slate-800 font-mono text-[11px] leading-relaxed">
+                <div id="printableThermalReceipt" class="bg-white w-full {{ $paperSize === '80mm' ? 'max-w-[340px]' : 'max-w-[280px]' }} p-5 shadow-md border border-slate-200/80 rounded-lg text-slate-800 font-mono text-[11px] leading-relaxed">
                     <!-- Store Header -->
                     <div class="text-center space-y-1 mb-4 pb-3 border-b border-dashed border-slate-300">
+                        @if($showLogo && $logoUrl)
+                            <div class="flex justify-center mb-1.5">
+                                <img src="{{ $logoUrl }}" alt="{{ $storeName }}" class="w-12 h-12 object-contain filter grayscale contrast-125 rounded-md" />
+                            </div>
+                        @endif
                         <div class="font-black text-sm text-slate-900 uppercase tracking-wider">
-                            {{ $tenant->name ?? 'LOKARA POS' }}
+                            {{ $storeName }}
                         </div>
+                        @if($tagline)
+                            <div class="text-[10px] text-slate-500 italic">
+                                {{ $tagline }}
+                            </div>
+                        @endif
                         <div class="text-[10px] text-slate-500">
                             {{ $viewingTransaction->outlet?->name ?? 'Outlet Utama' }}
                         </div>
@@ -32,6 +57,11 @@
                         @if($viewingTransaction->outlet?->phone)
                             <div class="text-[9px] text-slate-400">
                                 Telp: {{ $viewingTransaction->outlet->phone }}
+                            </div>
+                        @endif
+                        @if($headerNotes)
+                            <div class="text-[9px] text-slate-500 pt-1">
+                                {{ $headerNotes }}
                             </div>
                         @endif
                     </div>
@@ -46,18 +76,24 @@
                             <span>Waktu:</span>
                             <span>{{ $viewingTransaction->created_at->format('d/m/Y H:i:s') }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Kasir:</span>
-                            <span>{{ $viewingTransaction->user?->name ?? 'Kasir' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Pelanggan:</span>
-                            <span>{{ $viewingTransaction->customer?->name ?? 'Walk-in' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Tipe:</span>
-                            <span class="capitalize">{{ str_replace('_', ' ', $viewingTransaction->order_type) }} {{ $viewingTransaction->table_number ? '• Meja ' . $viewingTransaction->table_number : '' }}</span>
-                        </div>
+                        @if($showCashier)
+                            <div class="flex justify-between">
+                                <span>Kasir:</span>
+                                <span>{{ $viewingTransaction->user?->name ?? 'Kasir' }}</span>
+                            </div>
+                        @endif
+                        @if($showCustomer)
+                            <div class="flex justify-between">
+                                <span>Pelanggan:</span>
+                                <span>{{ $viewingTransaction->customer?->name ?? 'Walk-in' }}</span>
+                            </div>
+                        @endif
+                        @if($showTable)
+                            <div class="flex justify-between">
+                                <span>Tipe:</span>
+                                <span class="capitalize">{{ str_replace('_', ' ', $viewingTransaction->order_type) }} {{ $viewingTransaction->table_number ? '• Meja ' . $viewingTransaction->table_number : '' }}</span>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Items List -->
@@ -140,10 +176,15 @@
                     @endif
 
                     <!-- Footer Message -->
-                    <div class="text-center pt-4 text-[9px] text-slate-400 space-y-1">
-                        <p class="font-bold text-slate-600">Terima Kasih Atas Kunjungan Anda!</p>
-                        <p>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan kecuali dengan perjanjian.</p>
-                        <p class="pt-1 text-[8px] tracking-wider uppercase text-slate-300">Powered by Lokara POS</p>
+                    <div class="text-center pt-4 text-[9px] text-slate-500 space-y-1">
+                        <p class="font-bold text-slate-700 whitespace-pre-line">{{ $footerNotes }}</p>
+                        @if($wifiInfo)
+                            <p class="text-[9px] text-slate-500"><i class="fa-solid fa-wifi mr-1"></i> WiFi: <span class="font-bold">{{ $wifiInfo }}</span></p>
+                        @endif
+                        @if($socialMedia)
+                            <p class="text-[9px] text-slate-500"><i class="fa-brands fa-instagram mr-1"></i> {{ $socialMedia }}</p>
+                        @endif
+                        <p class="pt-1.5 text-[8px] tracking-wider uppercase text-slate-400">Powered by Lokara POS</p>
                     </div>
                 </div>
             </div>

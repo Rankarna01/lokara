@@ -198,3 +198,4 @@ trait HasCustomers
         ];
     }
 }
+
