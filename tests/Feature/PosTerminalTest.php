@@ -22,15 +22,22 @@ class PosTerminalTest extends TestCase
         $this->seed();
     }
 
+    public function test_guest_is_redirected_to_login_when_accessing_pos()
+    {
+        $this->get('/pos')->assertRedirect('/login');
+    }
+
     public function test_pos_terminal_renders_successfully()
     {
-        $this->get('/pos')
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $this->actingAs($dina)
+            ->get('/pos')
             ->assertStatus(200)
             ->assertSee('POS Terminal')
             ->assertSee('Katalog')
             ->assertSee('Semua Menu')
             ->assertSee('Kopi Ruang Pagi')
-            ->assertSee('Dina Putri')
+            ->assertSee($dina->name)
             ->assertSee('Kasir')
             ->assertSee('Pesanan Baru')
             ->assertSee('Dine In')
@@ -296,7 +303,9 @@ class PosTerminalTest extends TestCase
 
     public function test_pos_renders_sidebar_toggler()
     {
-        $this->get('/pos')
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $this->actingAs($dina)
+            ->get('/pos')
             ->assertStatus(200)
             ->assertSee('togglePosSidebar', false)
             ->assertSee('Perkecil / Perbesar Sidebar POS');

@@ -7,6 +7,7 @@ use App\Models\BusinessType;
 use App\Models\Invoice;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -15,15 +16,26 @@ class SuperAdminDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected $admin;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed();
+        $this->admin = User::where('role', 'super_admin')->first();
+        auth()->login($this->admin);
+    }
+
+    public function test_guest_is_redirected_to_login_when_accessing_admin()
+    {
+        auth()->logout();
+        $this->get('/admin')->assertRedirect('/login');
     }
 
     public function test_superadmin_dashboard_renders_successfully()
     {
-        $this->get('/admin')
+        $this->actingAs($this->admin)
+            ->get('/admin')
             ->assertStatus(200)
             ->assertSee('Dashboard Platform')
             ->assertSee('Total Tenant')
@@ -35,7 +47,8 @@ class SuperAdminDashboardTest extends TestCase
 
     public function test_livewire_can_switch_tabs()
     {
-        Livewire::test(PlatformDashboard::class)
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
             ->assertSet('activeTab', 'dashboard')
             ->call('setTab', 'tenants')
             ->assertSet('activeTab', 'tenants')

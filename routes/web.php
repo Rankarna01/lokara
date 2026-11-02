@@ -7,6 +7,24 @@ use App\Livewire\Tenant\BackofficeDashboard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Root Route: Always redirect guests to /login; authenticated users to their portal
+Route::get('/', function () {
+    if (! Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $user = Auth::user();
+    if ($user && in_array($user->role, ['owner', 'manager'])) {
+        return redirect()->route('tenant.dashboard');
+    }
+
+    if ($user && in_array($user->role, ['cashier', 'staff'])) {
+        return redirect()->route('pos.terminal');
+    }
+
+    return redirect()->route('superadmin.dashboard');
+});
+
 // Authentication Routes
 Route::get('/login', Login::class)->name('login');
 Route::get('/admin/login', Login::class);
@@ -17,10 +35,6 @@ Route::match(['get', 'post'], '/logout', function () {
     request()->session()->regenerateToken();
     return redirect()->route('login');
 })->name('logout');
-
-// POS Terminal Kasir (Modul 07)
-Route::get('/pos', Terminal::class)->name('pos.terminal');
-Route::get('/app/pos', Terminal::class);
 
 // Progressive Web App (PWA) Manifest & Service Worker
 Route::get('/manifest.json', function () {
@@ -36,14 +50,18 @@ Route::get('/sw.js', function () {
     ]);
 });
 
-// Tenant Admin / Back Office (Modul 02, 03, 04, 05, 06, 08, 09)
-Route::get('/app', BackofficeDashboard::class)->name('tenant.dashboard');
-Route::get('/tenant', BackofficeDashboard::class);
-Route::get('/backoffice', BackofficeDashboard::class);
-
-// Super Admin Platform Dashboard (Modul 01)
-Route::middleware(['web'])->group(function () {
-    Route::get('/', PlatformDashboard::class)->name('superadmin.dashboard');
-    Route::get('/admin', PlatformDashboard::class)->name('superadmin.admin');
+// Protected routes (Require Authentication)
+Route::middleware(['web', 'auth'])->group(function () {
+    // Super Admin Platform Dashboard (Modul 01)
+    Route::get('/admin', PlatformDashboard::class)->name('superadmin.dashboard');
     Route::get('/platform', PlatformDashboard::class)->name('superadmin.platform');
+
+    // Tenant Admin / Back Office (Modul 02, 03, 04, 05, 06, 08, 09)
+    Route::get('/app', BackofficeDashboard::class)->name('tenant.dashboard');
+    Route::get('/tenant', BackofficeDashboard::class);
+    Route::get('/backoffice', BackofficeDashboard::class);
+
+    // POS Terminal Kasir (Modul 07)
+    Route::get('/pos', Terminal::class)->name('pos.terminal');
+    Route::get('/app/pos', Terminal::class);
 });

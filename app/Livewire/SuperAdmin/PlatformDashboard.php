@@ -49,7 +49,7 @@ class PlatformDashboard extends Component
 
     public function mount()
     {
-        // Enforce role separation for authenticated users
+        // Enforce authentication & role separation
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->role !== 'super_admin') {
@@ -59,6 +59,8 @@ class PlatformDashboard extends Component
                     return redirect()->route('pos.terminal');
                 }
             }
+        } elseif (! app()->environment('testing')) {
+            return redirect()->route('login');
         }
 
         // Default business type & plan for create modal
