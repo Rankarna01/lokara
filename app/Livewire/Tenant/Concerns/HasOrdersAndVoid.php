@@ -4,36 +4,51 @@ namespace App\Livewire\Tenant\Concerns;
 
 use App\Models\Order;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 trait HasOrdersAndVoid
 {
     // Transactions Filters
     public string $searchTransaction = '';
+
     public string $transactionTypeTab = 'all'; // all, services, products (Khusus Salon & Barbershop)
+
     public string $transactionStatusFilter = 'all'; // all, completed, hold, voided
+
     public string $transactionPaymentMethodFilter = 'all'; // all, cash, qris, transfer, debit, credit
+
     public string $transactionOrderTypeFilter = 'all'; // all, dine_in, take_away, delivery
+
     public string $transactionDateFilter = '30_days'; // 30_days, 7_days, today, yesterday, this_month, all, custom
+
     public string $transactionStartDate = '';
+
     public string $transactionStartTime = '00:00';
+
     public string $transactionEndDate = '';
+
     public string $transactionEndTime = '23:59';
+
     public int $transactionPerPage = 20;
 
     // Chart & Trend Controls
     public string $transactionTrendPeriod = '7_days'; // 7_days, 14_days, 30_days
+
     public string $transactionTrendMetric = 'revenue'; // revenue, count
 
     // Transaction Detail & Receipt Modals
     public bool $showTransactionDetailModal = false;
+
     public ?int $selectedTransactionId = null;
+
     public bool $showPrintReceiptModal = false;
 
     // Void Order Modal
     public bool $showVoidModal = false;
+
     public ?int $voidOrderId = null;
+
     public string $voidPin = '';
+
     public string $voidReason = 'Kesalahan pesanan';
 
     public function setTransactionTypeTab(string $tab): void
@@ -106,13 +121,14 @@ trait HasOrdersAndVoid
     {
         if ($this->voidPin !== '888888' && $this->voidPin !== '123456') {
             $this->showToast('PIN Otorisasi Manajer salah!', 'error');
+
             return;
         }
 
         $order = Order::where('tenant_id', $this->tenantId)->findOrFail($this->voidOrderId);
         $order->update([
             'status' => 'voided',
-            'notes' => ($order->notes ? $order->notes . ' | ' : '') . "VOID oleh Manajer. Alasan: {$this->voidReason}",
+            'notes' => ($order->notes ? $order->notes.' | ' : '')."VOID oleh Manajer. Alasan: {$this->voidReason}",
         ]);
 
         $this->showVoidModal = false;
@@ -122,7 +138,7 @@ trait HasOrdersAndVoid
     /**
      * Get filtered transactions list with comprehensive relation loading
      */
-    protected function getFilteredTransactionsData(): array
+    protected function getFilteredTransactionsData(bool $withoutLimit = false): array
     {
         $baseQuery = Order::where('tenant_id', $this->tenantId);
 
@@ -156,37 +172,37 @@ trait HasOrdersAndVoid
         } elseif ($this->transactionDateFilter === 'this_month') {
             $baseQuery->where('created_at', '>=', Carbon::now()->startOfMonth()->startOfDay());
         } elseif ($this->transactionDateFilter === 'custom') {
-            if (!empty($this->transactionStartDate)) {
-                $start = Carbon::parse($this->transactionStartDate . ' ' . ($this->transactionStartTime ?: '00:00:00'));
+            if (! empty($this->transactionStartDate)) {
+                $start = Carbon::parse($this->transactionStartDate.' '.($this->transactionStartTime ?: '00:00:00'));
                 $baseQuery->where('created_at', '>=', $start);
             }
-            if (!empty($this->transactionEndDate)) {
-                $end = Carbon::parse($this->transactionEndDate . ' ' . ($this->transactionEndTime ?: '23:59:59'));
+            if (! empty($this->transactionEndDate)) {
+                $end = Carbon::parse($this->transactionEndDate.' '.($this->transactionEndTime ?: '23:59:59'));
                 $baseQuery->where('created_at', '<=', $end);
             }
         }
 
         // Search Filter
-        if (!empty($this->searchTransaction)) {
+        if (! empty($this->searchTransaction)) {
             $search = trim($this->searchTransaction);
             $baseQuery->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhere('table_number', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function ($cq) use ($search) {
-                      $cq->where('name', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('items', function ($iq) use ($search) {
-                      $iq->where('product_name', 'like', "%{$search}%")
-                        ->orWhere('variant_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('payments', function ($pq) use ($search) {
-                      $pq->where('reference_number', 'like', "%{$search}%");
-                  });
+                    ->orWhere('table_number', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('items', function ($iq) use ($search) {
+                        $iq->where('product_name', 'like', "%{$search}%")
+                            ->orWhere('variant_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('payments', function ($pq) use ($search) {
+                        $pq->where('reference_number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -221,7 +237,8 @@ trait HasOrdersAndVoid
         }
 
         $totalFilteredCount = (clone $query)->count();
-        $transactions = $query->orderBy('created_at', 'desc')->take($this->transactionPerPage)->get();
+        $sortedQuery = $query->orderBy('created_at', 'desc');
+        $transactions = $withoutLimit ? $sortedQuery->get() : $sortedQuery->take($this->transactionPerPage)->get();
 
         $viewingTransaction = null;
         if ($this->selectedTransactionId) {
@@ -268,12 +285,12 @@ trait HasOrdersAndVoid
         } elseif ($this->transactionDateFilter === 'this_month') {
             $metricsQuery->where('created_at', '>=', Carbon::now()->startOfMonth()->startOfDay());
         } elseif ($this->transactionDateFilter === 'custom') {
-            if (!empty($this->transactionStartDate)) {
-                $start = Carbon::parse($this->transactionStartDate . ' ' . ($this->transactionStartTime ?: '00:00:00'));
+            if (! empty($this->transactionStartDate)) {
+                $start = Carbon::parse($this->transactionStartDate.' '.($this->transactionStartTime ?: '00:00:00'));
                 $metricsQuery->where('created_at', '>=', $start);
             }
-            if (!empty($this->transactionEndDate)) {
-                $end = Carbon::parse($this->transactionEndDate . ' ' . ($this->transactionEndTime ?: '23:59:59'));
+            if (! empty($this->transactionEndDate)) {
+                $end = Carbon::parse($this->transactionEndDate.' '.($this->transactionEndTime ?: '23:59:59'));
                 $metricsQuery->where('created_at', '<=', $end);
             }
         }
@@ -297,8 +314,8 @@ trait HasOrdersAndVoid
             }
         }
         arsort($paymentAmounts);
-        $topPaymentMethod = !empty($paymentAmounts) ? array_key_first($paymentAmounts) : 'Belum Ada';
-        $topPaymentSharePct = $totalRevenue > 0 && !empty($paymentAmounts) ? round((reset($paymentAmounts) / $totalRevenue) * 100) : 0;
+        $topPaymentMethod = ! empty($paymentAmounts) ? array_key_first($paymentAmounts) : 'Belum Ada';
+        $topPaymentSharePct = $totalRevenue > 0 && ! empty($paymentAmounts) ? round((reset($paymentAmounts) / $totalRevenue) * 100) : 0;
 
         // Order Type breakdown
         $orderTypes = [
@@ -326,7 +343,7 @@ trait HasOrdersAndVoid
 
             $dayOrders = Order::where('tenant_id', $this->tenantId)
                 ->where('status', 'completed')
-                ->when($this->selectedOutletId, fn($q) => $q->where('outlet_id', $this->selectedOutletId))
+                ->when($this->selectedOutletId, fn ($q) => $q->where('outlet_id', $this->selectedOutletId))
                 ->whereDate('created_at', $dateStr)
                 ->get();
 

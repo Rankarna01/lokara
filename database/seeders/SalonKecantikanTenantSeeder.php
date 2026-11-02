@@ -4,6 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\BusinessType;
 use App\Models\Category;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderPayment;
 use App\Models\Outlet;
 use App\Models\Plan;
 use App\Models\Product;
@@ -54,7 +57,7 @@ class SalonKecantikanTenantSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
+        $owner = User::updateOrCreate(
             ['email' => self::OWNER_EMAIL],
             [
                 'name' => 'Arsi Hapis',
@@ -69,6 +72,114 @@ class SalonKecantikanTenantSeeder extends Seeder
         );
 
         $this->seedMasterLayanan($tenant);
+        $this->seedRiwayatTransaksi($tenant, $outlet, $owner);
+    }
+
+    private function seedRiwayatTransaksi(Tenant $tenant, Outlet $outlet, User $owner): void
+    {
+        $services = Product::where('tenant_id', $tenant->id)->where('type', 'service')->get()->keyBy('name');
+
+        $transactions = [
+            [
+                'order_number' => 'ORD-PBC-001',
+                'days_ago' => 6,
+                'time' => '10:15',
+                'discount' => 0,
+                'payment_method' => 'cash',
+                'items' => [['Facial Glow Brightening', 1], ['Hair Spa Aromatherapy', 1]],
+            ],
+            [
+                'order_number' => 'ORD-PBC-002',
+                'days_ago' => 4,
+                'time' => '13:40',
+                'discount' => 15000,
+                'payment_method' => 'qris',
+                'items' => [['Manicure & Gel Polish', 1]],
+            ],
+            [
+                'order_number' => 'ORD-PBC-003',
+                'days_ago' => 2,
+                'time' => '11:05',
+                'discount' => 0,
+                'payment_method' => 'qris',
+                'items' => [['Makeup Natural Harian', 1], ['Facial Glow Brightening', 2]],
+            ],
+            [
+                'order_number' => 'ORD-PBC-004',
+                'days_ago' => 1,
+                'time' => '16:20',
+                'discount' => 0,
+                'payment_method' => 'cash',
+                'items' => [['Hair Spa Aromatherapy', 2]],
+            ],
+            [
+                'order_number' => 'ORD-PBC-005',
+                'days_ago' => 0,
+                'time' => '09:30',
+                'discount' => 0,
+                'payment_method' => 'qris',
+                'items' => [['Manicure & Gel Polish', 1], ['Hair Spa Aromatherapy', 1]],
+            ],
+        ];
+
+        foreach ($transactions as $data) {
+            $createdAt = now()->subDays($data['days_ago'])->setTimeFromTimeString($data['time']);
+
+            $subtotal = 0;
+            foreach ($data['items'] as [$serviceName, $qty]) {
+                $subtotal += (float) $services[$serviceName]->base_price * $qty;
+            }
+            $total = $subtotal - $data['discount'];
+
+            $order = Order::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'order_number' => $data['order_number']],
+                [
+                    'outlet_id' => $outlet->id,
+                    'user_id' => $owner->id,
+                    'order_type' => 'salon_order',
+                    'subtotal' => $subtotal,
+                    'discount_amount' => $data['discount'],
+                    'tax_amount' => 0,
+                    'service_amount' => 0,
+                    'total_amount' => $total,
+                    'status' => 'completed',
+                    'payment_status' => 'paid',
+                    'paid_at' => $createdAt,
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
+                ]
+            );
+
+            foreach ($data['items'] as [$serviceName, $qty]) {
+                $service = $services[$serviceName];
+                OrderItem::updateOrCreate(
+                    ['order_id' => $order->id, 'product_id' => $service->id],
+                    [
+                        'tenant_id' => $tenant->id,
+                        'product_name' => $service->name,
+                        'variant_name' => 'Standar Sesi',
+                        'qty' => $qty,
+                        'unit_price' => $service->base_price,
+                        'subtotal' => (float) $service->base_price * $qty,
+                        'created_at' => $createdAt,
+                        'updated_at' => $createdAt,
+                    ]
+                );
+            }
+
+            OrderPayment::updateOrCreate(
+                ['order_id' => $order->id, 'reference_number' => 'PAY-'.$data['order_number']],
+                [
+                    'tenant_id' => $tenant->id,
+                    'payment_method' => $data['payment_method'],
+                    'amount' => $total,
+                    'cash_tendered' => $total,
+                    'change_due' => 0,
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
+                ]
+            );
+        }
     }
 
     private function seedMasterLayanan(Tenant $tenant): void

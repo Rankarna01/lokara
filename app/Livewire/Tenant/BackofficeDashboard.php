@@ -15,8 +15,8 @@ use App\Livewire\Tenant\Concerns\HasServices;
 use App\Livewire\Tenant\Concerns\HasShifts;
 use App\Livewire\Tenant\Concerns\HasStock;
 use App\Livewire\Tenant\Concerns\HasStoreSettings;
+use App\Livewire\Tenant\Concerns\HasTransactionExports;
 use App\Models\Category;
-use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Expense;
 use App\Models\Ingredient;
@@ -37,33 +37,39 @@ use Livewire\WithFileUploads;
 
 class BackofficeDashboard extends Component
 {
-    use WithFileUploads;
-    use HasProducts;
     use HasCategories;
-    use HasServices;
+    use HasCustomers;
     use HasDiscounts;
-    use HasRecipes;
-    use HasStock;
-    use HasPurchases;
     use HasExpenses;
     use HasOrdersAndVoid;
     use HasOutletsAndStaff;
+    use HasProducts;
+    use HasPurchases;
+    use HasRecipes;
+    use HasServices;
     use HasShifts;
-    use HasCustomers;
+    use HasStock;
     use HasStoreSettings;
+    use HasTransactionExports;
+    use WithFileUploads;
 
     #[Url(as: 'tab', keep: true)]
     public string $activeTab = 'dashboard';
+
     public ?int $tenantId = null;
+
     public ?int $selectedOutletId = null;
 
     // Search and filter states
     public string $searchProduct = '';
+
     public string $selectedCategoryFilter = 'all';
+
     public string $searchIngredient = '';
 
     // Toast
     public string $toastMessage = '';
+
     public string $toastType = 'success';
 
     public function mount()
@@ -84,7 +90,7 @@ class BackofficeDashboard extends Component
             $this->tenantId = $tenant?->id;
         }
 
-        if (!$this->selectedOutletId && $this->tenantId) {
+        if (! $this->selectedOutletId && $this->tenantId) {
             $outlet = Outlet::where('tenant_id', $this->tenantId)->first();
             $this->selectedOutletId = $outlet?->id;
         }
@@ -100,10 +106,10 @@ class BackofficeDashboard extends Component
         $this->initStoreSettings();
 
         // Restore active tab from query string or session on refresh
-        if (request()->has('tab') && !empty(request()->query('tab'))) {
+        if (request()->has('tab') && ! empty(request()->query('tab'))) {
             $this->activeTab = (string) request()->query('tab');
             session(['tenant_active_tab' => $this->activeTab]);
-        } elseif (session()->has('tenant_active_tab') && !empty(session('tenant_active_tab'))) {
+        } elseif (session()->has('tenant_active_tab') && ! empty(session('tenant_active_tab'))) {
             $this->activeTab = (string) session('tenant_active_tab');
         }
     }
@@ -126,8 +132,9 @@ class BackofficeDashboard extends Component
     public function switchTenant(int $tenantId): void
     {
         // Security check: Only Super Admin can switch between tenants in Back Office
-        if (Auth::check() && !Auth::user()->isSuperAdmin()) {
+        if (Auth::check() && ! Auth::user()->isSuperAdmin()) {
             $this->showToast('Akses ditolak: Anda hanya dapat mengelola bisnis Anda sendiri.', 'error');
+
             return;
         }
 
@@ -217,8 +224,8 @@ class BackofficeDashboard extends Component
             $productsQuery->where('category_id', $this->selectedCategoryFilter);
         }
 
-        if (!empty($this->searchProduct)) {
-            $productsQuery->where('name', 'like', '%' . $this->searchProduct . '%');
+        if (! empty($this->searchProduct)) {
+            $productsQuery->where('name', 'like', '%'.$this->searchProduct.'%');
         }
         $products = $productsQuery->orderBy('id', 'desc')->get();
 
@@ -231,8 +238,8 @@ class BackofficeDashboard extends Component
             $servicesQuery->where('category_id', $this->selectedServiceCategoryFilter);
         }
 
-        if (!empty($this->searchService)) {
-            $servicesQuery->where('name', 'like', '%' . $this->searchService . '%');
+        if (! empty($this->searchService)) {
+            $servicesQuery->where('name', 'like', '%'.$this->searchService.'%');
         }
         $services = $servicesQuery->orderBy('id', 'desc')->get();
 
@@ -245,18 +252,18 @@ class BackofficeDashboard extends Component
             $discountsQuery->where('is_active', false);
         }
 
-        if (!empty($this->searchDiscount)) {
+        if (! empty($this->searchDiscount)) {
             $discountsQuery->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->searchDiscount . '%')
-                    ->orWhere('code', 'like', '%' . $this->searchDiscount . '%');
+                $q->where('name', 'like', '%'.$this->searchDiscount.'%')
+                    ->orWhere('code', 'like', '%'.$this->searchDiscount.'%');
             });
         }
         $discounts = $discountsQuery->orderBy('id', 'desc')->get();
 
         // 3. Ingredients Data
         $ingredientsQuery = Ingredient::with(['recipes.product'])->where('tenant_id', $this->tenantId);
-        if (!empty($this->searchIngredient)) {
-            $ingredientsQuery->where('name', 'like', '%' . $this->searchIngredient . '%');
+        if (! empty($this->searchIngredient)) {
+            $ingredientsQuery->where('name', 'like', '%'.$this->searchIngredient.'%');
         }
         $ingredients = $ingredientsQuery->get();
 
@@ -274,14 +281,14 @@ class BackofficeDashboard extends Component
         $poQuery = PurchaseOrder::with(['supplier', 'outlet', 'items'])
             ->where('tenant_id', $this->tenantId);
 
-        if (!empty($this->searchPo)) {
+        if (! empty($this->searchPo)) {
             $poQuery->where(function ($q) {
-                $q->where('po_number', 'like', '%' . $this->searchPo . '%')
-                  ->orWhere('notes', 'like', '%' . $this->searchPo . '%')
-                  ->orWhereHas('supplier', function ($sq) {
-                      $sq->where('name', 'like', '%' . $this->searchPo . '%')
-                        ->orWhere('contact_person', 'like', '%' . $this->searchPo . '%');
-                  });
+                $q->where('po_number', 'like', '%'.$this->searchPo.'%')
+                    ->orWhere('notes', 'like', '%'.$this->searchPo.'%')
+                    ->orWhereHas('supplier', function ($sq) {
+                        $sq->where('name', 'like', '%'.$this->searchPo.'%')
+                            ->orWhere('contact_person', 'like', '%'.$this->searchPo.'%');
+                    });
             });
         }
 
@@ -301,7 +308,7 @@ class BackofficeDashboard extends Component
             $poQuery->where('order_date', '>=', now()->subDays(30)->toDateString());
         } elseif ($this->poDateFilter === 'this_month') {
             $poQuery->whereMonth('order_date', now()->month)->whereYear('order_date', now()->year);
-        } elseif ($this->poDateFilter === 'custom' && !empty($this->poStartDate) && !empty($this->poEndDate)) {
+        } elseif ($this->poDateFilter === 'custom' && ! empty($this->poStartDate) && ! empty($this->poEndDate)) {
             $poQuery->whereBetween('order_date', [$this->poStartDate, $this->poEndDate]);
         }
 
@@ -317,13 +324,13 @@ class BackofficeDashboard extends Component
 
         // Suppliers query with search & filter
         $supplierQuery = Supplier::withCount('purchaseOrders')->where('tenant_id', $this->tenantId);
-        if (!empty($this->searchSupplier)) {
+        if (! empty($this->searchSupplier)) {
             $supplierQuery->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->searchSupplier . '%')
-                  ->orWhere('contact_person', 'like', '%' . $this->searchSupplier . '%')
-                  ->orWhere('phone', 'like', '%' . $this->searchSupplier . '%')
-                  ->orWhere('email', 'like', '%' . $this->searchSupplier . '%')
-                  ->orWhere('address', 'like', '%' . $this->searchSupplier . '%');
+                $q->where('name', 'like', '%'.$this->searchSupplier.'%')
+                    ->orWhere('contact_person', 'like', '%'.$this->searchSupplier.'%')
+                    ->orWhere('phone', 'like', '%'.$this->searchSupplier.'%')
+                    ->orWhere('email', 'like', '%'.$this->searchSupplier.'%')
+                    ->orWhere('address', 'like', '%'.$this->searchSupplier.'%');
             });
         }
         if ($this->supplierStatusFilter === 'active') {
@@ -353,8 +360,8 @@ class BackofficeDashboard extends Component
             ->where('tenant_id', $this->tenantId);
 
         // Search filter: Item Name, SKU, or Reference Note
-        if (!empty($this->stockSearch)) {
-            $term = '%' . trim($this->stockSearch) . '%';
+        if (! empty($this->stockSearch)) {
+            $term = '%'.trim($this->stockSearch).'%';
             $stockMovementsQuery->where(function ($q) use ($term) {
                 $q->where('reference_note', 'like', $term)
                     ->orWhereHas('product', function ($pq) use ($term) {
@@ -390,14 +397,14 @@ class BackofficeDashboard extends Component
         } elseif ($this->stockDateFilter === 'this_month') {
             $stockMovementsQuery->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
         } elseif ($this->stockDateFilter === 'custom') {
-            if (!empty($this->stockStartDate)) {
-                $startTime = !empty($this->stockStartTime) ? $this->stockStartTime . ':00' : '00:00:00';
-                $startDateTime = Carbon::parse($this->stockStartDate . ' ' . $startTime);
+            if (! empty($this->stockStartDate)) {
+                $startTime = ! empty($this->stockStartTime) ? $this->stockStartTime.':00' : '00:00:00';
+                $startDateTime = Carbon::parse($this->stockStartDate.' '.$startTime);
                 $stockMovementsQuery->where('created_at', '>=', $startDateTime);
             }
-            if (!empty($this->stockEndDate)) {
-                $endTime = !empty($this->stockEndTime) ? $this->stockEndTime . ':59' : '23:59:59';
-                $endDateTime = Carbon::parse($this->stockEndDate . ' ' . $endTime);
+            if (! empty($this->stockEndDate)) {
+                $endTime = ! empty($this->stockEndTime) ? $this->stockEndTime.':59' : '23:59:59';
+                $endDateTime = Carbon::parse($this->stockEndDate.' '.$endTime);
                 $stockMovementsQuery->where('created_at', '<=', $endDateTime);
             }
         }
@@ -414,23 +421,22 @@ class BackofficeDashboard extends Component
 
         $totalDirectProductsCount = $directProducts->count();
         $totalDirectStockQty = (float) $directProducts->sum('stock_quantity');
-        $lowStockDirectProducts = $directProducts->filter(fn($p) => (float)$p->stock_quantity <= (float)($p->minimum_stock ?: 5))->count();
-        $totalInventoryAssetValue = (float) $directProducts->sum(fn($p) => (float)$p->stock_quantity * (float)$p->cost_price);
+        $lowStockDirectProducts = $directProducts->filter(fn ($p) => (float) $p->stock_quantity <= (float) ($p->minimum_stock ?: 5))->count();
+        $totalInventoryAssetValue = (float) $directProducts->sum(fn ($p) => (float) $p->stock_quantity * (float) $p->cost_price);
 
         // Filter direct products for the Stock Inventory Catalog view
         $filteredDirectProducts = $directProducts;
         if ($this->stockProductStatusFilter === 'safe') {
-            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => (float)$p->stock_quantity > (float)($p->minimum_stock ?: 5));
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn ($p) => (float) $p->stock_quantity > (float) ($p->minimum_stock ?: 5));
         } elseif ($this->stockProductStatusFilter === 'low') {
-            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => (float)$p->stock_quantity > 0 && (float)$p->stock_quantity <= (float)($p->minimum_stock ?: 5));
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn ($p) => (float) $p->stock_quantity > 0 && (float) $p->stock_quantity <= (float) ($p->minimum_stock ?: 5));
         } elseif ($this->stockProductStatusFilter === 'empty') {
-            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => (float)$p->stock_quantity <= 0);
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn ($p) => (float) $p->stock_quantity <= 0);
         }
 
-        if (!empty($this->stockSearch) && $this->stockActiveSubTab === 'catalog') {
+        if (! empty($this->stockSearch) && $this->stockActiveSubTab === 'catalog') {
             $term = strtolower(trim($this->stockSearch));
-            $filteredDirectProducts = $filteredDirectProducts->filter(fn($p) => 
-                str_contains(strtolower($p->name), $term) || 
+            $filteredDirectProducts = $filteredDirectProducts->filter(fn ($p) => str_contains(strtolower($p->name), $term) ||
                 str_contains(strtolower($p->sku ?? ''), $term) ||
                 str_contains(strtolower($p->category?->name ?? ''), $term)
             );
@@ -506,6 +512,6 @@ class BackofficeDashboard extends Component
             'shiftTemplates' => $this->getShiftTemplates(),
             'shiftHistory' => Shift::with(['user', 'outlet'])->where('tenant_id', $this->tenantId)->latest()->take(10)->get(),
             'financeData' => $financeData,
-        ])->layout('layouts.app', ['title' => 'Admin Back Office - ' . ($tenant->name ?? 'Lokara POS')]);
+        ])->layout('layouts.app', ['title' => 'Admin Back Office - '.($tenant->name ?? 'Lokara POS')]);
     }
 }

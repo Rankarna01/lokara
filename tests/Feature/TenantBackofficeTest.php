@@ -397,6 +397,42 @@ class TenantBackofficeTest extends TestCase
             ->assertSee('Makeup Natural Harian');
     }
 
+    public function test_salon_transaction_history_exports_excel_and_pdf()
+    {
+        $owner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions')
+            ->assertSee('ORD-PBC-001');
+
+        $component->call('exportTransactionsExcel')
+            ->assertFileDownloaded(null, null, 'application/vnd.ms-excel; charset=UTF-8');
+
+        $component->call('exportTransactionsPdf')
+            ->assertDispatched('open-transactions-pdf');
+
+        $this->actingAs($owner)
+            ->get('/app/transactions/pdf/kunci-tidak-valid')
+            ->assertNotFound();
+    }
+
+    public function test_salon_hides_order_type_filter_but_fnb_keeps_it()
+    {
+        $salonOwner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+        $fnbOwner = User::where('email', 'rian@kopiruangpagi.id')->first();
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions')
+            ->assertDontSee('Semua Tipe Order');
+
+        Livewire::actingAs($fnbOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions')
+            ->assertSee('Semua Tipe Order');
+    }
+
     public function test_super_admin_can_switch_tenant_in_backoffice()
     {
         $superAdmin = User::where('role', 'super_admin')->first();

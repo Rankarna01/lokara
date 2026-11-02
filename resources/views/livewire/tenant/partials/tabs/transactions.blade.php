@@ -415,16 +415,18 @@
                 </select>
             </div>
 
-            <!-- Filter Tipe Order -->
-            <div>
-                <select wire:model.live="transactionOrderTypeFilter"
-                        class="w-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 py-2 px-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500">
-                    <option value="all">Semua Tipe Order</option>
-                    <option value="dine_in">Makan di Tempat (Dine In)</option>
-                    <option value="take_away">Bawa Pulang (Take Away)</option>
-                    <option value="delivery">Pesan Antar (Delivery)</option>
-                </select>
-            </div>
+            <!-- Filter Tipe Order (disembunyikan untuk modul Salon & Barbershop) -->
+            @unless($tenant?->isSalon())
+                <div>
+                    <select wire:model.live="transactionOrderTypeFilter"
+                            class="w-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 py-2 px-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500">
+                        <option value="all">Semua Tipe Order</option>
+                        <option value="dine_in">Makan di Tempat (Dine In)</option>
+                        <option value="take_away">Bawa Pulang (Take Away)</option>
+                        <option value="delivery">Pesan Antar (Delivery)</option>
+                    </select>
+                </div>
+            @endunless
 
             <!-- Filter Rentang Waktu -->
             <div class="flex items-center gap-1.5">
@@ -446,6 +448,22 @@
                     <i class="fa-solid fa-rotate-right text-xs"></i>
                 </button>
             </div>
+        </div>
+
+        <!-- Export Buttons (mengikuti filter yang sedang aktif) -->
+        <div class="flex flex-wrap items-center justify-end gap-2"
+             @open-transactions-pdf.window="window.open($event.detail.url, '_blank')">
+            <span class="mr-auto text-[11px] text-slate-400 font-medium">Ekspor sesuai filter yang sedang aktif</span>
+            <button wire:click="exportTransactionsExcel" wire:loading.attr="disabled" wire:target="exportTransactionsExcel"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold shadow-sm transition">
+                <i class="fa-solid fa-file-excel text-xs"></i>
+                <span>Export Excel</span>
+            </button>
+            <button wire:click="exportTransactionsPdf" wire:loading.attr="disabled" wire:target="exportTransactionsPdf"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-xs font-semibold shadow-sm transition">
+                <i class="fa-solid fa-file-pdf text-xs"></i>
+                <span>Export PDF</span>
+            </button>
         </div>
 
         <!-- Custom Date & Time Filter Row -->
