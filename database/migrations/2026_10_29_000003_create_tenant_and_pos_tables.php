@@ -93,7 +93,7 @@ return new class extends Migration
             $table->foreignId('shift_id')->nullable()->constrained('shifts')->nullOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('order_number', 50);
-            $table->enum('order_type', ['dine_in', 'take_away', 'delivery'])->default('dine_in');
+            $table->string('order_type', 30)->default('dine_in');
             $table->string('table_number', 30)->nullable();
             $table->decimal('subtotal', 12, 2)->default(0);
             $table->decimal('discount_amount', 12, 2)->default(0);
