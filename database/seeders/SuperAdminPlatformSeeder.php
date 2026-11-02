@@ -69,21 +69,62 @@ class SuperAdminPlatformSeeder extends Seeder
         $salon = BusinessType::updateOrCreate(
             ['slug' => 'salon'],
             [
-                'name' => 'Salon & Barbershop',
-                'icon' => 'fa-scissors',
-                'description' => 'Untuk barbershop, salon kecantikan dengan komisi kapster/terapis, katalog produk perawatan/pomade, dan layanan jasa.',
+                'name' => 'Salon & Klinik Kecantikan',
+                'icon' => 'fa-spa',
+                'description' => 'Khusus salon kecantikan, klinik estetika, skin care, dan nail art dengan layanan treatment wajah/tubuh, produk kecantikan retail, dan komisi terapis/beautician.',
                 'default_settings' => [
                     'has_products' => true,
                     'has_services' => true,
                     'has_commissions' => true,
                     'has_shifts' => true,
-                    'default_units' => ['pcs', 'botol', 'tube', 'pot'],
+                    'has_tables' => false,
+                    'default_units' => ['treatment', 'sesi', 'paket', 'botol', 'tube', 'pot', 'pcs'],
                     'preset_modules' => [
-                        'Master Produk & Penjualan Retail',
-                        'Layanan Jasa & Perawatan',
-                        'Komisi Pegawai / Kapster',
+                        'Layanan Perawatan & Treatment (Facial, Hair Spa, Nail Art)',
+                        'Katalog Produk Skincare & Retail Beauty',
+                        'Sistem Komisi Beautician & Terapis',
+                        'Pencatatan Pesanan Kasir Salon (Tanpa Meja)',
                         'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
-                        'Integrasi Thermal Printer (Bluetooth/USB/RawBT)',
+                        'Integrasi Thermal Printer (Struk Kasir)',
+                    ],
+                    'template_categories' => [
+                        'Facial Treatment',
+                        'Hair Treatment & Spa',
+                        'Nail Art & Care',
+                        'Body Spa & Massage',
+                        'Produk Skincare & Retail',
+                    ],
+                ],
+                'is_active' => true,
+            ]
+        );
+
+        $barbershop = BusinessType::updateOrCreate(
+            ['slug' => 'barbershop'],
+            [
+                'name' => 'Barbershop & Pangkas Rambut',
+                'icon' => 'fa-scissors',
+                'description' => 'Khusus barbershop modern, pangkas rambut pria, dan grooming dengan layanan cukur/haircut, pomade styling retail, dan komisi kapster.',
+                'default_settings' => [
+                    'has_products' => true,
+                    'has_services' => true,
+                    'has_commissions' => true,
+                    'has_shifts' => true,
+                    'has_tables' => false,
+                    'default_units' => ['layanan', 'kali', 'pcs', 'tin', 'jar', 'botol'],
+                    'preset_modules' => [
+                        'Layanan Cukur, Grooming & Haircut Pria',
+                        'Katalog Pomade & Hair Styling Retail',
+                        'Sistem Komisi Kapster / Barber',
+                        'Pencatatan Antrean & Order Kasir (Tanpa Meja)',
+                        'Manajemen Shift Kasir & Rekonsiliasi Kas Laci',
+                        'Integrasi Thermal Printer (Struk Kasir)',
+                    ],
+                    'template_categories' => [
+                        'Potong & Styling',
+                        'Shaving & Grooming',
+                        'Treatment & Cuci',
+                        'Pomade & Hair Care',
                     ],
                 ],
                 'is_active' => true,
@@ -220,19 +261,55 @@ class SuperAdminPlatformSeeder extends Seeder
         );
 
         $t3 = Tenant::updateOrCreate(
-            ['slug' => 'studiorona'],
+            ['slug' => 'putribeautycare'],
             [
-                'name' => 'Studio Rona',
+                'name' => 'Putri Beauty Care',
                 'business_type_id' => $salon->id,
                 'plan_id' => $planBusiness->id,
+                'owner_name' => 'Hapis Owner',
+                'owner_email' => 'hapis@putribeautycare.site',
+                'owner_phone' => '081377889900',
+                'status' => 'active',
+                'trial_ends_at' => null,
+                'subscription_ends_at' => Carbon::now()->addMonths(12),
+                'city' => 'Jakarta Selatan',
+                'icon' => 'fa-spa',
+                'created_at' => Carbon::create(2026, 10, 26, 9, 0),
+            ]
+        );
+
+        $tBarber = Tenant::updateOrCreate(
+            ['slug' => 'gentlemanbarbershop'],
+            [
+                'name' => 'Gentleman Barbershop',
+                'business_type_id' => $barbershop->id,
+                'plan_id' => $planPro->id,
+                'owner_name' => 'Bambang Barber',
+                'owner_email' => 'bambang@gentlemanbarber.id',
+                'owner_phone' => '081298765411',
+                'status' => 'active',
+                'trial_ends_at' => null,
+                'subscription_ends_at' => Carbon::now()->addMonths(6),
+                'city' => 'Jakarta Selatan',
+                'icon' => 'fa-scissors',
+                'created_at' => Carbon::create(2026, 10, 25, 14, 0),
+            ]
+        );
+
+        $tStudioRona = Tenant::updateOrCreate(
+            ['slug' => 'studiorona'],
+            [
+                'name' => 'Studio Rona Salon',
+                'business_type_id' => $salon->id,
+                'plan_id' => $planPro->id,
                 'owner_name' => 'Rona Melinda',
                 'owner_email' => 'contact@studiorona.id',
-                'owner_phone' => '081377889900',
+                'owner_phone' => '081377889922',
                 'status' => 'trial',
                 'trial_ends_at' => Carbon::now()->addDays(11),
                 'subscription_ends_at' => null,
                 'city' => 'Surabaya',
-                'icon' => 'fa-scissors',
+                'icon' => 'fa-spa',
                 'created_at' => Carbon::create(2026, 10, 26, 9, 0),
             ]
         );

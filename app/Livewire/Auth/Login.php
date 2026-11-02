@@ -49,7 +49,13 @@ class Login extends Component
 
     public function fillDemoSalonOwner()
     {
-        $this->email = 'contact@studiorona.id';
+        $this->email = 'hapis@putribeautycare.site';
+        $this->password = 'password';
+    }
+
+    public function fillDemoBarberOwner()
+    {
+        $this->email = 'bambang@gentlemanbarber.id';
         $this->password = 'password';
     }
 
@@ -62,6 +68,12 @@ class Login extends Component
     public function fillDemoCashier2()
     {
         $this->email = 'budi@kopiruangpagi.id';
+        $this->password = 'password';
+    }
+
+    public function fillDemoSalonCashier()
+    {
+        $this->email = 'dina@putribeauty.com';
         $this->password = 'password';
     }
 

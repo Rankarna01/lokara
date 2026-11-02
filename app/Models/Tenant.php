@@ -135,10 +135,17 @@ class Tenant extends Model
 
     public function isSalon(): bool
     {
-        return $this->businessType?->slug === 'salon' 
-            || ($this->attributes['business_type'] ?? null) === 'salon'
+        return in_array($this->businessType?->slug, ['salon', 'barbershop']) 
+            || in_array($this->attributes['business_type'] ?? null, ['salon', 'barbershop'])
             || $this->hasFeature('has_services')
-            || (isset($this->settings['business_type']) && $this->settings['business_type'] === 'salon');
+            || in_array($this->settings['business_type'] ?? null, ['salon', 'barbershop']);
+    }
+
+    public function isBarbershop(): bool
+    {
+        return $this->businessType?->slug === 'barbershop'
+            || ($this->attributes['business_type'] ?? null) === 'barbershop'
+            || (isset($this->settings['business_type']) && $this->settings['business_type'] === 'barbershop');
     }
 }
 

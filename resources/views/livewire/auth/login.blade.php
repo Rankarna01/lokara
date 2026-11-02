@@ -131,7 +131,7 @@
 
                     <div x-show="showDemoAccounts" x-transition class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
                         <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Klik untuk Mengisi Otomatis:</div>
-                        <div class="grid grid-cols-2 gap-1.5">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                             <button type="button" wire:click="fillDemoAdmin"
                                     class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
                                 🔑 Super Admin
@@ -142,11 +142,19 @@
                             </button>
                             <button type="button" wire:click="fillDemoSalonOwner"
                                     class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                ✂️ Owner Salon
+                                🌸 Owner Salon
+                            </button>
+                            <button type="button" wire:click="fillDemoBarberOwner"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
+                                ✂️ Barbershop
+                            </button>
+                            <button type="button" wire:click="fillDemoSalonCashier"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
+                                💄 Kasir Salon
                             </button>
                             <button type="button" wire:click="fillDemoCashier"
                                     class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                🛒 Kasir POS
+                                🛒 Kasir F&B
                             </button>
                         </div>
                     </div>

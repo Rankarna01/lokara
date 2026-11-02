@@ -997,6 +997,298 @@ class TenantBackofficeDemoSeeder extends Seeder
                 );
             }
         }
+
+        // 11. Seed Demo Data Khusus Putri Beauty Care (Salon & Klinik Kecantikan)
+        $this->seedPutriBeautyCareBackoffice();
+
+        // 12. Seed Demo Data Khusus Gentleman Barbershop (Barbershop)
+        $this->seedGentlemanBarberBackoffice();
+    }
+
+    protected function seedPutriBeautyCareBackoffice(): void
+    {
+        $tenant = Tenant::where('slug', 'putribeautycare')->first();
+        if (! $tenant) {
+            return;
+        }
+
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+        if (! $outlet) {
+            return;
+        }
+
+        $owner = User::where('email', 'hapis@putribeautycare.site')->first();
+        $cashier = User::where('email', 'dina@putribeauty.com')->first();
+
+        // 1. Seed CRM Pelanggan Salon
+        $customers = [
+            ['name' => 'Clara Shinta', 'phone' => '08123456001', 'email' => 'clara@gmail.com', 'points' => 150],
+            ['name' => 'Nadia Putri', 'phone' => '08123456002', 'email' => 'nadia@gmail.com', 'points' => 220],
+            ['name' => 'Rina Anggraini', 'phone' => '08123456003', 'email' => 'rina@gmail.com', 'points' => 80],
+            ['name' => 'Maya Kartika', 'phone' => '08123456004', 'email' => 'maya@gmail.com', 'points' => 310],
+        ];
+
+        foreach ($customers as $cData) {
+            \App\Models\Customer::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'phone' => $cData['phone']],
+                array_merge($cData, ['tenant_id' => $tenant->id])
+            );
+        }
+
+        // 2. Seed Completed Orders
+        $pFacial = Product::where('tenant_id', $tenant->id)->where('name', 'Facial Ice Treatment')->first();
+        $pHair = Product::where('tenant_id', $tenant->id)->where('name', 'Hair Spa Aromatherapy')->first();
+        $pNail = Product::where('tenant_id', $tenant->id)->where('name', 'Manicure & Gel Polish')->first();
+        $pSerum = Product::where('tenant_id', $tenant->id)->where('name', 'Serum Glowing Brightening 30ml')->first();
+
+        $orders = [
+            [
+                'order_number' => 'ORD-PUTRI-' . date('Ym') . '-001',
+                'created_at' => now()->subDays(3)->setTime(10, 30),
+                'items' => [
+                    ['p' => $pFacial, 'price' => 60000, 'qty' => 1],
+                    ['p' => $pSerum, 'price' => 125000, 'qty' => 1],
+                ],
+            ],
+            [
+                'order_number' => 'ORD-PUTRI-' . date('Ym') . '-002',
+                'created_at' => now()->subDays(2)->setTime(13, 15),
+                'items' => [
+                    ['p' => $pHair, 'price' => 85000, 'qty' => 1],
+                    ['p' => $pNail, 'price' => 75000, 'qty' => 1],
+                ],
+            ],
+            [
+                'order_number' => 'ORD-PUTRI-' . date('Ym') . '-003',
+                'created_at' => now()->subDays(1)->setTime(15, 00),
+                'items' => [
+                    ['p' => $pFacial, 'price' => 60000, 'qty' => 2],
+                ],
+            ],
+            [
+                'order_number' => 'ORD-PUTRI-' . date('Ym') . '-004',
+                'created_at' => now()->subHours(4),
+                'items' => [
+                    ['p' => $pFacial, 'price' => 60000, 'qty' => 1],
+                    ['p' => $pHair, 'price' => 85000, 'qty' => 1],
+                    ['p' => $pSerum, 'price' => 125000, 'qty' => 1],
+                ],
+            ],
+        ];
+
+        foreach ($orders as $o) {
+            $subtotal = 0;
+            foreach ($o['items'] as $item) {
+                if ($item['p']) {
+                    $subtotal += ($item['price'] * $item['qty']);
+                }
+            }
+            $tax = round($subtotal * 0.11);
+            $total = $subtotal + $tax;
+
+            $order = Order::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'order_number' => $o['order_number']],
+                [
+                    'outlet_id' => $outlet->id,
+                    'user_id' => $cashier?->id ?? ($owner?->id ?? 1),
+                    'order_type' => 'salon_order',
+                    'table_number' => null,
+                    'subtotal' => $subtotal,
+                    'discount_amount' => 0,
+                    'tax_amount' => $tax,
+                    'service_amount' => 0,
+                    'total_amount' => $total,
+                    'status' => 'completed',
+                    'payment_status' => 'paid',
+                    'paid_at' => $o['created_at'],
+                    'created_at' => $o['created_at'],
+                    'updated_at' => $o['created_at'],
+                ]
+            );
+
+            foreach ($o['items'] as $item) {
+                if ($item['p']) {
+                    OrderItem::updateOrCreate(
+                        ['order_id' => $order->id, 'product_id' => $item['p']->id],
+                        [
+                            'tenant_id' => $tenant->id,
+                            'product_name' => $item['p']->name,
+                            'variant_name' => $item['p']->type === 'service' ? 'Treatment Sesi' : 'Retail',
+                            'qty' => $item['qty'],
+                            'unit_price' => $item['price'],
+                            'subtotal' => $item['price'] * $item['qty'],
+                            'created_at' => $o['created_at'],
+                            'updated_at' => $o['created_at'],
+                        ]
+                    );
+                }
+            }
+
+            OrderPayment::updateOrCreate(
+                ['order_id' => $order->id, 'reference_number' => 'PAY-' . $order->order_number],
+                [
+                    'tenant_id' => $tenant->id,
+                    'payment_method' => 'qris',
+                    'amount' => $total,
+                    'cash_tendered' => $total,
+                    'change_due' => 0,
+                    'created_at' => $o['created_at'],
+                    'updated_at' => $o['created_at'],
+                ]
+            );
+        }
+
+        // 3. Seed Expenses
+        $expenses = [
+            ['category' => 'Sewa Tempat', 'title' => 'Sewa Tempat Salon Senopati Bulan Ini', 'amount' => 4500000, 'expense_date' => now()->startOfMonth()->toDateString(), 'payment_method' => 'Transfer Bank'],
+            ['category' => 'Operasional', 'title' => 'Pengadaan Masker Wajah & Minyak Aromatherapy', 'amount' => 650000, 'expense_date' => now()->subDays(5)->toDateString(), 'payment_method' => 'Kas Toko / Tunai'],
+            ['category' => 'Listrik & Air', 'title' => 'Listrik PLN & Air Bersih Salon', 'amount' => 750000, 'expense_date' => now()->subDays(10)->toDateString(), 'payment_method' => 'Transfer Bank'],
+        ];
+
+        foreach ($expenses as $ex) {
+            Expense::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'title' => $ex['title']],
+                array_merge($ex, ['tenant_id' => $tenant->id, 'outlet_id' => $outlet->id])
+            );
+        }
+    }
+
+    protected function seedGentlemanBarberBackoffice(): void
+    {
+        $tenant = Tenant::where('slug', 'gentlemanbarbershop')->first();
+        if (! $tenant) {
+            return;
+        }
+
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+        if (! $outlet) {
+            return;
+        }
+
+        $owner = User::where('email', 'bambang@gentlemanbarber.id')->first();
+        $kapster = User::where('email', 'doni.barber@studiorona.id')->first();
+
+        // 1. Seed CRM Pelanggan Barbershop
+        $customers = [
+            ['name' => 'Rendy Pratama', 'phone' => '08129999001', 'email' => 'rendy@gmail.com', 'points' => 120],
+            ['name' => 'Dimas Arya', 'phone' => '08129999002', 'email' => 'dimas@gmail.com', 'points' => 180],
+            ['name' => 'Fajar Ramadhan', 'phone' => '08129999003', 'email' => 'fajar@gmail.com', 'points' => 90],
+        ];
+
+        foreach ($customers as $cData) {
+            \App\Models\Customer::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'phone' => $cData['phone']],
+                array_merge($cData, ['tenant_id' => $tenant->id])
+            );
+        }
+
+        // 2. Seed Completed Orders
+        $pHaircut = Product::where('tenant_id', $tenant->id)->where('name', 'Gentleman Haircut + Wash + Hot Towel')->first();
+        $pPomade = Product::where('tenant_id', $tenant->id)->where('name', 'Classic Pomade Oil-Based 100gr')->first();
+        $pShave = Product::where('tenant_id', $tenant->id)->where('name', 'Royal Hot Towel Shave')->first();
+
+        $orders = [
+            [
+                'order_number' => 'ORD-BRB-' . date('Ym') . '-001',
+                'created_at' => now()->subDays(2)->setTime(11, 00),
+                'items' => [
+                    ['p' => $pHaircut, 'price' => 50000, 'qty' => 1],
+                    ['p' => $pPomade, 'price' => 85000, 'qty' => 1],
+                ],
+            ],
+            [
+                'order_number' => 'ORD-BRB-' . date('Ym') . '-002',
+                'created_at' => now()->subDays(1)->setTime(14, 30),
+                'items' => [
+                    ['p' => $pHaircut, 'price' => 50000, 'qty' => 1],
+                    ['p' => $pShave, 'price' => 35000, 'qty' => 1],
+                ],
+            ],
+            [
+                'order_number' => 'ORD-BRB-' . date('Ym') . '-003',
+                'created_at' => now()->subHours(3),
+                'items' => [
+                    ['p' => $pHaircut, 'price' => 50000, 'qty' => 2],
+                ],
+            ],
+        ];
+
+        foreach ($orders as $o) {
+            $subtotal = 0;
+            foreach ($o['items'] as $item) {
+                if ($item['p']) {
+                    $subtotal += ($item['price'] * $item['qty']);
+                }
+            }
+            $tax = round($subtotal * 0.11);
+            $total = $subtotal + $tax;
+
+            $order = Order::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'order_number' => $o['order_number']],
+                [
+                    'outlet_id' => $outlet->id,
+                    'user_id' => $kapster?->id ?? ($owner?->id ?? 1),
+                    'order_type' => 'salon_order',
+                    'table_number' => null,
+                    'subtotal' => $subtotal,
+                    'discount_amount' => 0,
+                    'tax_amount' => $tax,
+                    'service_amount' => 0,
+                    'total_amount' => $total,
+                    'status' => 'completed',
+                    'payment_status' => 'paid',
+                    'paid_at' => $o['created_at'],
+                    'created_at' => $o['created_at'],
+                    'updated_at' => $o['created_at'],
+                ]
+            );
+
+            foreach ($o['items'] as $item) {
+                if ($item['p']) {
+                    OrderItem::updateOrCreate(
+                        ['order_id' => $order->id, 'product_id' => $item['p']->id],
+                        [
+                            'tenant_id' => $tenant->id,
+                            'product_name' => $item['p']->name,
+                            'variant_name' => $item['p']->type === 'service' ? 'Layanan Sesi' : 'Barbershop Retail',
+                            'qty' => $item['qty'],
+                            'unit_price' => $item['price'],
+                            'subtotal' => $item['price'] * $item['qty'],
+                            'created_at' => $o['created_at'],
+                            'updated_at' => $o['created_at'],
+                        ]
+                    );
+                }
+            }
+
+            OrderPayment::updateOrCreate(
+                ['order_id' => $order->id, 'reference_number' => 'PAY-' . $order->order_number],
+                [
+                    'tenant_id' => $tenant->id,
+                    'payment_method' => 'cash',
+                    'amount' => $total,
+                    'cash_tendered' => $total,
+                    'change_due' => 0,
+                    'created_at' => $o['created_at'],
+                    'updated_at' => $o['created_at'],
+                ]
+            );
+        }
+
+        // 3. Seed Expenses
+        $expenses = [
+            ['category' => 'Sewa Tempat', 'title' => 'Sewa Kios Barbershop Blok M', 'amount' => 3000000, 'expense_date' => now()->startOfMonth()->toDateString(), 'payment_method' => 'Transfer Bank'],
+            ['category' => 'Operasional', 'title' => 'Laundry Handuk Hangat & Jubah Cukur', 'amount' => 200000, 'expense_date' => now()->subDays(4)->toDateString(), 'payment_method' => 'Kas Toko / Tunai'],
+            ['category' => 'Operasional', 'title' => 'Restock Silet Barber & Shaving Foam', 'amount' => 350000, 'expense_date' => now()->subDays(7)->toDateString(), 'payment_method' => 'Kas Toko / Tunai'],
+        ];
+
+        foreach ($expenses as $ex) {
+            Expense::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'title' => $ex['title']],
+                array_merge($ex, ['tenant_id' => $tenant->id, 'outlet_id' => $outlet->id])
+            );
+        }
     }
 }
+
 
