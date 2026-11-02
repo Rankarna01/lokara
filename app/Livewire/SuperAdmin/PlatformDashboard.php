@@ -22,22 +22,24 @@ use Livewire\WithPagination;
 
 class PlatformDashboard extends Component
 {
-    use WithPagination;
-    use HasTenantManagement;
-    use HasTenantUsersAndPasswords;
-    use HasPlansAndFeatures;
     use HasBusinessTypesAndPresets;
     use HasInvoicesAndAudit;
+    use HasPlansAndFeatures;
+    use HasTenantManagement;
+    use HasTenantUsersAndPasswords;
+    use WithPagination;
 
     // Active Navigation Tab
     public string $activeTab = 'dashboard';
 
     // Global Search & Filter
     public string $searchQuery = '';
+
     public string $dateFilter = '30_days'; // '7_days', '30_days', '90_days', 'this_year'
 
     // Notification toast
     public string $toastMessage = '';
+
     public string $toastType = 'success';
 
     // Mobile Sidebar toggle
@@ -84,7 +86,7 @@ class PlatformDashboard extends Component
 
     public function toggleSidebar()
     {
-        $this->sidebarOpen = !$this->sidebarOpen;
+        $this->sidebarOpen = ! $this->sidebarOpen;
     }
 
     public function setDateFilter(string $filter)
@@ -98,6 +100,7 @@ class PlatformDashboard extends Component
         Auth::logout();
         session()->invalidate();
         session()->regenerateToken();
+
         return redirect()->route('login');
     }
 
@@ -129,7 +132,7 @@ class PlatformDashboard extends Component
             '7_days' => '7 hari terakhir',
             '30_days' => '30 hari terakhir',
             '90_days' => '90 hari terakhir',
-            'this_year' => 'Tahun ' . $now->year,
+            'this_year' => 'Tahun '.$now->year,
             default => '30 hari terakhir',
         };
 
@@ -147,11 +150,11 @@ class PlatformDashboard extends Component
         });
 
         if ($rawMrr >= 1000000000) {
-            $mrrValue = 'Rp ' . number_format($rawMrr / 1000000000, 1, ',', '.') . ' M';
+            $mrrValue = 'Rp '.number_format($rawMrr / 1000000000, 1, ',', '.').' M';
         } elseif ($rawMrr >= 1000000) {
-            $mrrValue = 'Rp ' . number_format($rawMrr / 1000000, 1, ',', '.') . ' jt';
+            $mrrValue = 'Rp '.number_format($rawMrr / 1000000, 1, ',', '.').' jt';
         } else {
-            $mrrValue = 'Rp ' . number_format($rawMrr, 0, ',', '.');
+            $mrrValue = 'Rp '.number_format($rawMrr, 0, ',', '.');
         }
 
         // 4. Dynamic Platform Transactions based on dateFilter
@@ -164,13 +167,13 @@ class PlatformDashboard extends Component
             ->sum('amount');
 
         $totalTransactions = number_format($totalTransactionsCount, 0, ',', '.');
-        $totalVolumeFormatted = 'Rp ' . number_format($totalTransactionsAmount + $paidInvoicesAmount, 0, ',', '.');
+        $totalVolumeFormatted = 'Rp '.number_format($totalTransactionsAmount + $paidInvoicesAmount, 0, ',', '.');
 
         // 5. Dynamic Attention Count (Expiring trials, expiring subs, overdue invoices, expired tenants)
         $expiringTrials = Tenant::where('status', 'trial')
             ->where(function ($q) use ($now) {
                 $q->whereNull('trial_ends_at')
-                  ->orWhere('trial_ends_at', '<=', $now->copy()->addDays(7));
+                    ->orWhere('trial_ends_at', '<=', $now->copy()->addDays(7));
             })->count();
 
         $expiringSubscriptions = Tenant::where('status', 'active')
@@ -212,8 +215,8 @@ class PlatformDashboard extends Component
         $allTenantsQuery = Tenant::with(['businessType', 'plan'])
             ->when($this->searchQuery, function ($q) {
                 $q->where('name', 'like', "%{$this->searchQuery}%")
-                  ->orWhere('owner_name', 'like', "%{$this->searchQuery}%")
-                  ->orWhere('city', 'like', "%{$this->searchQuery}%");
+                    ->orWhere('owner_name', 'like', "%{$this->searchQuery}%")
+                    ->orWhere('city', 'like', "%{$this->searchQuery}%");
             })
             ->when($this->tenantStatusFilter !== 'all', function ($q) {
                 $q->where('status', $this->tenantStatusFilter);
@@ -281,6 +284,7 @@ class PlatformDashboard extends Component
             'growthData' => $growthData,
             'recentTenants' => $recentTenants,
             'allTenants' => $allTenants,
+            'tenantOptions' => Tenant::orderBy('name')->get(['id', 'name']),
             'invoices' => $invoices,
             'invoiceTotalCount' => $invoiceTotalCount,
             'invoicePaidCount' => $invoicePaidCount,

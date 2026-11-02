@@ -70,7 +70,7 @@
                             <select wire:model="createUserTenantId"
                                     class="w-full border rounded-xl px-3 py-2 text-xs text-slate-800 transition focus:outline-none @error('createUserTenantId') border-rose-400 ring-1 ring-rose-400 bg-rose-50/30 text-rose-900 @else border-slate-200 focus:ring-1 focus:ring-orange-500 @enderror">
                                 <option value="">-- Pilih Tenant --</option>
-                                @foreach ($allTenants as $tn)
+                                @foreach ($tenantOptions as $tn)
                                     <option value="{{ $tn->id }}">{{ $tn->name }}</option>
                                 @endforeach
                             </select>

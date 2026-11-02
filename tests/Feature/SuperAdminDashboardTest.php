@@ -9,6 +9,7 @@ use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -156,9 +157,9 @@ class SuperAdminDashboardTest extends TestCase
             ->assertHasNoErrors()
             ->assertSet('showResetPasswordModal', false);
 
-        $user = \App\Models\User::where('email', $tenant->owner_email)->first();
+        $user = User::where('email', $tenant->owner_email)->first();
         $this->assertNotNull($user);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('NewSecret123!', $user->password));
+        $this->assertTrue(Hash::check('NewSecret123!', $user->password));
     }
 
     public function test_reset_password_fails_when_validation_not_met()
@@ -246,5 +247,27 @@ class SuperAdminDashboardTest extends TestCase
             ->assertStatus(200)
             ->assertSee('toggleSidebarExpanded', false)
             ->assertSee('Perkecil / Perbesar Sidebar');
+    }
+
+    public function test_create_user_tenant_dropdown_lists_tenants_beyond_first_page()
+    {
+        foreach (range(1, 10) as $number) {
+            Tenant::create([
+                'name' => "Bisnis Uji {$number}",
+                'slug' => "bisnis-uji-{$number}",
+                'business_type_id' => BusinessType::first()->id,
+                'plan_id' => Plan::first()->id,
+                'owner_name' => 'Pemilik Uji',
+                'owner_email' => "owner{$number}@uji.id",
+                'owner_phone' => '081200000000',
+                'status' => 'active',
+                'city' => 'Jakarta',
+            ]);
+        }
+
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
+            ->call('openCreateUserModal')
+            ->assertSee("Bisnis Uji {$number}");
     }
 }
