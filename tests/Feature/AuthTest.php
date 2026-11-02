@@ -62,5 +62,16 @@ class AuthTest extends TestCase
             ->assertSet('email', 'support@lokarapos.id')
             ->assertSet('password', 'password');
     }
+
+    public function test_can_login_via_http_post()
+    {
+        $response = $this->post('/login', [
+            'email' => 'admin@lokarapos.id',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('superadmin.dashboard'));
+        $this->assertAuthenticated();
+    }
 }
 

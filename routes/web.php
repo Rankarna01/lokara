@@ -29,6 +29,26 @@ Route::get('/', function () {
 Route::get('/login', Login::class)->name('login');
 Route::get('/admin/login', Login::class);
 
+Route::post('/login', function (\Illuminate\Http\Request $request) {
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $request->session()->regenerate();
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['owner', 'manager'])) {
+            return redirect()->route('tenant.dashboard');
+        } elseif ($user && in_array($user->role, ['cashier', 'staff'])) {
+            return redirect()->route('pos.terminal');
+        }
+        return redirect()->route('superadmin.dashboard');
+    }
+
+    return back()->withErrors(['email' => 'Email atau kata sandi tidak sesuai dengan data kami.'])->withInput();
+});
+
 Route::match(['get', 'post'], '/logout', function () {
     Auth::logout();
     request()->session()->invalidate();

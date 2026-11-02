@@ -32,8 +32,9 @@
                     </p>
                 </div>
 
-                <!-- Form Login -->
-                <form wire:submit.prevent="login" class="space-y-4">
+                <!-- Form Login (Mendukung Livewire & Standar HTTP POST Fallback) -->
+                <form method="POST" action="{{ route('login') }}" wire:submit="login" class="space-y-4">
+                    @csrf
 
                     <!-- Input Email -->
                     <div class="space-y-1.5">
@@ -46,10 +47,13 @@
                             </div>
                             <input id="email"
                                    type="email"
-                                   wire:model.defer="email"
+                                   name="email"
+                                   wire:model="email"
+                                   value="{{ old('email') }}"
                                    placeholder="nama@email.com"
                                    autocomplete="email"
                                    autofocus
+                                   required
                                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition" />
                         </div>
                         @error('email')
@@ -70,9 +74,11 @@
                             </div>
                             <input id="password"
                                    :type="showPassword ? 'text' : 'password'"
-                                   wire:model.defer="password"
+                                   name="password"
+                                   wire:model="password"
                                    placeholder="Masukkan kata sandi..."
                                    autocomplete="current-password"
+                                   required
                                    class="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition" />
                             <button type="button"
                                     @click="showPassword = !showPassword"
@@ -92,7 +98,9 @@
                     <div class="flex items-center justify-between text-xs pt-0.5">
                         <label class="flex items-center gap-2 cursor-pointer select-none">
                             <input type="checkbox"
+                                   name="remember"
                                    wire:model="remember"
+                                   value="1"
                                    class="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 transition cursor-pointer" />
                             <span class="text-slate-600 font-medium text-xs">Ingat sesi saya</span>
                         </label>
