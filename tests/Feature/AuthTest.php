@@ -73,5 +73,20 @@ class AuthTest extends TestCase
         $response->assertRedirect(route('superadmin.dashboard'));
         $this->assertAuthenticated();
     }
+
+    public function test_livewire_and_sw_assets_are_served_with_200_ok()
+    {
+        $this->get('/js/livewire/livewire.min.js')
+            ->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/javascript; charset=utf-8');
+
+        $this->get('/livewire/livewire.min.js')
+            ->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/javascript; charset=utf-8');
+
+        $this->get('/sw.js')
+            ->assertStatus(200);
+    }
 }
+
 

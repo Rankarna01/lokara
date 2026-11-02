@@ -56,6 +56,29 @@ Route::match(['get', 'post'], '/logout', function () {
     return redirect()->route('login');
 })->name('logout');
 
+// Direct bulletproof routes for Livewire assets (guarantees 200 OK regardless of hosting setup)
+$serveLivewireAsset = function (string $filename) {
+    $distPath = base_path('vendor/livewire/livewire/dist/' . $filename);
+    $publicPath = public_path('js/livewire/' . $filename);
+    $path = file_exists($distPath) ? $distPath : $publicPath;
+
+    if (! file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/javascript; charset=utf-8',
+        'Cache-Control' => 'public, max-age=31536000',
+    ]);
+};
+
+Route::get('/livewire/livewire.min.js', fn () => $serveLivewireAsset('livewire.min.js'));
+Route::get('/livewire/livewire.js', fn () => $serveLivewireAsset('livewire.js'));
+Route::get('/js/livewire/livewire.min.js', fn () => $serveLivewireAsset('livewire.min.js'));
+Route::get('/js/livewire/livewire.js', fn () => $serveLivewireAsset('livewire.js'));
+Route::get('/vendor/livewire/livewire.min.js', fn () => $serveLivewireAsset('livewire.min.js'));
+Route::get('/vendor/livewire/livewire.js', fn () => $serveLivewireAsset('livewire.js'));
+
 // Progressive Web App (PWA) Manifest & Service Worker
 Route::get('/manifest.json', function () {
     return response()->file(public_path('manifest.json'), [
