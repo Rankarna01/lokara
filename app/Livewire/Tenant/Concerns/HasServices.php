@@ -9,19 +9,33 @@ use Illuminate\Support\Str;
 trait HasServices
 {
     public bool $showServiceModal = false;
+
     public ?int $editingServiceId = null;
+
     public string $serviceName = '';
+
     public ?int $serviceCategoryId = null;
+
     public string $serviceCategoryTag = 'Haircut • Pria';
+
     public float $servicePrice = 60000;
+
     public int $serviceDuration = 40; // Menit
+
     public string $serviceCommissionType = 'fixed'; // 'fixed' or 'percentage'
+
     public float $serviceCommissionValue = 20000;
+
     public float $serviceCostPrice = 5000;
+
     public string $serviceImageUrl = '';
+
     public $serviceImageFile = null;
+
     public bool $serviceIsAvailable = true;
+
     public string $searchService = '';
+
     public string $selectedServiceCategoryFilter = 'all';
 
     public function openNewServiceModal(): void
@@ -69,12 +83,13 @@ trait HasServices
 
         if ($this->serviceCommissionType === 'percentage' && $commissionVal > 100) {
             $this->addError('serviceCommissionValue', 'Komisi persentase tidak boleh melebihi 100%.');
+
             return;
         }
 
         if ($this->serviceImageFile) {
             $path = $this->serviceImageFile->store('services', 'public');
-            $this->serviceImageUrl = '/storage/' . $path;
+            $this->serviceImageUrl = '/storage/'.$path;
         }
 
         if ($this->editingServiceId) {
@@ -99,8 +114,8 @@ trait HasServices
                 'category_id' => $this->serviceCategoryId,
                 'category_tag' => $this->serviceCategoryTag ?: 'Layanan Salon',
                 'name' => $this->serviceName,
-                'slug' => Str::slug($this->serviceName) . '-' . rand(100, 999),
-                'sku' => 'SRV-' . strtoupper(Str::random(5)),
+                'slug' => Str::slug($this->serviceName).'-'.rand(100, 999),
+                'sku' => 'SRV-'.strtoupper(Str::random(5)),
                 'base_price' => $this->servicePrice,
                 'cost_price' => $this->serviceCostPrice,
                 'duration_minutes' => $this->serviceDuration,
@@ -120,7 +135,7 @@ trait HasServices
     public function toggleServiceAvailability(int $id): void
     {
         $service = Product::where('tenant_id', $this->tenantId)->where('type', 'service')->findOrFail($id);
-        $service->is_available = !$service->is_available;
+        $service->is_available = ! $service->is_available;
         $service->save();
         $status = $service->is_available ? 'Tersedia' : 'Tidak Aktif / Libur';
         $this->showToast("Status layanan '{$service->name}' diubah menjadi '{$status}'");
@@ -130,6 +145,13 @@ trait HasServices
     {
         $service = Product::where('tenant_id', $this->tenantId)->where('type', 'service')->findOrFail($id);
         $name = $service->name;
+
+        if ($service->orderItems()->exists()) {
+            $this->showToast("Layanan '{$name}' sudah pernah dipakai di transaksi dan tidak bisa dihapus. Nonaktifkan saja ketersediaannya.", 'error');
+
+            return;
+        }
+
         $service->delete();
         $this->showToast("Layanan '{$name}' berhasil dihapus.");
     }
@@ -150,4 +172,3 @@ trait HasServices
         $this->serviceIsAvailable = true;
     }
 }
-

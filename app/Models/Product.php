@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
@@ -35,6 +36,7 @@ class Product extends Model
         if ($this->commission_type === 'percentage') {
             return round(((float) $this->base_price * (float) $this->commission_value) / 100);
         }
+
         return (float) $this->commission_value;
     }
 
@@ -53,7 +55,7 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
-    public function modifiers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function modifiers(): BelongsToMany
     {
         return $this->belongsToMany(ProductModifier::class, 'product_modifier_assignments');
     }
@@ -66,5 +68,10 @@ class Product extends Model
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
     }
 }

@@ -448,6 +448,52 @@ class TenantBackofficeTest extends TestCase
         $this->assertEquals(135000, $service->fresh()->base_price);
     }
 
+    public function test_service_with_order_history_cannot_be_deleted()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $service = Product::where('tenant_id', $salonTenant->id)
+            ->where('name', 'like', '%Gentleman Haircut%')
+            ->first();
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('deleteService', $service->id)
+            ->assertSet('toastType', 'error')
+            ->assertSee('tidak bisa dihapus');
+
+        $this->assertNotNull($service->fresh());
+    }
+
+    public function test_service_without_order_history_can_be_deleted()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $cat = Category::where('tenant_id', $salonTenant->id)->first();
+
+        $service = Product::create([
+            'tenant_id' => $salonTenant->id,
+            'category_id' => $cat->id,
+            'type' => 'service',
+            'name' => 'Layanan Uji Hapus',
+            'slug' => 'layanan-uji-hapus',
+            'sku' => 'SRV-TESTDEL',
+            'base_price' => 50000,
+            'duration_minutes' => 30,
+            'commission_type' => 'fixed',
+            'commission_value' => 0,
+            'is_active' => true,
+            'is_available' => true,
+        ]);
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('deleteService', $service->id)
+            ->assertSet('toastType', 'success');
+
+        $this->assertNull(Product::find($service->id));
+    }
+
     public function test_can_upload_service_image_file_and_remove_image()
     {
         Storage::fake('public');
@@ -1014,7 +1060,7 @@ class TenantBackofficeTest extends TestCase
     public function test_salon_laba_rugi_has_two_tabs_for_products_and_services_with_filtering_and_searching()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();
-        if (!$salonOwner) {
+        if (! $salonOwner) {
             $salonTenant = Tenant::where('slug', 'studiorona')->first();
             $salonOwner = User::where('tenant_id', $salonTenant->id)->first();
         }
@@ -1289,7 +1335,7 @@ class TenantBackofficeTest extends TestCase
     public function test_salon_transaction_history_has_separate_tabs_for_services_and_products()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();
-        if (!$salonOwner) {
+        if (! $salonOwner) {
             $salonTenant = Tenant::where('slug', 'studiorona')->first();
             $salonOwner = User::where('tenant_id', $salonTenant->id)->first();
         }
@@ -1398,7 +1444,7 @@ class TenantBackofficeTest extends TestCase
     public function test_salon_settings_hides_shift_section_by_default_and_allows_toggling()
     {
         $salonOwner = User::where('tenant_id', 3)->where('role', 'owner')->first();
-        if (!$salonOwner) {
+        if (! $salonOwner) {
             $salonTenant = Tenant::where('slug', 'studiorona')->first();
             $salonOwner = User::where('tenant_id', $salonTenant->id)->first();
         }
