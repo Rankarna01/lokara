@@ -18,10 +18,11 @@ trait HasHoldAndRecall
             return;
         }
 
+        $isSalon = method_exists($this, 'isSalonTenant') && $this->isSalonTenant();
         $totals = $this->calculateTotals();
         $this->heldOrders[] = [
             'id' => uniqid('HOLD-'),
-            'table' => $this->orderType === 'dine_in' ? $this->selectedTable : 'Take Away',
+            'table' => $isSalon ? 'Layanan Salon' : ($this->orderType === 'dine_in' ? $this->selectedTable : 'Take Away'),
             'customer' => $this->selectedCustomer['name'] ?? 'Pelanggan Umum',
             'items' => $this->cart,
             'total' => $totals['total'],
@@ -39,7 +40,7 @@ trait HasHoldAndRecall
         foreach ($this->heldOrders as $key => $held) {
             if ($held['id'] === $holdId) {
                 $this->cart = $held['items'];
-                $this->selectedTable = str_contains($held['table'], 'Meja') ? $held['table'] : 'Meja 08';
+                $this->selectedTable = str_contains($held['table'], 'Meja') ? $held['table'] : 'Meja 01';
                 $this->orderType = str_contains($held['table'], 'Meja') ? 'dine_in' : 'take_away';
                 unset($this->heldOrders[$key]);
                 $this->heldOrders = array_values($this->heldOrders);

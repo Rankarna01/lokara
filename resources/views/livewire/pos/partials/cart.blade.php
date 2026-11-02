@@ -28,45 +28,63 @@
     <!-- Cart Body: Order Type + Table + Items -->
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
 
-        <!-- Order Type Switcher (Dine In vs Take Away) -->
-        <div class="grid grid-cols-2 gap-2">
-            <button wire:click="setOrderType('dine_in')"
-                    class="py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition {{ $orderType === 'dine_in' ? 'bg-orange-500 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">
-                <i class="fa-solid fa-utensils text-xs"></i>
-                <span>Dine In</span>
-            </button>
-
-            <button wire:click="setOrderType('take_away')"
-                    class="py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition {{ $orderType === 'take_away' ? 'bg-orange-500 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">
-                <i class="fa-solid fa-bag-shopping text-xs"></i>
-                <span>Take Away</span>
-            </button>
-        </div>
-
-        <!-- Table Selector Dropdown (Dine In only) -->
-        @if ($orderType === 'dine_in')
-            <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open"
-                        class="w-full py-2 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 flex items-center justify-between hover:border-slate-300 transition">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-chair text-slate-400 text-xs"></i>
-                        <span>{{ $selectedTable }}</span>
+        @if ($isSalon ?? false)
+            {{-- Salon & Barbershop Order Intake Card (Mencatat Order Salon) --}}
+            <div class="p-3 rounded-xl bg-gradient-to-r from-orange-50/90 via-amber-50/40 to-white border border-orange-200/80 shadow-xs flex items-center justify-between">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500 text-white flex items-center justify-center text-xs shadow-xs flex-shrink-0">
+                        <i class="fa-solid fa-scissors"></i>
                     </div>
-                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-slate-900 leading-tight truncate">Pencatatan Order Salon</div>
+                        <div class="text-[10px] text-slate-500 mt-0.5 truncate">Layanan treatment & produk retail</div>
+                    </div>
+                </div>
+                <span class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200 shrink-0">
+                    Salon Order
+                </span>
+            </div>
+        @else
+            <!-- Order Type Switcher (Dine In vs Take Away) -->
+            <div class="grid grid-cols-2 gap-2">
+                <button wire:click="setOrderType('dine_in')"
+                        class="py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition {{ $orderType === 'dine_in' ? 'bg-orange-500 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">
+                    <i class="fa-solid fa-utensils text-xs"></i>
+                    <span>Dine In</span>
                 </button>
 
-                <div x-show="open" @click.outside="open = false" x-transition
-                     class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg p-2 z-30 grid grid-cols-4 gap-1 text-xs">
-                    @foreach (['Meja 01', 'Meja 02', 'Meja 03', 'Meja 04', 'Meja 05', 'Meja 06', 'Meja 07', 'Meja 08', 'Meja 09', 'Meja 10', 'Meja 11', 'Meja 12'] as $table)
-                        <button type="button"
-                                wire:click="$set('selectedTable', '{{ $table }}')"
-                                @click="open = false"
-                                class="py-1.5 px-2 rounded-lg text-center font-medium transition {{ $selectedTable === $table ? 'bg-orange-500 text-white font-bold' : 'hover:bg-slate-100 text-slate-700' }}">
-                            {{ str_replace('Meja ', 'M', $table) }}
-                        </button>
-                    @endforeach
-                </div>
+                <button wire:click="setOrderType('take_away')"
+                        class="py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition {{ $orderType === 'take_away' ? 'bg-orange-500 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">
+                    <i class="fa-solid fa-bag-shopping text-xs"></i>
+                    <span>Take Away</span>
+                </button>
             </div>
+
+            <!-- Table Selector Dropdown (Dine In only) -->
+            @if ($orderType === 'dine_in')
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open"
+                            class="w-full py-2 px-3 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 flex items-center justify-between hover:border-slate-300 transition">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-chair text-slate-400 text-xs"></i>
+                            <span>{{ $selectedTable }}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                    </button>
+
+                    <div x-show="open" @click.outside="open = false" x-transition
+                         class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg p-2 z-30 grid grid-cols-4 gap-1 text-xs">
+                        @foreach (['Meja 01', 'Meja 02', 'Meja 03', 'Meja 04', 'Meja 05', 'Meja 06', 'Meja 07', 'Meja 08', 'Meja 09', 'Meja 10', 'Meja 11', 'Meja 12'] as $table)
+                            <button type="button"
+                                    wire:click="$set('selectedTable', '{{ $table }}')"
+                                    @click="open = false"
+                                    class="py-1.5 px-2 rounded-lg text-center font-medium transition {{ $selectedTable === $table ? 'bg-orange-500 text-white font-bold' : 'hover:bg-slate-100 text-slate-700' }}">
+                                {{ str_replace('Meja ', 'M', $table) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         @endif
 
         <!-- Member Badge if selected -->

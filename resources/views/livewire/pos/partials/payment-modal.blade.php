@@ -5,7 +5,7 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                     <h3 class="text-base font-bold text-slate-900">Konfirmasi Pembayaran</h3>
-                    <p class="text-[11px] text-slate-400">{{ $orderType === 'dine_in' ? 'Dine In • ' . $selectedTable : 'Take Away' }}</p>
+                    <p class="text-[11px] text-slate-400">{{ ($isSalon ?? false) ? 'Order Layanan & Produk Salon' : ($orderType === 'dine_in' ? 'Dine In • ' . $selectedTable : 'Take Away') }}</p>
                 </div>
                 <button wire:click="$set('showPaymentModal', false)" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-sm"></i>

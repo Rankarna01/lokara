@@ -34,10 +34,8 @@ class PosTerminalTest extends TestCase
             ->assertSee('Kasir')
             ->assertSee('Pesanan Baru')
             ->assertSee('Dine In')
-            ->assertSee('Meja 08')
-            ->assertSee('Es Kopi Susu Aren')
-            ->assertSee('Cafe Latte')
-            ->assertSee('Croissant Butter')
+            ->assertSee('Meja 01')
+            ->assertSee('Belum ada item pesanan')
             ->assertSee('Buka Shift Terlebih Dahulu');
     }
 
@@ -55,15 +53,36 @@ class PosTerminalTest extends TestCase
 
     public function test_can_modify_cart_quantities()
     {
+        $product = Product::first();
+
         Livewire::test(Terminal::class)
-            ->assertCount('cart', 3)
+            ->assertCount('cart', 0)
+            ->set('cart', [
+                [
+                    'product_id' => $product->id,
+                    'name' => 'Es Kopi Susu Aren',
+                    'variant' => 'Regular • Tanpa Gula',
+                    'price' => 22000,
+                    'qty' => 2,
+                    'subtotal' => 44000,
+                    'image_url' => '',
+                ],
+                [
+                    'product_id' => $product->id,
+                    'name' => 'Croissant Butter',
+                    'variant' => 'Original',
+                    'price' => 16000,
+                    'qty' => 1,
+                    'subtotal' => 16000,
+                    'image_url' => '',
+                ],
+            ])
             ->call('incrementQty', 0)
-            // Initial qty was 2, now 3 -> subtotal was 44.000, now 66.000
             ->assertSee('Rp66.000')
             ->call('decrementQty', 0)
             ->assertSee('Rp44.000')
-            ->call('removeFromCart', 2)
-            ->assertCount('cart', 2);
+            ->call('removeFromCart', 1)
+            ->assertCount('cart', 1);
     }
 
     public function test_can_switch_order_type()
@@ -78,13 +97,26 @@ class PosTerminalTest extends TestCase
 
     public function test_can_complete_payment_and_create_order()
     {
+        $product = Product::first();
+
         Livewire::test(Terminal::class)
             ->set('shiftStartingCash', 200000)
             ->call('startShift')
+            ->set('cart', [
+                [
+                    'product_id' => $product->id,
+                    'name' => 'Es Kopi Susu Aren',
+                    'variant' => 'Regular',
+                    'price' => 22000,
+                    'qty' => 1,
+                    'subtotal' => 22000,
+                    'image_url' => '',
+                ],
+            ])
             ->call('openPaymentModal')
             ->assertSet('showPaymentModal', true)
             ->set('paymentMethod', 'cash')
-            ->set('cashTendered', 100000)
+            ->set('cashTendered', 50000)
             ->call('processPayment')
             ->assertSet('showPaymentModal', false)
             ->assertSet('showSuccessModal', true)
@@ -97,8 +129,21 @@ class PosTerminalTest extends TestCase
 
     public function test_can_hold_and_recall_order()
     {
+        $product = Product::first();
+
         Livewire::test(Terminal::class)
-            ->assertCount('cart', 3)
+            ->set('cart', [
+                [
+                    'product_id' => $product->id,
+                    'name' => 'Es Kopi Susu Aren',
+                    'variant' => 'Regular',
+                    'price' => 22000,
+                    'qty' => 2,
+                    'subtotal' => 44000,
+                    'image_url' => '',
+                ],
+            ])
+            ->assertCount('cart', 1)
             ->call('holdOrder')
             ->assertCount('cart', 0)
             ->assertCount('heldOrders', 1);
@@ -272,6 +317,11 @@ class PosTerminalTest extends TestCase
             ->assertDontSee('Sistem Kasir Ditutup')
             ->assertDontSee('Shift Belum Dibuka')
             ->assertDontSee('Buka Shift Terlebih Dahulu')
+            ->assertDontSee('Dine In')
+            ->assertDontSee('Take Away')
+            ->assertDontSee('Meja 01')
+            ->assertDontSee('Meja 08')
+            ->assertSee('Pencatatan Order Salon')
             ->assertSee('pos-cart-panel', false)
             ->assertSee('Lihat Keranjang')
             ->assertSee('Katalog Layanan & Produk');

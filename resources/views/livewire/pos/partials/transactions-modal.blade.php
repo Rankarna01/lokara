@@ -28,7 +28,7 @@
                             <tr class="hover:bg-slate-50/50 transition">
                                 <td class="py-2.5 px-3 font-bold text-slate-900">{{ $to->order_number }}</td>
                                 <td class="py-2.5 px-3 text-slate-500">
-                                    {{ $to->created_at ? $to->created_at->format('H:i') : '14:20' }} • {{ $to->order_type === 'dine_in' ? ($to->table_number ?? 'Dine In') : 'Take Away' }}
+                                    {{ $to->created_at ? $to->created_at->format('H:i') : '14:20' }} • {{ $to->order_type === 'salon_order' ? 'Layanan Salon' : ($to->order_type === 'dine_in' ? ($to->table_number ?? 'Dine In') : 'Take Away') }}
                                 </td>
                                 <td class="py-2.5 px-3">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">

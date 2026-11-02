@@ -827,7 +827,7 @@ class TenantBackofficeDemoSeeder extends Seeder
             $salonOrdersData = [
                 [
                     'order_number' => 'ORD-RONA-' . date('Ym') . '-001',
-                    'order_type' => 'dine_in',
+                    'order_type' => 'salon_order',
                     'table_number' => 'Kursi Barber 01',
                     'created_at' => now()->subDays(3)->setTime(11, 30),
                     'items' => [
@@ -837,7 +837,7 @@ class TenantBackofficeDemoSeeder extends Seeder
                 ],
                 [
                     'order_number' => 'ORD-RONA-' . date('Ym') . '-002',
-                    'order_type' => 'dine_in',
+                    'order_type' => 'salon_order',
                     'table_number' => 'Kursi Spa 01',
                     'created_at' => now()->subDays(2)->setTime(14, 15),
                     'items' => [
@@ -847,7 +847,7 @@ class TenantBackofficeDemoSeeder extends Seeder
                 ],
                 [
                     'order_number' => 'ORD-RONA-' . date('Ym') . '-003',
-                    'order_type' => 'dine_in',
+                    'order_type' => 'salon_order',
                     'table_number' => 'Kursi Barber 02',
                     'created_at' => now()->subDays(2)->setTime(16, 45),
                     'items' => [
@@ -857,7 +857,7 @@ class TenantBackofficeDemoSeeder extends Seeder
                 ],
                 [
                     'order_number' => 'ORD-RONA-' . date('Ym') . '-004',
-                    'order_type' => 'dine_in',
+                    'order_type' => 'salon_order',
                     'table_number' => 'Kursi Coloring 01',
                     'created_at' => now()->subDays(1)->setTime(13, 00),
                     'items' => [
@@ -868,7 +868,7 @@ class TenantBackofficeDemoSeeder extends Seeder
                 ],
                 [
                     'order_number' => 'ORD-RONA-' . date('Ym') . '-005',
-                    'order_type' => 'dine_in',
+                    'order_type' => 'salon_order',
                     'table_number' => 'Kursi Barber 01',
                     'created_at' => now()->subHours(5),
                     'items' => [
@@ -878,7 +878,7 @@ class TenantBackofficeDemoSeeder extends Seeder
                 ],
                 [
                     'order_number' => 'ORD-RONA-' . date('Ym') . '-006',
-                    'order_type' => 'dine_in',
+                    'order_type' => 'salon_order',
                     'table_number' => 'Kursi Barber 03',
                     'created_at' => now()->subHours(2),
                     'items' => [

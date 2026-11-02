@@ -79,36 +79,12 @@ class Terminal extends Component
             $this->showOpenShiftModal = false;
         }
 
-        // Default demo cart
-        $this->cart = [
-            [
-                'product_id' => 1,
-                'name' => 'Es Kopi Susu Aren',
-                'variant' => 'Regular • Tanpa Gula',
-                'price' => 22000,
-                'qty' => 2,
-                'subtotal' => 44000,
-                'image_url' => 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=300&h=300&q=80',
-            ],
-            [
-                'product_id' => 3,
-                'name' => 'Cafe Latte',
-                'variant' => 'Hot • Large',
-                'price' => 25000,
-                'qty' => 1,
-                'subtotal' => 25000,
-                'image_url' => 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=300&h=300&q=80',
-            ],
-            [
-                'product_id' => 5,
-                'name' => 'Croissant Butter',
-                'variant' => 'Original',
-                'price' => 16000,
-                'qty' => 1,
-                'subtotal' => 16000,
-                'image_url' => 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=300&h=300&q=80',
-            ],
-        ];
+        // Start with clean empty cart
+        $this->cart = [];
+        if ($this->isSalonTenant()) {
+            $this->orderType = 'salon_order';
+            $this->selectedTable = '';
+        }
 
         // Seed initial petty cash movement
         $this->pettyCashMovements = [

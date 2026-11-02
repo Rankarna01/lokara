@@ -114,10 +114,10 @@
                             </td>
                             <td class="py-3 px-4">
                                 <div class="font-semibold text-slate-800 capitalize">
-                                    {{ $ord->order_type === 'dine_in' ? 'Dine In' : 'Take Away' }}
+                                    {{ $ord->order_type === 'salon_order' ? 'Layanan Salon' : ($ord->order_type === 'dine_in' ? 'Dine In' : 'Take Away') }}
                                 </div>
                                 <div class="text-[11px] text-slate-400">
-                                    {{ $ord->table_number ?: 'Tanpa Meja' }}
+                                    {{ $ord->table_number ?: ($ord->order_type === 'salon_order' ? 'Salon & Barbershop' : 'Tanpa Meja') }}
                                     @if ($ord->customer)
                                         • {{ $ord->customer->name }}
                                     @endif

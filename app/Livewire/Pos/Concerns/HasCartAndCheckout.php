@@ -14,15 +14,15 @@ trait HasCartAndCheckout
 {
     // Cart State
     public array $cart = [];
-    public string $orderType = 'dine_in'; // 'dine_in', 'take_away'
-    public string $selectedTable = 'Meja 08';
+    public string $orderType = 'dine_in'; // 'dine_in', 'take_away', 'salon_order'
+    public string $selectedTable = 'Meja 01';
     public ?array $selectedCustomer = null;
 
     // Payment Modal State
     public bool $showPaymentModal = false;
     public string $paymentMethod = 'cash';
-    public float $cashTendered = 100000;
-    public float $changeDue = 5650;
+    public float $cashTendered = 0;
+    public float $changeDue = 0;
 
     // Payment Success Modal State
     public bool $showSuccessModal = false;
@@ -208,6 +208,9 @@ trait HasCartAndCheckout
 
         $totals = $this->calculateTotals();
         $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
+        $orderTypeLabel = $isSalon
+            ? 'Order Layanan Salon'
+            : ($this->orderType === 'dine_in' ? 'Dine In (' . $this->selectedTable . ')' : 'Take Away');
 
         $this->completedOrderData = [
             'order_number' => $orderNumber,
@@ -218,7 +221,7 @@ trait HasCartAndCheckout
             'payment_method' => strtoupper($this->paymentMethod),
             'cash_tendered' => $this->paymentMethod === 'cash' ? $this->cashTendered : $totals['total'],
             'change_due' => $this->paymentMethod === 'cash' ? $this->changeDue : 0,
-            'order_type' => $this->orderType === 'dine_in' ? 'Dine In (' . $this->selectedTable . ')' : 'Take Away',
+            'order_type' => $orderTypeLabel,
             'customer_name' => $this->selectedCustomer['name'] ?? 'Pelanggan Reguler',
             'created_at' => Carbon::now()->translatedFormat('d M Y, H:i'),
         ];
@@ -239,8 +242,8 @@ trait HasCartAndCheckout
                 'shift_id' => $this->activeShiftId,
                 'user_id' => $user?->id ?? 1,
                 'order_number' => $orderNumber,
-                'order_type' => $this->orderType,
-                'table_number' => $this->orderType === 'dine_in' ? $this->selectedTable : null,
+                'order_type' => $isSalon ? 'salon_order' : $this->orderType,
+                'table_number' => (! $isSalon && $this->orderType === 'dine_in') ? $this->selectedTable : null,
                 'subtotal' => $totals['subtotal'],
                 'discount_amount' => 0,
                 'tax_amount' => $totals['tax'],
