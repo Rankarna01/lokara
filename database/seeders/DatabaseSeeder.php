@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminPlatformSeeder::class,
             TenantPosDemoSeeder::class,
             TenantBackofficeDemoSeeder::class,
+            SalonKecantikanTenantSeeder::class,
         ]);
     }
 }

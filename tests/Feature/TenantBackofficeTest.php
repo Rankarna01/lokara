@@ -20,6 +20,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -375,6 +376,25 @@ class TenantBackofficeTest extends TestCase
             ->assertSet('activeTab', 'discounts')
             ->assertSee('OPENING20')
             ->assertSee('CUKUR15K');
+    }
+
+    public function test_putrybeautycare_salon_owner_sees_master_layanan_from_seeder()
+    {
+        $owner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+        $this->assertNotNull($owner);
+        $this->assertEquals('owner', $owner->role);
+        $this->assertTrue(Hash::check('password123', $owner->password));
+
+        $tenant = Tenant::where('slug', 'putrybeautycare')->first();
+        $this->assertEquals($tenant->id, $owner->tenant_id);
+        $this->assertTrue($tenant->isSalon());
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->assertSee('Master Layanan')
+            ->call('switchTab', 'services')
+            ->assertSee('Facial Glow Brightening')
+            ->assertSee('Makeup Natural Harian');
     }
 
     public function test_super_admin_can_switch_tenant_in_backoffice()
