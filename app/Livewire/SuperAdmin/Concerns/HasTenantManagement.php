@@ -8,6 +8,7 @@ use App\Models\PlatformActivityLog;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 trait HasTenantManagement
 {
@@ -16,13 +17,21 @@ trait HasTenantManagement
 
     // Create Tenant Modal State
     public bool $showCreateTenantModal = false;
+
     public string $newTenantName = '';
+
     public string $newTenantSlug = '';
+
     public ?int $newTenantBusinessType = null;
+
     public ?int $newTenantPlan = null;
+
     public string $newTenantOwnerName = '';
+
     public string $newTenantOwnerEmail = '';
+
     public string $newTenantOwnerPhone = '';
+
     public string $newTenantCity = '';
 
     public function updatedNewTenantName($value)
@@ -36,10 +45,10 @@ trait HasTenantManagement
         $this->resetValidation();
         $this->reset(['newTenantName', 'newTenantSlug', 'newTenantOwnerName', 'newTenantOwnerEmail', 'newTenantOwnerPhone', 'newTenantCity']);
 
-        if (!$this->newTenantBusinessType) {
+        if (! $this->newTenantBusinessType) {
             $this->newTenantBusinessType = BusinessType::first()?->id;
         }
-        if (!$this->newTenantPlan) {
+        if (! $this->newTenantPlan) {
             $this->newTenantPlan = Plan::where('slug', 'pro')->first()?->id ?? Plan::first()?->id;
         }
 
@@ -95,7 +104,7 @@ trait HasTenantManagement
     {
         try {
             $this->validate();
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->notify('Gagal mendaftar: Mohon lengkapi semua kolom yang wajib diisi!', 'error');
             throw $e;
         }
@@ -118,7 +127,7 @@ trait HasTenantManagement
 
         PlatformActivityLog::create([
             'action' => "Tenant {$tenant->name} berhasil didaftarkan",
-            'description' => "Paket: " . ($tenant->plan ? $tenant->plan->name : 'Basic') . " • Owner: {$tenant->owner_name}",
+            'description' => 'Paket: '.($tenant->plan ? $tenant->plan->name : 'Basic')." • Owner: {$tenant->owner_name}",
             'icon' => 'fa-plus',
             'icon_color' => 'text-orange-500 bg-orange-50',
             'badge_text' => 'Baru saja',
@@ -131,6 +140,30 @@ trait HasTenantManagement
         $this->notify("Tenant '{$tenant->name}' berhasil didaftarkan ke platform!");
     }
 
+    public function deleteTenant(int $tenantId)
+    {
+        $tenant = Tenant::findOrFail($tenantId);
+
+        if ($tenant->status !== 'suspended') {
+            $this->notify("Tenant '{$tenant->name}' hanya dapat dihapus setelah berstatus Suspended.", 'error');
+
+            return;
+        }
+
+        $name = $tenant->name;
+        $tenant->delete();
+
+        PlatformActivityLog::create([
+            'action' => "Tenant {$name} dihapus permanen",
+            'description' => 'Seluruh data tenant ikut terhapus',
+            'icon' => 'fa-trash',
+            'icon_color' => 'text-rose-500 bg-rose-50',
+            'badge_text' => 'Baru saja',
+        ]);
+
+        $this->notify("Tenant '{$name}' berhasil dihapus permanen.");
+    }
+
     public function toggleTenantStatus(int $tenantId)
     {
         $tenant = Tenant::findOrFail($tenantId);
@@ -139,13 +172,13 @@ trait HasTenantManagement
 
         PlatformActivityLog::create([
             'action' => "Status Tenant {$tenant->name} diubah",
-            'description' => "Status baru: " . strtoupper($newStatus),
+            'description' => 'Status baru: '.strtoupper($newStatus),
             'icon' => $newStatus === 'active' ? 'fa-check' : 'fa-ban',
             'icon_color' => $newStatus === 'active' ? 'text-emerald-500 bg-emerald-50' : 'text-rose-500 bg-rose-50',
             'badge_text' => 'Baru saja',
         ]);
 
-        $this->notify("Status {$tenant->name} kini menjadi " . strtoupper($newStatus));
+        $this->notify("Status {$tenant->name} kini menjadi ".strtoupper($newStatus));
     }
 
     public function impersonateTenant(int $tenantId)
@@ -154,4 +187,3 @@ trait HasTenantManagement
         $this->notify("Sesi Impersonasi aktif: Anda kini dapat mengakses backoffice {$tenant->name}");
     }
 }
-

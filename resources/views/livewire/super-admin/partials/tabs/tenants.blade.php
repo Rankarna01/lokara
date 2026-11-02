@@ -78,6 +78,14 @@
                                                     <button wire:click="toggleTenantStatus({{ $t->id }})" title="{{ $t->status === 'active' ? 'Suspend Tenant' : 'Aktifkan Tenant' }}" class="p-1.5 rounded-lg border border-slate-200 {{ $t->status === 'active' ? 'text-rose-500 hover:bg-rose-50' : 'text-emerald-500 hover:bg-emerald-50' }} transition">
                                                         <i class="fa-solid {{ $t->status === 'active' ? 'fa-ban' : 'fa-check' }} text-xs"></i>
                                                     </button>
+                                                    @if ($t->status === 'suspended')
+                                                        <button wire:click="deleteTenant({{ $t->id }})"
+                                                                wire:confirm="Hapus permanen tenant '{{ $t->name }}' beserta seluruh datanya? Tindakan ini tidak bisa dibatalkan."
+                                                                title="Hapus Tenant"
+                                                                class="p-1.5 rounded-lg border border-slate-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition">
+                                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                                        </button>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @empty

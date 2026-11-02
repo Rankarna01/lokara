@@ -249,6 +249,31 @@ class SuperAdminDashboardTest extends TestCase
             ->assertSee('Perkecil / Perbesar Sidebar');
     }
 
+    public function test_superadmin_can_delete_suspended_tenant()
+    {
+        $suspendedTenant = Tenant::where('status', 'suspended')->first();
+        $this->assertNotNull($suspendedTenant);
+
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
+            ->call('deleteTenant', $suspendedTenant->id);
+
+        $this->assertNull(Tenant::find($suspendedTenant->id));
+    }
+
+    public function test_active_tenant_cannot_be_deleted()
+    {
+        $activeTenant = Tenant::where('status', 'active')->first();
+        $this->assertNotNull($activeTenant);
+
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
+            ->call('deleteTenant', $activeTenant->id)
+            ->assertSee('hanya dapat dihapus setelah berstatus Suspended');
+
+        $this->assertNotNull($activeTenant->fresh());
+    }
+
     public function test_create_user_tenant_dropdown_lists_tenants_beyond_first_page()
     {
         foreach (range(1, 10) as $number) {
