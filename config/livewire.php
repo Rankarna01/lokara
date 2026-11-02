@@ -238,6 +238,19 @@ return [
 
     /*
     |---------------------------------------------------------------------------
+    | Asset URL
+    |---------------------------------------------------------------------------
+    |
+    | This value specifies the script URL used to load Livewire's JavaScript.
+    | On shared hosting (such as Hostinger), requests to `/vendor/` are often
+    | blocked by security rules, so we route assets to `/js/livewire/livewire.min.js`.
+    |
+    */
+
+    'asset_url' => env('LIVEWIRE_ASSET_URL', '/js/livewire/livewire.min.js'),
+
+    /*
+    |---------------------------------------------------------------------------
     | Release Token
     |---------------------------------------------------------------------------
     |

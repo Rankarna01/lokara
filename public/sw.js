@@ -1,5 +1,5 @@
 // Lokara POS & Backoffice - Progressive Web App Service Worker
-const CACHE_NAME = 'lokara-pos-cache-v1';
+const CACHE_NAME = 'lokara-pos-cache-v2';
 const PRECACHE_ASSETS = [
     '/manifest.json',
     '/images/logo-app.png',
@@ -33,13 +33,18 @@ self.addEventListener('activate', (event) => {
 
 // Network-first strategy with cache fallback for navigation and static assets
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests or Livewire/artisan polling/update requests
+    // Only handle http/https GET requests
     if (event.request.method !== 'GET') {
         return;
     }
 
+    if (!event.request.url.startsWith('http://') && !event.request.url.startsWith('https://')) {
+        return;
+    }
+
     const url = new URL(event.request.url);
-    if (url.pathname.includes('/livewire/') || url.pathname.includes('/livewire-dev/')) {
+    // Skip Livewire endpoints & assets entirely from SW caching
+    if (url.pathname.includes('/livewire') || url.pathname.includes('/livewire-') || url.pathname.includes('/js/livewire/')) {
         return;
     }
 
@@ -55,14 +60,7 @@ self.addEventListener('fetch', (event) => {
                 return networkResponse;
             })
             .catch(() => {
-                return caches.match(event.request).then((cachedResponse) => {
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-                    if (event.request.mode === 'navigate') {
-                        return caches.match('/');
-                    }
-                });
+                return caches.match(event.request);
             })
     );
 });
