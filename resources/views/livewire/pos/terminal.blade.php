@@ -1,4 +1,5 @@
 <div class="h-screen w-screen overflow-hidden bg-surface flex flex-col antialiased text-dark select-none"
+     @open-pos-receipt.window="window.open($event.detail.url, '_blank')"
      x-data="{
          sidebarExpanded: (localStorage.getItem('pos_sidebar_expanded') !== 'false'),
          togglePosSidebar() {

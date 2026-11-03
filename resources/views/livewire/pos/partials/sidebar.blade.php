@@ -112,15 +112,6 @@
 
     <!-- Bottom Back to Admin / Logout Link -->
     <div class="p-2.5 border-t border-slate-100 space-y-1">
-        @if(!auth()->check() || auth()->user()->canAccessBackoffice())
-            <a href="{{ route('tenant.dashboard') }}"
-               class="w-full flex items-center text-xs text-orange-600 hover:bg-orange-50 rounded-lg transition font-semibold"
-               :class="sidebarExpanded ? 'px-3.5 py-2 gap-3' : 'p-2.5 justify-center'"
-               title="Ke Dashboard Back Office">
-                <i class="fa-solid fa-chart-pie text-sm w-4 text-center shrink-0"></i>
-                <span x-show="sidebarExpanded" x-transition.opacity.duration.200ms class="truncate">Back Office Toko</span>
-            </a>
-        @endif
         <button wire:click="logout"
                 class="w-full flex items-center text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition font-medium"
                 :class="sidebarExpanded ? 'px-3.5 py-2 gap-3' : 'p-2.5 justify-center'"

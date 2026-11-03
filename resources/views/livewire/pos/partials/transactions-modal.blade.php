@@ -37,7 +37,7 @@
                                 </td>
                                 <td class="py-2.5 px-3 font-bold text-slate-900">Rp{{ number_format($to->total_amount, 0, ',', '.') }}</td>
                                 <td class="py-2.5 px-3 text-right">
-                                    <button wire:click="notify('Struk order {{ $to->order_number }} dikirim ke printer thermal')" class="px-2.5 py-1 rounded border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-semibold">
+                                    <button wire:click="printReceipt({{ $to->id }})" class="px-2.5 py-1 rounded border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-semibold">
                                         <i class="fa-solid fa-print mr-1"></i> Cetak Ulang
                                     </button>
                                 </td>

@@ -114,6 +114,13 @@ Route::middleware(['web', 'auth'])->group(function () {
         return response($payload['html']);
     })->name('tenant.transactions.pdf');
 
+    Route::get('/pos/receipt/{key}', function (string $key) {
+        $payload = Cache::pull('pos-receipt:'.$key);
+        abort_unless($payload && $payload['user_id'] === Auth::id(), 404);
+
+        return response($payload['html']);
+    })->name('pos.receipt');
+
     // POS Terminal Kasir (Modul 07)
     Route::get('/pos', Terminal::class)->name('pos.terminal');
     Route::get('/app/pos', Terminal::class);

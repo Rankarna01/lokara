@@ -78,15 +78,30 @@
                 </div>
             @elseif ($paymentMethod === 'qris')
                 <!-- QRIS Dynamic Display -->
-                <div class="text-center py-3 space-y-2.5">
-                    <div class="w-44 h-44 mx-auto p-2 border border-slate-200 rounded-2xl bg-white shadow-xs flex items-center justify-center overflow-hidden">
-                        @if ($qrisImg)
-                            <img src="{{ $qrisImg }}" alt="QRIS {{ $qrisMerchant }}" class="w-full h-full object-contain" />
-                        @else
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=00020101021226670016ID.LOKARAPOS.WWW01189360099999999999990215INV-{{ date('Ymd-His') }}ID5916{{ urlencode(substr($qrisMerchant, 0, 16)) }}6013Jakarta"
-                                 alt="QRIS Dinamis"
-                                 class="w-full h-full object-contain" />
-                        @endif
+                <div class="text-center py-3 space-y-2.5" x-data="{ zoomQris: false }">
+                    @php
+                        $qrisSrc = $qrisImg ?: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=00020101021226670016ID.LOKARAPOS.WWW01189360099999999999990215INV-'.date('Ymd-His').'ID5916'.urlencode(substr($qrisMerchant, 0, 16)).'6013Jakarta';
+                    @endphp
+                    <button type="button" @click="zoomQris = true" title="Klik untuk memperbesar QRIS"
+                            class="w-44 h-44 mx-auto p-2 border border-slate-200 rounded-2xl bg-white shadow-xs flex items-center justify-center overflow-hidden cursor-zoom-in hover:border-orange-300 transition">
+                        <img src="{{ $qrisSrc }}" alt="QRIS {{ $qrisMerchant }}" class="w-full h-full object-contain" />
+                    </button>
+                    <button type="button" @click="zoomQris = true" class="text-[11px] font-semibold text-orange-600 hover:text-orange-700">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i> Perbesar QRIS untuk pelanggan
+                    </button>
+
+                    <!-- Layar penuh QRIS agar mudah di-scan pelanggan -->
+                    <div x-show="zoomQris" x-cloak x-transition.opacity.duration.150ms
+                         @keydown.escape.window="zoomQris = false"
+                         @click="zoomQris = false"
+                         class="fixed inset-0 z-[70] bg-slate-900/90 flex flex-col items-center justify-center p-6 cursor-zoom-out">
+                        <div class="bg-white rounded-3xl p-6 shadow-2xl w-[min(90vw,480px)] aspect-square flex items-center justify-center">
+                            <img src="{{ $qrisSrc }}" alt="QRIS {{ $qrisMerchant }}" class="w-full h-full object-contain" />
+                        </div>
+                        <div class="mt-5 text-center text-white">
+                            <div class="font-bold text-base">{{ $qrisMerchant }}</div>
+                            <div class="text-xs text-slate-300 mt-1">Ketuk di mana saja atau tekan Esc untuk menutup</div>
+                        </div>
                     </div>
                     <div>
                         <div class="font-bold text-slate-800 text-xs">{{ $qrisMerchant }}</div>

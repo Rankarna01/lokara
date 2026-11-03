@@ -6,33 +6,46 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 trait HasCartAndCheckout
 {
     // Cart State
     public array $cart = [];
+
     public string $orderType = 'dine_in'; // 'dine_in', 'take_away', 'salon_order'
+
     public string $selectedTable = 'Meja 01';
+
     public ?array $selectedCustomer = null;
 
     // Payment Modal State
     public bool $showPaymentModal = false;
+
     public string $paymentMethod = 'cash';
+
     public float $cashTendered = 0;
+
     public float $changeDue = 0;
 
     // Payment Success Modal State
     public bool $showSuccessModal = false;
+
     public ?array $completedOrderData = null;
 
     // Variant Selection Modal State
     public bool $showVariantModal = false;
+
     public ?Product $selectedProductForVariant = null;
+
     public string $selectedVariantName = '';
+
     public float $selectedVariantPrice = 0;
+
     public string $itemNotes = '';
 
     public function setCategory(string $slug)
@@ -52,6 +65,7 @@ trait HasCartAndCheckout
         if (! $this->activeShiftId && ! $isSalon) {
             $this->showOpenShiftModal = true;
             $this->notify('Sistem kasir sedang ditutup! Anda wajib membuka shift terlebih dahulu sebelum melayani pesanan.', 'error');
+
             return;
         }
 
@@ -66,6 +80,7 @@ trait HasCartAndCheckout
             $this->selectedVariantPrice = (float) $product->variants->first()->final_price;
             $this->itemNotes = '';
             $this->showVariantModal = true;
+
             return;
         }
 
@@ -75,7 +90,7 @@ trait HasCartAndCheckout
     public function confirmVariantSelection()
     {
         if ($this->selectedProductForVariant) {
-            $variantText = $this->selectedVariantName . ($this->itemNotes ? ' • ' . $this->itemNotes : '');
+            $variantText = $this->selectedVariantName.($this->itemNotes ? ' • '.$this->itemNotes : '');
             $this->insertItemToCart(
                 $this->selectedProductForVariant,
                 $this->selectedProductForVariant->name,
@@ -179,6 +194,7 @@ trait HasCartAndCheckout
     {
         if (empty($this->cart)) {
             $this->notify('Keranjang masih kosong!', 'error');
+
             return;
         }
 
@@ -203,14 +219,15 @@ trait HasCartAndCheckout
             $this->showPaymentModal = false;
             $this->showOpenShiftModal = true;
             $this->notify('Sistem kasir sedang ditutup! Anda wajib membuka shift terlebih dahulu.', 'error');
+
             return;
         }
 
         $totals = $this->calculateTotals();
-        $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4));
+        $orderNumber = 'ORD-'.date('Ymd').'-'.strtoupper(Str::random(4));
         $orderTypeLabel = $isSalon
             ? 'Order Layanan Salon'
-            : ($this->orderType === 'dine_in' ? 'Dine In (' . $this->selectedTable . ')' : 'Take Away');
+            : ($this->orderType === 'dine_in' ? 'Dine In ('.$this->selectedTable.')' : 'Take Away');
 
         $this->completedOrderData = [
             'order_number' => $orderNumber,
@@ -270,7 +287,7 @@ trait HasCartAndCheckout
                 $product = Product::where('id', $item['product_id'])->where('tenant_id', $tenantId)->first();
                 if ($product && $product->track_stock) {
                     $product->decrement('stock_quantity', (float) $item['qty']);
-                    \App\Models\StockMovement::create([
+                    StockMovement::create([
                         'tenant_id' => $tenantId,
                         'outlet_id' => $this->selectedOutletId ?? 1,
                         'product_id' => $product->id,
@@ -292,8 +309,10 @@ trait HasCartAndCheckout
                 'amount' => $totals['total'],
                 'cash_tendered' => $this->paymentMethod === 'cash' ? $this->cashTendered : $totals['total'],
                 'change_due' => $this->paymentMethod === 'cash' ? $this->changeDue : 0,
-                'reference_number' => 'REF-' . time(),
+                'reference_number' => 'REF-'.time(),
             ]);
+
+            $this->completedOrderData['order_id'] = $order->id;
         }
 
         $this->showPaymentModal = false;
@@ -310,4 +329,3 @@ trait HasCartAndCheckout
         $this->selectedCustomer = null;
     }
 }
-

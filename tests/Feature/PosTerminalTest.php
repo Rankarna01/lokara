@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Livewire\Pos\Terminal;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -301,6 +303,131 @@ class PosTerminalTest extends TestCase
             ->assertCount('cart', 0);
     }
 
+    public function test_printing_receipt_dispatches_thermal_page_and_only_owner_session_can_open_it()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $order = Order::create([
+            'tenant_id' => $dina->tenant_id,
+            'outlet_id' => $dina->outlet_id,
+            'user_id' => $dina->id,
+            'order_number' => 'ORD-PRINT-001',
+            'order_type' => 'dine_in',
+            'subtotal' => 25000,
+            'total_amount' => 25000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+        ]);
+
+        Livewire::actingAs($dina)
+            ->test(Terminal::class)
+            ->call('printReceipt', $order->id)
+            ->assertDispatched('open-pos-receipt');
+
+        Cache::put('pos-receipt:kunci-uji', [
+            'user_id' => $dina->id,
+            'html' => '<html>STRUK-UJI</html>',
+        ], now()->addMinutes(5));
+
+        $rian = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $this->actingAs($rian)->get('/pos/receipt/kunci-uji')->assertNotFound();
+
+        Cache::put('pos-receipt:kunci-uji', [
+            'user_id' => $dina->id,
+            'html' => '<html>STRUK-UJI</html>',
+        ], now()->addMinutes(5));
+
+        $this->actingAs($dina)->get('/pos/receipt/kunci-uji')
+            ->assertOk()
+            ->assertSee('STRUK-UJI');
+    }
+
+    public function test_thermal_receipt_prints_number_of_copies_from_printer_settings()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $order = Order::create([
+            'tenant_id' => $dina->tenant_id,
+            'outlet_id' => $dina->outlet_id,
+            'user_id' => $dina->id,
+            'order_number' => 'ORD-PRINT-002',
+            'order_type' => 'dine_in',
+            'subtotal' => 25000,
+            'total_amount' => 25000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+        ]);
+
+        $html = view('livewire.pos.receipts.thermal', [
+            'order' => $order->load(['items', 'payments', 'outlet', 'customer', 'user']),
+            'settings' => [],
+            'tenantName' => 'Kopi Ruang Pagi',
+            'paperWidth' => '58mm',
+            'copies' => 2,
+        ])->render();
+
+        $this->assertSame(2, substr_count($html, 'class="copy"'));
+    }
+
+    public function test_cashier_can_add_new_member_and_select_it_for_transaction()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+
+        Livewire::actingAs($dina)
+            ->test(Terminal::class)
+            ->call('openNewMemberForm')
+            ->assertSet('showNewMemberForm', true)
+            ->set('newMemberName', 'Nadia Putri')
+            ->set('newMemberPhone', '081299990000')
+            ->set('newMemberTier', 'gold')
+            ->call('saveNewMember')
+            ->assertSet('showNewMemberForm', false)
+            ->assertSet('selectedCustomer', fn ($customer) => $customer['name'] === 'Nadia Putri');
+
+        $this->assertDatabaseHas('customers', [
+            'tenant_id' => $dina->tenant_id,
+            'name' => 'Nadia Putri',
+            'phone' => '081299990000',
+            'membership_tier' => 'gold',
+            'points' => 0,
+        ]);
+    }
+
+    public function test_new_member_with_registered_phone_is_rejected()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        Customer::create([
+            'tenant_id' => $dina->tenant_id,
+            'name' => 'Member Lama',
+            'phone' => '081277766655',
+            'membership_tier' => 'silver',
+            'points' => 10,
+        ]);
+
+        Livewire::actingAs($dina)
+            ->test(Terminal::class)
+            ->call('openNewMemberForm')
+            ->set('newMemberName', 'Member Baru')
+            ->set('newMemberPhone', '081277766655')
+            ->call('saveNewMember')
+            ->assertHasErrors(['newMemberPhone']);
+
+        $this->assertSame(1, Customer::where('phone', '081277766655')->count());
+    }
+
+    public function test_cashier_in_pos_cannot_reach_backoffice_and_no_backoffice_link_is_shown()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+
+        $this->actingAs($dina)
+            ->get('/pos')
+            ->assertOk()
+            ->assertDontSee('Back Office Toko')
+            ->assertDontSee('Ke Dashboard Back Office');
+
+        $this->actingAs($dina)
+            ->get('/app')
+            ->assertRedirect(route('pos.terminal'));
+    }
+
     public function test_pos_renders_sidebar_toggler()
     {
         $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
@@ -314,7 +441,7 @@ class PosTerminalTest extends TestCase
     public function test_salon_pos_terminal_hides_shift_and_allows_transactions_without_shift()
     {
         $salonStaff = User::where('email', 'doni.barber@studiorona.id')->first();
-        if (!$salonStaff) {
+        if (! $salonStaff) {
             $salonTenant = Tenant::where('slug', 'studiorona')->first();
             $salonStaff = User::where('tenant_id', $salonTenant->id)->first();
         }
@@ -349,4 +476,3 @@ class PosTerminalTest extends TestCase
         }
     }
 }
-

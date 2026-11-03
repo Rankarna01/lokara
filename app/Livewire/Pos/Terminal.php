@@ -6,8 +6,10 @@ use App\Livewire\Pos\Concerns\HasCartAndCheckout;
 use App\Livewire\Pos\Concerns\HasCustomerAndBarcode;
 use App\Livewire\Pos\Concerns\HasHoldAndRecall;
 use App\Livewire\Pos\Concerns\HasPrinterSettings;
+use App\Livewire\Pos\Concerns\HasReceiptPrinting;
 use App\Livewire\Pos\Concerns\HasShiftAndCash;
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Outlet;
@@ -19,10 +21,11 @@ use Livewire\Component;
 class Terminal extends Component
 {
     use HasCartAndCheckout;
-    use HasShiftAndCash;
+    use HasCustomerAndBarcode;
     use HasHoldAndRecall;
     use HasPrinterSettings;
-    use HasCustomerAndBarcode;
+    use HasReceiptPrinting;
+    use HasShiftAndCash;
 
     // Active navigation tab on POS sidebar
     public string $activeNav = 'katalog';
@@ -32,6 +35,7 @@ class Terminal extends Component
 
     // Filter & Search
     public string $search = '';
+
     public string $selectedCategory = 'all';
 
     // Toast
@@ -43,12 +47,14 @@ class Terminal extends Component
         if ($user && $user->tenant_id) {
             return Tenant::find($user->tenant_id);
         }
+
         return Tenant::where('slug', 'kopiruangpagi')->first() ?? Tenant::first();
     }
 
     public function isSalonTenant(): bool
     {
         $tenant = $this->getCurrentTenant();
+
         return $tenant ? $tenant->isSalon() : false;
     }
 
@@ -57,7 +63,7 @@ class Terminal extends Component
         $user = Auth::user();
         if ($user && $user->tenant_id) {
             $this->selectedOutletId = $user->outlet_id;
-            if (!$this->selectedOutletId) {
+            if (! $this->selectedOutletId) {
                 $firstOutlet = Outlet::where('tenant_id', $user->tenant_id)->first();
                 $this->selectedOutletId = $firstOutlet?->id;
             }
@@ -100,13 +106,15 @@ class Terminal extends Component
         $user = Auth::user();
         if ($user && in_array($user->role, ['cashier', 'staff'])) {
             $this->notify('Akses ditolak: Akun kasir hanya dapat bertugas di cabang penugasan.', 'error');
+
             return;
         }
 
         $tenantId = $user?->tenant_id ?? (Tenant::where('slug', 'kopiruangpagi')->first()?->id ?? 1);
         $outlet = Outlet::where('tenant_id', $tenantId)->find($outletId);
-        if (!$outlet) {
+        if (! $outlet) {
             $this->notify('Cabang outlet tidak ditemukan.', 'error');
+
             return;
         }
 
@@ -130,6 +138,7 @@ class Terminal extends Component
         Auth::logout();
         session()->invalidate();
         session()->regenerateToken();
+
         return redirect()->route('login');
     }
 
@@ -149,7 +158,7 @@ class Terminal extends Component
             ->where('is_active', true)
             ->when($this->search, function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
-                  ->orWhere('barcode', 'like', "%{$this->search}%");
+                    ->orWhere('barcode', 'like', "%{$this->search}%");
             })
             ->when($this->selectedCategory !== 'all', function ($q) {
                 $q->whereHas('category', function ($catQuery) {
@@ -169,7 +178,7 @@ class Terminal extends Component
 
         // Outlets
         $outlets = Outlet::where('tenant_id', $tenantId)->get();
-        if (!$this->selectedOutletId || !$outlets->contains('id', $this->selectedOutletId)) {
+        if (! $this->selectedOutletId || ! $outlets->contains('id', $this->selectedOutletId)) {
             $this->selectedOutletId = $outlets->first()?->id;
         }
         $currentOutlet = Outlet::find($this->selectedOutletId) ?? $outlets->first();
@@ -189,10 +198,10 @@ class Terminal extends Component
             $ordersQuery->where('status', 'voided');
         }
 
-        if (!empty($this->orderSearch)) {
+        if (! empty($this->orderSearch)) {
             $ordersQuery->where(function ($q) {
                 $q->where('order_number', 'like', "%{$this->orderSearch}%")
-                  ->orWhere('table_number', 'like', "%{$this->orderSearch}%");
+                    ->orWhere('table_number', 'like', "%{$this->orderSearch}%");
             });
         }
 
@@ -206,17 +215,29 @@ class Terminal extends Component
             ->get();
 
         // Customers list for customer modal
-        $customersList = [
-            ['name' => 'Budi Santoso', 'phone' => '08123456789', 'points' => 125, 'tier' => 'Gold Member'],
-            ['name' => 'Sarah Wijaya', 'phone' => '08198765432', 'points' => 84, 'tier' => 'Silver Member'],
-            ['name' => 'Rian Pratama', 'phone' => '08112233445', 'points' => 210, 'tier' => 'VIP Member'],
-            ['name' => 'Dewi Anggraini', 'phone' => '08571234567', 'points' => 35, 'tier' => 'Regular'],
-        ];
+        $customersList = Customer::where('tenant_id', $tenant?->id)
+            ->when($this->customerSearch !== '', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('name', 'like', '%'.$this->customerSearch.'%')
+                        ->orWhere('phone', 'like', '%'.$this->customerSearch.'%');
+                });
+            })
+            ->orderBy('name')
+            ->take(50)
+            ->get()
+            ->map(fn (Customer $customer) => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'phone' => $customer->phone ?? '-',
+                'points' => (int) $customer->points,
+                'tier' => ucfirst($customer->membership_tier ?? 'silver').' Member',
+            ])
+            ->all();
 
         // Cash Calculation for Shift
         $cashSalesTotal = OrderPayment::where('payment_method', 'cash')->sum('amount');
-        $pettyOutTotal = array_sum(array_column(array_filter($this->pettyCashMovements, fn($p) => $p['type'] === 'out'), 'amount'));
-        $pettyInTotal = array_sum(array_column(array_filter($this->pettyCashMovements, fn($p) => $p['type'] === 'in'), 'amount'));
+        $pettyOutTotal = array_sum(array_column(array_filter($this->pettyCashMovements, fn ($p) => $p['type'] === 'out'), 'amount'));
+        $pettyInTotal = array_sum(array_column(array_filter($this->pettyCashMovements, fn ($p) => $p['type'] === 'in'), 'amount'));
         $expectedCashDrawer = $this->shiftStartingCash + $cashSalesTotal + $pettyInTotal - $pettyOutTotal;
 
         $totals = $this->calculateTotals();
@@ -235,6 +256,6 @@ class Terminal extends Component
             'customersList' => $customersList,
             'cashSalesTotal' => $cashSalesTotal,
             'expectedCashDrawer' => $expectedCashDrawer,
-        ])->layout('layouts.app', ['title' => 'POS Terminal - ' . ($tenant?->name ?? 'Lokara POS')]);
+        ])->layout('layouts.app', ['title' => 'POS Terminal - '.($tenant?->name ?? 'Lokara POS')]);
     }
 }

@@ -41,7 +41,7 @@
             </div>
 
             <div class="space-y-2 pt-2">
-                <button type="button" wire:click="notify('Perintah byte ESC/POS dikirim ke printer thermal')" class="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-2">
+                <button type="button" wire:click="printReceipt({{ (int) ($completedOrderData['order_id'] ?? 0) }})" class="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-print text-slate-500"></i>
                     <span>Cetak Struk Thermal</span>
                 </button>
