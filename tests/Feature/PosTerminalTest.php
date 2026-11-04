@@ -428,6 +428,47 @@ class PosTerminalTest extends TestCase
             ->assertRedirect(route('pos.terminal'));
     }
 
+    public function test_catalog_search_matches_name_sku_and_barcode_within_tenant_only()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $otherTenant = \App\Models\Tenant::where('slug', 'studiorona')->first();
+
+        Product::create([
+            'tenant_id' => $dina->tenant_id,
+            'name' => 'Kopi Uji Pencarian',
+            'slug' => 'kopi-uji-pencarian',
+            'sku' => 'SKU-UJI-777',
+            'barcode' => '8990001112223',
+            'base_price' => 20000,
+            'is_active' => true,
+            'is_available' => true,
+            'type' => 'item',
+        ]);
+
+        Product::create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Kopi Uji Pencarian Tenant Lain',
+            'slug' => 'kopi-uji-pencarian-lain',
+            'sku' => 'SKU-LAIN-1',
+            'base_price' => 20000,
+            'is_active' => true,
+            'is_available' => true,
+            'type' => 'item',
+        ]);
+
+        Livewire::actingAs($dina)
+            ->test(Terminal::class)
+            ->set('search', 'Kopi Uji Pencarian')
+            ->assertSee('Kopi Uji Pencarian')
+            ->assertDontSee('Tenant Lain')
+            ->set('search', 'SKU-UJI-777')
+            ->assertSee('Kopi Uji Pencarian')
+            ->set('search', '8990001112223')
+            ->assertSee('Kopi Uji Pencarian')
+            ->set('search', 'NON-ADA-XYZ')
+            ->assertDontSee('Kopi Uji Pencarian');
+    }
+
     public function test_pos_renders_sidebar_toggler()
     {
         $dina = User::where('email', 'dina@kopiruangpagi.id')->first();

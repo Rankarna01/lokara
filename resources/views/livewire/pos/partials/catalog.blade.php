@@ -56,6 +56,22 @@
         @endforeach
     </div>
 
+    <!-- 1b. Pencarian Produk / Layanan -->
+    <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input type="text"
+               wire:model.live.debounce.300ms="search"
+               placeholder="{{ ($isSalon ?? false) ? 'Cari layanan, produk, SKU, atau barcode...' : 'Cari menu, SKU, atau barcode...' }}"
+               class="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 transition" />
+        @if ($search !== '')
+            <button type="button" wire:click="$set('search', '')"
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                    title="Hapus pencarian">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        @endif
+    </div>
+
     <!-- 2. Section Header: Title & Scan Barcode Button -->
     <div class="flex items-center justify-between">
         <div>

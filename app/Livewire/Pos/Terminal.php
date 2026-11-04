@@ -156,9 +156,12 @@ class Terminal extends Component
         // Query Products
         $products = Product::where('tenant_id', $tenantId)
             ->where('is_active', true)
-            ->when($this->search, function ($q) {
-                $q->where('name', 'like', "%{$this->search}%")
-                    ->orWhere('barcode', 'like', "%{$this->search}%");
+            ->when($this->search !== '', function ($q) {
+                $q->where(function ($searchQuery) {
+                    $searchQuery->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('sku', 'like', "%{$this->search}%")
+                        ->orWhere('barcode', 'like', "%{$this->search}%");
+                });
             })
             ->when($this->selectedCategory !== 'all', function ($q) {
                 $q->whereHas('category', function ($catQuery) {
