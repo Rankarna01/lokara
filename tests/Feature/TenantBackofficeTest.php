@@ -504,6 +504,44 @@ class TenantBackofficeTest extends TestCase
         $this->assertEquals(135000, $service->fresh()->base_price);
     }
 
+    public function test_empty_cost_price_is_saved_as_zero_for_service_and_product()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $cat = Category::where('tenant_id', $salonTenant->id)->first();
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewServiceModal')
+            ->set('serviceName', 'Layanan Modal Kosong')
+            ->set('serviceCategoryId', $cat->id)
+            ->set('servicePrice', 50000)
+            ->set('serviceDuration', 30)
+            ->set('serviceCostPrice', '')
+            ->call('saveService')
+            ->assertHasNoErrors()
+            ->assertSet('showServiceModal', false);
+
+        $this->assertEquals(0, (float) Product::where('name', 'Layanan Modal Kosong')->first()->cost_price);
+
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::where('slug', 'kopiruangpagi')->first();
+        $productCat = Category::where('tenant_id', $tenant->id)->first();
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewProductModal')
+            ->set('productName', 'Produk Modal Kosong')
+            ->set('productCategoryId', $productCat->id)
+            ->set('productBasePrice', 20000)
+            ->set('productCostPrice', null)
+            ->call('saveProduct')
+            ->assertHasNoErrors()
+            ->assertSet('showProductModal', false);
+
+        $this->assertEquals(0, (float) Product::where('name', 'Produk Modal Kosong')->first()->cost_price);
+    }
+
     public function test_service_with_order_history_cannot_be_deleted()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();

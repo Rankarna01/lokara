@@ -9,19 +9,33 @@ use Illuminate\Support\Str;
 trait HasProducts
 {
     public bool $showProductModal = false;
+
     public ?int $editingProductId = null;
+
     public string $productName = '';
+
     public ?int $productCategoryId = null;
+
     public string $productCategoryTag = 'Kopi • Hot / Ice';
+
     public float $productBasePrice = 0;
-    public float $productCostPrice = 0;
+
+    public ?float $productCostPrice = 0;
+
     public string $productImageUrl = '';
+
     public $productImageFile = null;
+
     public float $productStockQuantity = 0;
+
     public float $productMinStock = 5;
+
     public string $productUnit = 'pcs';
+
     public bool $productTrackStock = true;
+
     public bool $productIsActive = true;
+
     public bool $productIsAvailable = true;
 
     public function openNewProductModal(): void
@@ -67,7 +81,7 @@ trait HasProducts
 
         if ($this->productImageFile) {
             $path = $this->productImageFile->store('products', 'public');
-            $this->productImageUrl = '/storage/' . $path;
+            $this->productImageUrl = '/storage/'.$path;
         }
 
         if ($this->editingProductId) {
@@ -77,7 +91,7 @@ trait HasProducts
                 'category_id' => $this->productCategoryId,
                 'category_tag' => $this->productCategoryTag,
                 'base_price' => $this->productBasePrice,
-                'cost_price' => $this->productCostPrice,
+                'cost_price' => (float) ($this->productCostPrice ?? 0),
                 'stock_quantity' => $this->productStockQuantity,
                 'minimum_stock' => $this->productMinStock,
                 'unit' => $this->productUnit ?: 'pcs',
@@ -94,11 +108,11 @@ trait HasProducts
                 'category_tag' => $this->productCategoryTag,
                 'type' => 'item',
                 'name' => $this->productName,
-                'slug' => Str::slug($this->productName) . '-' . rand(100, 999),
-                'sku' => 'PRD-' . strtoupper(Str::random(5)),
-                'barcode' => '899' . rand(100000000, 999999999),
+                'slug' => Str::slug($this->productName).'-'.rand(100, 999),
+                'sku' => 'PRD-'.strtoupper(Str::random(5)),
+                'barcode' => '899'.rand(100000000, 999999999),
                 'base_price' => $this->productBasePrice,
-                'cost_price' => $this->productCostPrice,
+                'cost_price' => (float) ($this->productCostPrice ?? 0),
                 'stock_quantity' => $this->productStockQuantity,
                 'minimum_stock' => $this->productMinStock,
                 'unit' => $this->productUnit ?: 'pcs',
@@ -117,7 +131,7 @@ trait HasProducts
     public function toggleProductAvailability(int $id): void
     {
         $product = Product::where('tenant_id', $this->tenantId)->findOrFail($id);
-        $product->is_available = !$product->is_available;
+        $product->is_available = ! $product->is_available;
         $product->save();
         $status = $product->is_available ? 'Tersedia' : 'Habis / Stok Kosong';
         $this->showToast("Status {$product->name} diubah menjadi '{$status}'");
@@ -141,4 +155,3 @@ trait HasProducts
         $this->productIsAvailable = true;
     }
 }
-

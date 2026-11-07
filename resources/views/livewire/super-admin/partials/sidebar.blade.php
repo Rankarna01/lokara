@@ -120,6 +120,15 @@
                                 <span x-show="sidebarExpanded" x-transition.opacity.duration.200ms class="truncate">Support & Pengumuman</span>
                             </button>
 
+                            <!-- Hapus Riwayat Transaksi (terkunci dengan kredensial) -->
+                            <button wire:click="setTab('history-cleanup')"
+                                    class="w-full flex items-center rounded-lg text-sm font-medium transition-colors text-left {{ $activeTab === 'history-cleanup' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}"
+                                    :class="sidebarExpanded ? 'px-3.5 py-2.5 gap-3' : 'px-3.5 py-2.5 gap-3 lg:px-2 lg:py-2.5 lg:justify-center'"
+                                    title="Hapus Riwayat Transaksi">
+                                <i class="fa-solid fa-trash-can text-base w-5 text-center shrink-0 {{ $activeTab === 'history-cleanup' ? 'text-orange-500' : 'text-slate-400' }}"></i>
+                                <span x-show="sidebarExpanded" x-transition.opacity.duration.200ms class="truncate">Hapus Riwayat Transaksi</span>
+                            </button>
+
                             <!-- Monitoring & Audit -->
                             <button wire:click="setTab('monitoring')"
                                     class="w-full flex items-center rounded-lg text-sm font-medium transition-colors text-left {{ $activeTab === 'monitoring' ? 'bg-orange-50 text-orange-600 font-semibold border-l-4 border-orange-500 rounded-l-none' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}"

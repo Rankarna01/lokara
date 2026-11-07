@@ -7,6 +7,7 @@ use App\Livewire\SuperAdmin\Concerns\HasInvoicesAndAudit;
 use App\Livewire\SuperAdmin\Concerns\HasPlansAndFeatures;
 use App\Livewire\SuperAdmin\Concerns\HasTenantManagement;
 use App\Livewire\SuperAdmin\Concerns\HasTenantUsersAndPasswords;
+use App\Livewire\SuperAdmin\Concerns\HasTransactionHistoryCleanup;
 use App\Models\Announcement;
 use App\Models\BusinessType;
 use App\Models\Invoice;
@@ -27,6 +28,7 @@ class PlatformDashboard extends Component
     use HasPlansAndFeatures;
     use HasTenantManagement;
     use HasTenantUsersAndPasswords;
+    use HasTransactionHistoryCleanup;
     use WithPagination;
 
     // Active Navigation Tab
@@ -285,6 +287,9 @@ class PlatformDashboard extends Component
             'recentTenants' => $recentTenants,
             'allTenants' => $allTenants,
             'tenantOptions' => Tenant::orderBy('name')->get(['id', 'name']),
+            'cleanupTenants' => Tenant::orderBy('name')->get(['id', 'name']),
+            'cleanupOrderCount' => $this->cleanupOrderCount(),
+            'cleanupUnlocked' => $this->isCleanupUnlocked(),
             'invoices' => $invoices,
             'invoiceTotalCount' => $invoiceTotalCount,
             'invoicePaidCount' => $invoicePaidCount,

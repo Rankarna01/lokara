@@ -26,7 +26,7 @@ trait HasServices
 
     public float $serviceCommissionValue = 20000;
 
-    public float $serviceCostPrice = 5000;
+    public ?float $serviceCostPrice = null;
 
     public string $serviceImageUrl = '';
 
@@ -99,7 +99,7 @@ trait HasServices
                 'category_id' => $this->serviceCategoryId,
                 'category_tag' => $this->serviceCategoryTag ?: 'Layanan Salon',
                 'base_price' => $this->servicePrice,
-                'cost_price' => $this->serviceCostPrice,
+                'cost_price' => (float) ($this->serviceCostPrice ?? 0),
                 'duration_minutes' => $this->serviceDuration,
                 'commission_type' => $this->serviceCommissionType,
                 'commission_value' => $commissionVal,
@@ -117,7 +117,7 @@ trait HasServices
                 'slug' => Str::slug($this->serviceName).'-'.rand(100, 999),
                 'sku' => 'SRV-'.strtoupper(Str::random(5)),
                 'base_price' => $this->servicePrice,
-                'cost_price' => $this->serviceCostPrice,
+                'cost_price' => (float) ($this->serviceCostPrice ?? 0),
                 'duration_minutes' => $this->serviceDuration,
                 'commission_type' => $this->serviceCommissionType,
                 'commission_value' => $commissionVal,

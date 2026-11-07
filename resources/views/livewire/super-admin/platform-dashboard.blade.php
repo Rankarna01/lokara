@@ -41,6 +41,8 @@
                     @include('livewire.super-admin.partials.tabs.settings')
                 @elseif ($activeTab === 'support')
                     @include('livewire.super-admin.partials.tabs.support')
+                @elseif ($activeTab === 'history-cleanup')
+                    @include('livewire.super-admin.partials.tabs.history-cleanup')
                 @elseif ($activeTab === 'monitoring')
                     @include('livewire.super-admin.partials.tabs.monitoring')
                 @endif

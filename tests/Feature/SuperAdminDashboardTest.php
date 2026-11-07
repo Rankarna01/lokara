@@ -5,7 +5,12 @@ namespace Tests\Feature;
 use App\Livewire\SuperAdmin\PlatformDashboard;
 use App\Models\BusinessType;
 use App\Models\Invoice;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderPayment;
+use App\Models\Outlet;
 use App\Models\Plan;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -272,6 +277,114 @@ class SuperAdminDashboardTest extends TestCase
             ->assertSee('hanya dapat dihapus setelah berstatus Suspended');
 
         $this->assertNotNull($activeTenant->fresh());
+    }
+
+    public function test_transaction_history_cleanup_stays_locked_until_correct_credentials()
+    {
+        config(['transaction_cleanup.username' => 'pembersih', 'transaction_cleanup.password' => 'rahasia-uji']);
+
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
+            ->call('setTab', 'history-cleanup')
+            ->set('cleanupLoginUsername', 'pembersih')
+            ->set('cleanupLoginPassword', 'salah')
+            ->call('unlockCleanup')
+            ->assertSee('Username atau password salah')
+            ->assertSee('Menu Terkunci');
+
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
+            ->call('setTab', 'history-cleanup')
+            ->set('cleanupLoginUsername', 'pembersih')
+            ->set('cleanupLoginPassword', 'rahasia-uji')
+            ->call('unlockCleanup')
+            ->assertSee('Menu terbuka');
+    }
+
+    public function test_transaction_history_cleanup_deletes_only_selected_tenant_orders()
+    {
+        config(['transaction_cleanup.username' => 'pembersih', 'transaction_cleanup.password' => 'rahasia-uji']);
+
+        $tenantA = Tenant::where('slug', 'kopiruangpagi')->first();
+        $tenantB = Tenant::where('slug', 'studiorona')->first();
+        $outletA = Outlet::where('tenant_id', $tenantA->id)->first();
+        $outletB = Outlet::where('tenant_id', $tenantB->id)->first();
+
+        $orderA = $this->makeTransactionOrder($tenantA, $outletA, 'ORD-CLEAN-A1');
+        $this->makeTransactionOrder($tenantA, $outletA, 'ORD-CLEAN-A2');
+        $orderB = $this->makeTransactionOrder($tenantB, $outletB, 'ORD-CLEAN-B1');
+        $tenantBOrderCountBefore = Order::where('tenant_id', $tenantB->id)->count();
+
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
+            ->call('setTab', 'history-cleanup')
+            ->set('cleanupLoginUsername', 'pembersih')
+            ->set('cleanupLoginPassword', 'rahasia-uji')
+            ->call('unlockCleanup')
+            ->set('cleanupTenantId', $tenantA->id)
+            ->set('cleanupConfirmed', true)
+            ->call('deleteTenantTransactionHistory');
+
+        $this->assertDatabaseMissing('orders', ['id' => $orderA->id]);
+        $this->assertDatabaseMissing('order_items', ['order_id' => $orderA->id]);
+        $this->assertDatabaseMissing('order_payments', ['order_id' => $orderA->id]);
+        $this->assertSame(0, Order::where('tenant_id', $tenantA->id)->count());
+        $this->assertSame($tenantBOrderCountBefore, Order::where('tenant_id', $tenantB->id)->count());
+        $this->assertNotNull($orderB->fresh());
+    }
+
+    public function test_transaction_history_cleanup_requires_unlock_before_deleting()
+    {
+        config(['transaction_cleanup.username' => 'pembersih', 'transaction_cleanup.password' => 'rahasia-uji']);
+
+        $tenant = Tenant::where('slug', 'kopiruangpagi')->first();
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+        $order = $this->makeTransactionOrder($tenant, $outlet, 'ORD-CLEAN-LOCKED');
+
+        Livewire::actingAs($this->admin)
+            ->test(PlatformDashboard::class)
+            ->set('cleanupTenantId', $tenant->id)
+            ->set('cleanupConfirmed', true)
+            ->call('deleteTenantTransactionHistory');
+
+        $this->assertNotNull($order->fresh());
+    }
+
+    private function makeTransactionOrder(Tenant $tenant, Outlet $outlet, string $orderNumber)
+    {
+        $order = Order::create([
+            'tenant_id' => $tenant->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $this->admin->id,
+            'order_number' => $orderNumber,
+            'order_type' => 'dine_in',
+            'subtotal' => 20000,
+            'total_amount' => 20000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+        ]);
+
+        OrderItem::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'product_id' => Product::where('tenant_id', $tenant->id)->value('id'),
+            'product_name' => 'Item Uji',
+            'qty' => 1,
+            'unit_price' => 20000,
+            'subtotal' => 20000,
+        ]);
+
+        OrderPayment::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $order->id,
+            'payment_method' => 'cash',
+            'amount' => 20000,
+            'cash_tendered' => 20000,
+            'change_due' => 0,
+            'reference_number' => 'REF-'.$orderNumber,
+        ]);
+
+        return $order;
     }
 
     public function test_create_user_tenant_dropdown_lists_tenants_beyond_first_page()
