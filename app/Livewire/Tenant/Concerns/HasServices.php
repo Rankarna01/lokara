@@ -24,7 +24,7 @@ trait HasServices
 
     public string $serviceCommissionType = 'fixed'; // 'fixed' or 'percentage'
 
-    public float $serviceCommissionValue = 20000;
+    public float $serviceCommissionValue = 0;
 
     public ?float $serviceCostPrice = null;
 
@@ -165,8 +165,8 @@ trait HasServices
         $this->servicePrice = 60000;
         $this->serviceDuration = 45;
         $this->serviceCommissionType = 'fixed';
-        $this->serviceCommissionValue = 20000;
-        $this->serviceCostPrice = 5000;
+        $this->serviceCommissionValue = 0;
+        $this->serviceCostPrice = 0;
         $this->serviceImageFile = null;
         $this->serviceImageUrl = '';
         $this->serviceIsAvailable = true;

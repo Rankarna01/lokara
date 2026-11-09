@@ -747,6 +747,27 @@ class TenantBackofficeTest extends TestCase
         $this->assertEquals(15000, (float) $service->commission_value);
     }
 
+    public function test_new_service_defaults_fee_and_material_cost_to_zero()
+    {
+        $salonOwner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+        $salonTenant = Tenant::where('slug', 'putrybeautycare')->first();
+        $cat = Category::where('tenant_id', $salonTenant->id)->first();
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openNewServiceModal')
+            ->set('serviceName', 'Layanan Default Nol')
+            ->set('serviceCategoryId', $cat->id)
+            ->set('servicePrice', 80000)
+            ->set('serviceDuration', 45)
+            ->call('saveService')
+            ->assertHasNoErrors();
+
+        $service = Product::where('tenant_id', $salonTenant->id)->where('name', 'Layanan Default Nol')->first();
+        $this->assertEquals(0, (float) $service->commission_value);
+        $this->assertEquals(0, (float) $service->cost_price);
+    }
+
     public function test_salon_master_layanan_hides_material_cost_but_barbershop_keeps_it()
     {
         $salonOwner = User::where('email', 'arsihapis@putribeautycare.site')->first();
