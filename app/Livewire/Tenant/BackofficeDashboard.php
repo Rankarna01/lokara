@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class BackofficeDashboard extends Component
 {
@@ -52,6 +53,7 @@ class BackofficeDashboard extends Component
     use HasStoreSettings;
     use HasTransactionExports;
     use WithFileUploads;
+    use WithPagination;
 
     #[Url(as: 'tab', keep: true)]
     public string $activeTab = 'dashboard';
@@ -112,6 +114,26 @@ class BackofficeDashboard extends Component
         } elseif (session()->has('tenant_active_tab') && ! empty(session('tenant_active_tab'))) {
             $this->activeTab = (string) session('tenant_active_tab');
         }
+    }
+
+    public function updatedSearchProduct(): void
+    {
+        $this->resetPage('productsPage');
+    }
+
+    public function updatedSelectedCategoryFilter(): void
+    {
+        $this->resetPage('productsPage');
+    }
+
+    public function updatedSearchService(): void
+    {
+        $this->resetPage('servicesPage');
+    }
+
+    public function updatedSelectedServiceCategoryFilter(): void
+    {
+        $this->resetPage('servicesPage');
     }
 
     public function switchTab(string $tab): void
@@ -227,7 +249,7 @@ class BackofficeDashboard extends Component
         if (! empty($this->searchProduct)) {
             $productsQuery->where('name', 'like', '%'.$this->searchProduct.'%');
         }
-        $products = $productsQuery->orderBy('id', 'desc')->get();
+        $products = $productsQuery->orderBy('id', 'desc')->paginate(10, ['*'], 'productsPage');
 
         // 2b. Services Data (Khusus Salon & Barbershop)
         $servicesQuery = Product::with('category')
@@ -241,7 +263,9 @@ class BackofficeDashboard extends Component
         if (! empty($this->searchService)) {
             $servicesQuery->where('name', 'like', '%'.$this->searchService.'%');
         }
-        $services = $servicesQuery->orderBy('id', 'desc')->get();
+        // Statistik & badge memakai seluruh layanan, tabel hanya menampilkan 10 per halaman
+        $services = (clone $servicesQuery)->orderBy('id', 'desc')->get();
+        $servicesTable = $servicesQuery->orderBy('id', 'desc')->paginate(10, ['*'], 'servicesPage');
 
         // 2c. Discounts & Promos Data
         $discountsQuery = Discount::where('tenant_id', $this->tenantId);
@@ -475,6 +499,7 @@ class BackofficeDashboard extends Component
             'totalProductsCount' => $totalProductsCount,
             'products' => $products,
             'services' => $services,
+            'servicesTable' => $servicesTable,
             'discounts' => $discounts,
             'ingredients' => $ingredients,
             'transactions' => $transactions,

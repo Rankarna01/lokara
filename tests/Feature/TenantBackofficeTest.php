@@ -542,6 +542,70 @@ class TenantBackofficeTest extends TestCase
         $this->assertEquals(0, (float) Product::where('name', 'Produk Modal Kosong')->first()->cost_price);
     }
 
+    public function test_service_and_product_tables_paginate_ten_per_page_and_reset_on_search()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $salonCategory = Category::where('tenant_id', $salonTenant->id)->first();
+
+        foreach (range(1, 12) as $number) {
+            $label = str_pad((string) $number, 2, '0', STR_PAD_LEFT);
+            Product::create([
+                'tenant_id' => $salonTenant->id,
+                'category_id' => $salonCategory->id,
+                'type' => 'service',
+                'name' => "Layanan Halaman {$label}",
+                'slug' => "layanan-halaman-{$label}",
+                'sku' => "SRV-PAGE{$label}",
+                'base_price' => 50000,
+                'duration_minutes' => 30,
+                'commission_type' => 'fixed',
+                'commission_value' => 0,
+                'is_active' => true,
+                'is_available' => true,
+            ]);
+        }
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'services')
+            ->assertSee('Layanan Halaman 12')
+            ->assertDontSee('Layanan Halaman 01')
+            ->call('gotoPage', 2, 'servicesPage')
+            ->assertSee('Layanan Halaman 01')
+            ->set('searchService', 'Halaman 1')
+            ->assertSee('Layanan Halaman 10');
+
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::where('slug', 'kopiruangpagi')->first();
+        $productCategory = Category::where('tenant_id', $tenant->id)->first();
+
+        foreach (range(1, 12) as $number) {
+            $label = str_pad((string) $number, 2, '0', STR_PAD_LEFT);
+            Product::create([
+                'tenant_id' => $tenant->id,
+                'category_id' => $productCategory->id,
+                'type' => 'item',
+                'name' => "Produk Halaman {$label}",
+                'slug' => "produk-halaman-{$label}",
+                'sku' => "PRD-PAGE{$label}",
+                'base_price' => 20000,
+                'is_active' => true,
+                'is_available' => true,
+            ]);
+        }
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'products')
+            ->assertSee('Produk Halaman 12')
+            ->assertDontSee('Produk Halaman 01')
+            ->call('gotoPage', 2, 'productsPage')
+            ->assertSee('Produk Halaman 01')
+            ->set('searchProduct', 'Halaman 1')
+            ->assertSee('Produk Halaman 10');
+    }
+
     public function test_service_with_order_history_cannot_be_deleted()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();

@@ -191,6 +191,11 @@
                                         @endforelse
                                     </tbody>
                                 </table>
+                                @if ($products->hasPages())
+                                    <div class="px-4 py-3 border-t border-slate-100">
+                                        {{ $products->links() }}
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

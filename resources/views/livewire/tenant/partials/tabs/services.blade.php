@@ -123,7 +123,7 @@
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100">
-                                        @forelse($services as $srv)
+                                        @forelse($servicesTable as $srv)
                                             <tr class="hover:bg-slate-50/60 transition">
                                                 <td class="py-3.5 px-4">
                                                     <div class="flex items-center gap-3">
@@ -196,6 +196,11 @@
                                         @endforelse
                                     </tbody>
                                 </table>
+                                @if ($servicesTable->hasPages())
+                                    <div class="px-4 py-3 border-t border-slate-100">
+                                        {{ $servicesTable->links() }}
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
