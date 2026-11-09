@@ -106,6 +106,10 @@
                             </div>
                         </div>
 
+                        @php
+                            $showMaterialCost = $tenant?->businessType?->slug !== 'salon';
+                        @endphp
+
                         <!-- Service Table -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
                             <div class="overflow-x-auto">
@@ -116,7 +120,9 @@
                                             <th class="py-3 px-4">Kategori</th>
                                             <th class="py-3 px-4 text-center">Durasi</th>
                                             <th class="py-3 px-4 text-right">Tarif Jasa</th>
-                                            <th class="py-3 px-4 text-right">Modal Bahan</th>
+                                            @if ($showMaterialCost)
+                                                <th class="py-3 px-4 text-right">Modal Bahan</th>
+                                            @endif
                                             <th class="py-3 px-4 text-right">Fee Kapster</th>
                                             <th class="py-3 px-4 text-center">Margin Bersih</th>
                                             <th class="py-3 px-4 text-center">Status</th>
@@ -150,9 +156,11 @@
                                                 <td class="py-3.5 px-4 text-right font-bold text-slate-900">
                                                     Rp {{ number_format($srv->base_price, 0, ',', '.') }}
                                                 </td>
-                                                <td class="py-3.5 px-4 text-right text-xs text-slate-500">
-                                                    Rp {{ number_format($srv->cost_price, 0, ',', '.') }}
-                                                </td>
+                                                @if ($showMaterialCost)
+                                                    <td class="py-3.5 px-4 text-right text-xs text-slate-500">
+                                                        Rp {{ number_format($srv->cost_price, 0, ',', '.') }}
+                                                    </td>
+                                                @endif
                                                 <td class="py-3.5 px-4 text-right text-xs">
                                                     <div class="font-bold text-amber-600">Rp {{ number_format($srv->estimated_commission, 0, ',', '.') }}</div>
                                                     <div class="text-[10px] text-slate-400">
@@ -190,7 +198,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="9" class="py-12 text-center text-slate-400 text-sm">
+                                                <td colspan="{{ $showMaterialCost ? 9 : 8 }}" class="py-12 text-center text-slate-400 text-sm">
                                                     <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
                                                         <i class="fa-solid fa-scissors"></i>
                                                     </div>

@@ -60,13 +60,15 @@
                         </div>
                     </div>
 
-                    <!-- Modal Bahan / HPP Produk -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Modal Bahan Produk (HPP per Sesi)</label>
-                        <input type="number" wire:model="serviceCostPrice" placeholder="e.g. 5000 (shampoo, pomade, cream)"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
-                        <span class="text-[10px] text-slate-400">Pemakaian shampoo, pomade, obat cream, handuk, dll</span>
-                    </div>
+                    <!-- Modal Bahan / HPP Produk (disembunyikan untuk Salon & Klinik Kecantikan) -->
+                    @unless ($tenant?->businessType?->slug === 'salon')
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Modal Bahan Produk (HPP per Sesi)</label>
+                            <input type="number" wire:model="serviceCostPrice" placeholder="e.g. 5000 (shampoo, pomade, cream)"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            <span class="text-[10px] text-slate-400">Pemakaian shampoo, pomade, obat cream, handuk, dll</span>
+                        </div>
+                    @endunless
 
                     <!-- Fee Kapster (Komisi per Sesi) -->
                     <div class="grid grid-cols-2 gap-3">

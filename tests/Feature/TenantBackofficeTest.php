@@ -747,6 +747,28 @@ class TenantBackofficeTest extends TestCase
         $this->assertEquals(15000, (float) $service->commission_value);
     }
 
+    public function test_salon_master_layanan_hides_material_cost_but_barbershop_keeps_it()
+    {
+        $salonOwner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'services')
+            ->assertDontSee('Modal Bahan')
+            ->call('openNewServiceModal')
+            ->assertDontSee('Modal Bahan Produk');
+
+        $barberTenant = Tenant::where('slug', 'gentlemanbarbershop')->first();
+        $barberOwner = User::where('tenant_id', $barberTenant->id)->where('role', 'owner')->first();
+
+        Livewire::actingAs($barberOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'services')
+            ->assertSee('Modal Bahan')
+            ->call('openNewServiceModal')
+            ->assertSee('Modal Bahan Produk');
+    }
+
     public function test_service_with_order_history_cannot_be_deleted()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();
