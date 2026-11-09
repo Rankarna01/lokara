@@ -5,14 +5,14 @@
                                 <div class="flex items-center gap-2">
                                     <h1 class="text-xl font-bold text-slate-900">Katalog & Master Produk</h1>
                                     @if($tenant?->isSalon() || $tenant?->hasFeature('has_services'))
-                                        <span class="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        <!-- <span class="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
                                             Produk Fisik & Retail
-                                        </span>
+                                        </span> -->
                                     @endif
                                 </div>
-                                <p class="text-xs text-slate-500 mt-0.5">
+                                <!-- <p class="text-xs text-slate-500 mt-0.5">
                                     {{ $tenant?->isSalon() ? 'Kelola produk retail perawatan, pomade, shampoo, harga jual, dan stok barang.' : 'Kelola menu, harga jual cabang, HPP modal, dan ketersediaan stok.' }}
-                                </p>
+                                </p> -->
                             </div>
                             <div class="flex items-center gap-2.5">
                                 @if($tenant?->isSalon() || $tenant?->hasFeature('has_services'))
@@ -31,7 +31,7 @@
                         </div>
 
                         <!-- Search & Category Filters -->
-                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="flex flex-col gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
                             <div class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0">
                                 <!-- Filter Semua Kategori -->
                                 <button wire:click="$set('selectedCategoryFilter', 'all')"
@@ -74,7 +74,7 @@
                                 </button>
                             </div>
 
-                            <div class="relative w-full lg:w-64 shrink-0">
+                            <div class="relative w-full sm:w-80">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                                 <input type="text" wire:model.live.debounce.300ms="searchProduct"
                                     placeholder="Cari nama menu..."

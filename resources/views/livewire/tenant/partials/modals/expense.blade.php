@@ -10,26 +10,49 @@
                 </div>
                 <div class="p-5 space-y-4 text-sm">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori Biaya</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-slate-700">Kategori Biaya</label>
+                            <button type="button" wire:click="$toggle('showNewExpenseCategory')"
+                                class="text-[11px] font-semibold text-orange-600 hover:text-orange-700">
+                                {{ $showNewExpenseCategory ? 'Batal' : '+ Tambah kategori baru' }}
+                            </button>
+                        </div>
+
+                        @if ($showNewExpenseCategory)
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="text" wire:model="expenseNewCategory" wire:keydown.enter="addExpenseCategory" placeholder="Contoh: Perlengkapan Kebersihan"
+                                    class="flex-1 bg-white border border-orange-300 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-orange-500">
+                                <button type="button" wire:click="addExpenseCategory"
+                                    class="px-3 py-2 text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-xl">Tambah</button>
+                            </div>
+                            @error('expenseNewCategory') <div class="text-rose-600 text-[11px] mb-2">{{ $message }}</div> @enderror
+                        @endif
+
                         <select wire:model="expenseCategory"
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-orange-500">
-                            <option value="Listrik & Air">Listrik & Air</option>
-                            <option value="Gaji Karyawan">Gaji Karyawan</option>
-                            <option value="Sewa Tempat">Sewa Tempat</option>
-                            <option value="Marketing">Marketing & Iklan</option>
-                            <option value="Pemeliharaan">Pemeliharaan & Servis Alat</option>
-                            <option value="Lainnya">Lainnya</option>
+                            @foreach ($expenseCategoryOptions as $categoryOption)
+                                <option value="{{ $categoryOption }}">{{ $categoryOption }}</option>
+                            @endforeach
                         </select>
+                        @error('expenseCategory') <div class="text-rose-600 text-[11px] mt-1">{{ $message }}</div> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Pengeluaran</label>
+                        <input type="date" wire:model="expenseDate" max="{{ now()->toDateString() }}"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-1 focus:ring-orange-500">
+                        @error('expenseDate') <div class="text-rose-600 text-[11px] mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Judul / Deskripsi Pengeluaran</label>
                         <input type="text" wire:model="expenseTitle" placeholder="Contoh: Beli Token Listrik PLN"
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-1 focus:ring-orange-500">
+                        @error('expenseTitle') <div class="text-rose-600 text-[11px] mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Nominal (Rp)</label>
                         <input type="number" wire:model="expenseAmount"
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:ring-1 focus:ring-orange-500 font-bold">
+                        @error('expenseAmount') <div class="text-rose-600 text-[11px] mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Sumber Kas</label>
@@ -51,4 +74,3 @@
             </div>
         </div>
     @endif
-

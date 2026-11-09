@@ -19,6 +19,7 @@ use App\Livewire\Tenant\Concerns\HasTransactionExports;
 use App\Models\Category;
 use App\Models\Discount;
 use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use App\Models\Ingredient;
 use App\Models\Order;
 use App\Models\Outlet;
@@ -537,6 +538,7 @@ class BackofficeDashboard extends Component
             'shiftTemplates' => $this->getShiftTemplates(),
             'shiftHistory' => Shift::with(['user', 'outlet'])->where('tenant_id', $this->tenantId)->latest()->take(10)->get(),
             'financeData' => $financeData,
+            'expenseCategoryOptions' => $this->tenantId ? ExpenseCategory::namesForTenant($this->tenantId) : [],
         ])->layout('layouts.app', ['title' => 'Admin Back Office - '.($tenant->name ?? 'Lokara POS')]);
     }
 }

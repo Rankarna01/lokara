@@ -5,11 +5,13 @@ namespace App\Livewire\Pos;
 use App\Livewire\Pos\Concerns\HasCartAndCheckout;
 use App\Livewire\Pos\Concerns\HasCustomerAndBarcode;
 use App\Livewire\Pos\Concerns\HasHoldAndRecall;
+use App\Livewire\Pos\Concerns\HasPosExpenses;
 use App\Livewire\Pos\Concerns\HasPrinterSettings;
 use App\Livewire\Pos\Concerns\HasReceiptPrinting;
 use App\Livewire\Pos\Concerns\HasShiftAndCash;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\ExpenseCategory;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use App\Models\Outlet;
@@ -23,6 +25,7 @@ class Terminal extends Component
     use HasCartAndCheckout;
     use HasCustomerAndBarcode;
     use HasHoldAndRecall;
+    use HasPosExpenses;
     use HasPrinterSettings;
     use HasReceiptPrinting;
     use HasShiftAndCash;
@@ -257,6 +260,7 @@ class Terminal extends Component
             'todayOrders' => $todayOrders,
             'allOrders' => $allOrders,
             'customersList' => $customersList,
+            'posExpenseCategoryOptions' => $tenant ? ExpenseCategory::namesForTenant($tenant->id) : [],
             'cashSalesTotal' => $cashSalesTotal,
             'expectedCashDrawer' => $expectedCashDrawer,
         ])->layout('layouts.app', ['title' => 'POS Terminal - '.($tenant?->name ?? 'Lokara POS')]);

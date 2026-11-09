@@ -87,6 +87,15 @@
                 @endif
             </button>
 
+            <!-- Catat Pengeluaran Toko (Kasir) -->
+            <button wire:click="openPosExpenseModal"
+                    class="w-full flex items-center rounded-lg font-medium transition-colors text-left text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    :class="sidebarExpanded ? 'px-3.5 py-2.5 gap-3' : 'px-2 py-2.5 justify-center'"
+                    title="Catat Pengeluaran Toko">
+                <i class="fa-solid fa-money-bill-transfer text-sm w-4 text-center shrink-0 text-slate-400"></i>
+                <span x-show="sidebarExpanded" x-transition.opacity.duration.200ms class="truncate">Pengeluaran</span>
+            </button>
+
             <!-- Printer Struk Thermal -->
             <button wire:click="$set('showPrinterModal', true)"
                     class="w-full flex items-center rounded-lg font-medium transition-colors text-left text-slate-600 hover:text-slate-900 hover:bg-slate-50"

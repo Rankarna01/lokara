@@ -67,13 +67,13 @@
                 <!-- Total OPEX Toko -->
                 <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80">
                     <div class="text-xs text-amber-800 font-medium">Beban Operasional (OPEX)</div>
-                    <div class="text-xl font-bold text-amber-700 mt-1">- Rp {{ number_format($totalOpex, 0, ',', '.') }}</div>
+                    <div class="text-xl font-bold text-amber-700 mt-1">- Rp {{ number_format($fd['totalOpex'], 0, ',', '.') }}</div>
                     <div class="text-[11px] text-amber-700/80 mt-1.5">Sewa, Gaji, Listrik, Air, & Marketing</div>
                 </div>
 
                 <!-- Laba Bersih Toko (Net Profit) -->
                 @php
-                    $salonNetProfit = $fd['combinedGrossProfit'] - $totalOpex;
+                    $salonNetProfit = $fd['combinedNetProfit'];
                 @endphp
                 <div class="p-4 rounded-xl {{ $salonNetProfit >= 0 ? 'bg-emerald-900 text-white' : 'bg-rose-900 text-white' }} shadow-sm">
                     <div class="text-xs text-slate-200 font-medium">Laba Bersih Akhir (Net Profit)</div>
@@ -346,6 +346,9 @@
                         </span>
                     </div>
 
+                    @php
+                        $showCommissionScheme = $tenant?->businessType?->slug !== 'salon';
+                    @endphp
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-50 border-b border-slate-200/80 text-[11px] text-slate-500 uppercase font-semibold">
@@ -355,7 +358,9 @@
                                     <th class="py-3 px-3 text-center">Durasi</th>
                                     <th class="py-3 px-3 text-right">Tarif Jasa</th>
                                     <th class="py-3 px-3 text-right">Modal Bahan</th>
-                                    <th class="py-3 px-3 text-center">Skema Komisi</th>
+                                    @if ($showCommissionScheme)
+                                        <th class="py-3 px-3 text-center">Skema Komisi</th>
+                                    @endif
                                     <th class="py-3 px-3 text-center">Sesi Selesai</th>
                                     <th class="py-3 px-3 text-right">Total Omzet</th>
                                     <th class="py-3 px-3 text-right">Total Bahan</th>
@@ -392,9 +397,11 @@
                                         <td class="py-3 px-3 text-right text-xs text-slate-500 font-medium">
                                             Rp {{ number_format($s['unit_material_cost'], 0, ',', '.') }}
                                         </td>
-                                        <td class="py-3 px-3 text-center text-[11px] text-amber-700 font-semibold">
-                                            {{ $s['commission_scheme'] }}
-                                        </td>
+                                        @if ($showCommissionScheme)
+                                            <td class="py-3 px-3 text-center text-[11px] text-amber-700 font-semibold">
+                                                {{ $s['commission_scheme'] }}
+                                            </td>
+                                        @endif
                                         <td class="py-3 px-3 text-center font-bold text-xs {{ $s['sessions_count'] > 0 ? 'text-indigo-600' : 'text-slate-400' }}">
                                             {{ number_format($s['sessions_count'], 0, ',', '.') }}
                                         </td>
@@ -418,7 +425,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="12" class="py-8 text-center text-xs text-slate-400">
+                                        <td colspan="{{ $showCommissionScheme ? 12 : 11 }}" class="py-8 text-center text-xs text-slate-400">
                                             Tidak ada master layanan yang sesuai dengan pencarian atau filter kategori saat ini.
                                         </td>
                                     </tr>
@@ -432,29 +439,32 @@
     @else
         <!-- Standard P&L Waterfall Card (Non-salon / General F&B) -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-            <h3 class="font-bold text-slate-900 text-base">Laporan Laba Rugi Bulan Ini</h3>
+            <div>
+                <h3 class="font-bold text-slate-900 text-base">Laporan Laba Rugi</h3>
+                <p class="text-xs text-slate-400">Periode: <span class="font-semibold text-slate-700">{{ $financeData['dateFilterLabel'] }}</span></p>
+            </div>
 
             <div class="space-y-2.5 text-sm">
                 <div class="flex justify-between py-2 border-b border-slate-100 font-semibold text-slate-800">
                     <span>(+) Pendapatan Penjualan Kotor (Gross Sales)</span>
-                    <span>Rp {{ number_format($monthGrossSales, 0, ',', '.') }}</span>
+                    <span>Rp {{ number_format($financeData['combinedSales'], 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between py-2 border-b border-slate-100 text-rose-600 font-medium pl-4">
                     <span>(-) Harga Pokok Penjualan (HPP / Biaya Bahan)</span>
-                    <span>- Rp {{ number_format($estimatedCogs, 0, ',', '.') }}</span>
+                    <span>- Rp {{ number_format($financeData['combinedDirectCost'], 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between py-2.5 bg-emerald-50/70 px-3 rounded-xl font-bold text-emerald-800">
-                    <span>(=) Laba Kotor (Gross Profit) [{{ $grossMarginPct }}%]</span>
-                    <span>Rp {{ number_format($grossProfit, 0, ',', '.') }}</span>
+                    <span>(=) Laba Kotor (Gross Profit) [{{ $financeData['combinedMargin'] }}%]</span>
+                    <span>Rp {{ number_format($financeData['combinedGrossProfit'], 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between py-2 border-b border-slate-100 text-rose-600 font-medium pl-4">
                     <span>(-) Total Biaya Operasional Toko (OPEX)</span>
-                    <span>- Rp {{ number_format($totalOpex, 0, ',', '.') }}</span>
+                    <span>- Rp {{ number_format($financeData['totalOpex'], 0, ',', '.') }}</span>
                 </div>
                 <div class="flex justify-between py-3.5 bg-slate-900 text-white px-4 rounded-xl font-bold text-base shadow-sm">
                     <span>(=) Laba Bersih Toko (Net Profit)</span>
-                    <span class="{{ $netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
-                        Rp {{ number_format($netProfit, 0, ',', '.') }}
+                    <span class="{{ $financeData['combinedNetProfit'] >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                        Rp {{ number_format($financeData['combinedNetProfit'], 0, ',', '.') }}
                     </span>
                 </div>
             </div>
@@ -469,7 +479,7 @@
                 <p class="text-xs text-slate-400 mt-0.5">Pengeluaran rutin outlet: sewa, listrik, air, gaji, dan pemeliharaan</p>
             </div>
             <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-rose-50 text-rose-700">
-                Total OPEX: Rp {{ number_format($totalOpex, 0, ',', '.') }}
+                Total OPEX: Rp {{ number_format($financeData['totalOpex'], 0, ',', '.') }}
             </span>
         </div>
         <div class="overflow-x-auto">
@@ -484,7 +494,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    @forelse($expenses as $exp)
+                    @forelse($financeData['expenseRows'] as $exp)
                         <tr class="hover:bg-slate-50/60 transition">
                             <td class="py-3 px-4 text-xs text-slate-500">{{ $exp->expense_date->format('d M Y') }}</td>
                             <td class="py-3 px-4">

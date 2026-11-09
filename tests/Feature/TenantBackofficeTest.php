@@ -6,6 +6,7 @@ use App\Livewire\Tenant\BackofficeDashboard;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Discount;
+use App\Models\Expense;
 use App\Models\Ingredient;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -604,6 +605,146 @@ class TenantBackofficeTest extends TestCase
             ->assertSee('Produk Halaman 01')
             ->set('searchProduct', 'Halaman 1')
             ->assertSee('Produk Halaman 10');
+    }
+
+    public function test_salon_finance_hides_commission_scheme_and_uses_entered_material_cost()
+    {
+        $salonOwner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+        $salonTenant = Tenant::where('slug', 'putrybeautycare')->first();
+        $cat = Category::where('tenant_id', $salonTenant->id)->first();
+
+        Product::create([
+            'tenant_id' => $salonTenant->id,
+            'category_id' => $cat->id,
+            'type' => 'service',
+            'name' => 'Layanan Modal Nol',
+            'slug' => 'layanan-modal-nol',
+            'sku' => 'SRV-MODALNOL',
+            'base_price' => 60000,
+            'cost_price' => 0,
+            'duration_minutes' => 30,
+            'commission_type' => 'fixed',
+            'commission_value' => 10000,
+            'is_active' => true,
+            'is_available' => true,
+        ]);
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->call('setFinanceSubTab', 'services')
+            ->assertSee('Layanan Modal Nol')
+            ->assertDontSee('Skema Komisi')
+            ->assertDontSee('Rp 5.000');
+
+        $barberTenant = Tenant::where('slug', 'gentlemanbarbershop')->first();
+        $barberOwner = User::where('tenant_id', $barberTenant->id)->where('role', 'owner')->first();
+
+        Livewire::actingAs($barberOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->call('setFinanceSubTab', 'services')
+            ->assertSee('Skema Komisi');
+    }
+
+    public function test_opex_with_past_date_follows_profit_loss_period_filter()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $pastDate = now()->subMonths(2)->toDateString();
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openExpenseModal')
+            ->set('expenseCategory', 'Sewa Tempat')
+            ->set('expenseDate', $pastDate)
+            ->set('expenseTitle', 'Sewa Ruko Bulan Lalu')
+            ->set('expenseAmount', 777000)
+            ->call('saveExpense')
+            ->assertHasNoErrors()
+            ->assertSet('showExpenseModal', false);
+
+        $this->assertTrue(
+            Expense::where('tenant_id', $owner->tenant_id)
+                ->where('title', 'Sewa Ruko Bulan Lalu')
+                ->whereDate('expense_date', $pastDate)
+                ->exists()
+        );
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->set('financeDateFilter', 'this_month')
+            ->assertDontSee('Sewa Ruko Bulan Lalu')
+            ->set('financeDateFilter', 'all')
+            ->assertSee('Sewa Ruko Bulan Lalu');
+    }
+
+    public function test_opex_rejects_future_date_and_adds_new_category_in_modal()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openExpenseModal')
+            ->set('expenseDate', now()->addDay()->toDateString())
+            ->set('expenseTitle', 'Pengeluaran Masa Depan')
+            ->set('expenseAmount', 50000)
+            ->call('saveExpense')
+            ->assertHasErrors(['expenseDate']);
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('openExpenseModal')
+            ->set('showNewExpenseCategory', true)
+            ->set('expenseNewCategory', 'Perlengkapan Uji')
+            ->call('addExpenseCategory')
+            ->assertSet('expenseCategory', 'Perlengkapan Uji')
+            ->assertSet('showNewExpenseCategory', false);
+
+        $this->assertDatabaseHas('expense_categories', [
+            'tenant_id' => $owner->tenant_id,
+            'name' => 'Perlengkapan Uji',
+        ]);
+    }
+
+    public function test_service_fee_column_is_shown_and_editable()
+    {
+        $salonOwner = User::where('email', 'contact@studiorona.id')->first();
+        $salonTenant = Tenant::where('slug', 'studiorona')->first();
+        $cat = Category::where('tenant_id', $salonTenant->id)->first();
+
+        $service = Product::create([
+            'tenant_id' => $salonTenant->id,
+            'category_id' => $cat->id,
+            'type' => 'service',
+            'name' => 'Layanan Uji Fee',
+            'slug' => 'layanan-uji-fee',
+            'sku' => 'SRV-UJIFEE',
+            'base_price' => 100000,
+            'cost_price' => 0,
+            'duration_minutes' => 30,
+            'commission_type' => 'percentage',
+            'commission_value' => 20,
+            'is_active' => true,
+            'is_available' => true,
+        ]);
+
+        Livewire::actingAs($salonOwner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'services')
+            ->assertSee('Fee Kapster')
+            ->assertSee('Rp 20.000')
+            ->assertSee('20% dari tarif')
+            ->call('editService', $service->id)
+            ->assertSet('serviceCommissionType', 'percentage')
+            ->set('serviceCommissionType', 'fixed')
+            ->set('serviceCommissionValue', 15000)
+            ->call('saveService')
+            ->assertHasNoErrors();
+
+        $service->refresh();
+        $this->assertSame('fixed', $service->commission_type);
+        $this->assertEquals(15000, (float) $service->commission_value);
     }
 
     public function test_service_with_order_history_cannot_be_deleted()

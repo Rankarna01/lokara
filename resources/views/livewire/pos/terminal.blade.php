@@ -96,6 +96,7 @@
     @include('livewire.pos.partials.hold-modal')
     @include('livewire.pos.partials.transactions-modal')
     @include('livewire.pos.partials.customer-modal')
+    @include('livewire.pos.partials.expense-modal')
     @include('livewire.pos.partials.help-modal')
 
 </div>

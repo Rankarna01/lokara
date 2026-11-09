@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Pos\Terminal;
 use App\Models\Customer;
+use App\Models\Expense;
 use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\Product;
@@ -467,6 +468,32 @@ class PosTerminalTest extends TestCase
             ->assertSee('Kopi Uji Pencarian')
             ->set('search', 'NON-ADA-XYZ')
             ->assertDontSee('Kopi Uji Pencarian');
+    }
+
+    public function test_cashier_can_record_store_expense_with_past_date_from_pos()
+    {
+        $dina = User::where('email', 'dina@kopiruangpagi.id')->first();
+        $yesterday = now()->subDay()->toDateString();
+
+        Livewire::actingAs($dina)
+            ->test(Terminal::class)
+            ->call('openPosExpenseModal')
+            ->assertSet('showPosExpenseModal', true)
+            ->set('posExpenseCategory', 'Operasional')
+            ->set('posExpenseDate', $yesterday)
+            ->set('posExpenseTitle', 'Beli galon air uji')
+            ->set('posExpenseAmount', 45000)
+            ->call('savePosExpense')
+            ->assertHasNoErrors()
+            ->assertSet('showPosExpenseModal', false);
+
+        $this->assertTrue(
+            Expense::where('tenant_id', $dina->tenant_id)
+                ->where('title', 'Beli galon air uji')
+                ->where('category', 'Operasional')
+                ->whereDate('expense_date', $yesterday)
+                ->exists()
+        );
     }
 
     public function test_pos_renders_sidebar_toggler()

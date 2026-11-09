@@ -4,6 +4,7 @@ namespace App\Livewire\Tenant\Concerns;
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use App\Models\Order;
 use App\Models\Product;
 use Carbon\Carbon;
@@ -11,10 +12,21 @@ use Carbon\Carbon;
 trait HasExpenses
 {
     public bool $showExpenseModal = false;
-    public string $expenseCategory = 'Listrik & Air';
+
+    public string $expenseCategory = '';
+
+    public string $expenseNewCategory = '';
+
+    public bool $showNewExpenseCategory = false;
+
+    public string $expenseDate = '';
+
     public string $expenseTitle = '';
+
     public float $expenseAmount = 0;
+
     public string $expensePaymentMethod = 'Kas Toko / Tunai';
+
     public string $expenseNotes = '';
 
     // Sub-tab for Salon / Barbershop Laba Rugi
@@ -22,8 +34,11 @@ trait HasExpenses
 
     // Filtering & Searching in Laba Rugi
     public string $financeSearch = '';
+
     public string $financeCategoryFilter = 'all';
+
     public string $financeDateFilter = 'this_month'; // 'today', '7_days', 'this_month', 'all'
+
     public string $financeSortBy = 'profit_desc'; // 'profit_desc', 'qty_desc', 'sales_desc', 'margin_desc', 'name_asc'
 
     public function setFinanceSubTab(string $tab): void
@@ -42,12 +57,33 @@ trait HasExpenses
 
     public function openExpenseModal(): void
     {
-        $this->expenseCategory = 'Listrik & Air';
+        $this->expenseCategory = ExpenseCategory::namesForTenant($this->tenantId)[0] ?? 'Lainnya';
+        $this->expenseDate = now()->toDateString();
         $this->expenseTitle = '';
         $this->expenseAmount = 250000;
         $this->expensePaymentMethod = 'Kas Toko / Tunai';
         $this->expenseNotes = '';
+        $this->showNewExpenseCategory = false;
+        $this->expenseNewCategory = '';
         $this->showExpenseModal = true;
+    }
+
+    public function addExpenseCategory(): void
+    {
+        $this->validate([
+            'expenseNewCategory' => 'required|string|min:2|max:100',
+        ], [
+            'expenseNewCategory.required' => 'Nama kategori wajib diisi.',
+            'expenseNewCategory.min' => 'Nama kategori minimal 2 karakter.',
+        ]);
+
+        $name = trim($this->expenseNewCategory);
+        ExpenseCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => $name]);
+
+        $this->expenseCategory = $name;
+        $this->expenseNewCategory = '';
+        $this->showNewExpenseCategory = false;
+        $this->showToast("Kategori biaya '{$name}' berhasil ditambahkan.");
     }
 
     public function saveExpense(): void
@@ -55,7 +91,13 @@ trait HasExpenses
         $this->validate([
             'expenseTitle' => 'required|min:3',
             'expenseAmount' => 'required|numeric|min:1000',
+            'expenseCategory' => 'required|string|max:100',
+            'expenseDate' => 'required|date|before_or_equal:today',
+        ], [
+            'expenseDate.before_or_equal' => 'Tanggal pengeluaran tidak boleh di masa depan.',
         ]);
+
+        ExpenseCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => $this->expenseCategory]);
 
         Expense::create([
             'tenant_id' => $this->tenantId,
@@ -63,13 +105,13 @@ trait HasExpenses
             'category' => $this->expenseCategory,
             'title' => $this->expenseTitle,
             'amount' => $this->expenseAmount,
-            'expense_date' => now()->toDateString(),
+            'expense_date' => $this->expenseDate,
             'payment_method' => $this->expensePaymentMethod,
             'notes' => $this->expenseNotes,
         ]);
 
         $this->showExpenseModal = false;
-        $this->showToast("Pengeluaran OPEX '{$this->expenseTitle}' senilai Rp " . number_format($this->expenseAmount, 0, ',', '.') . " berhasil dicatat.");
+        $this->showToast("Pengeluaran OPEX '{$this->expenseTitle}' senilai Rp ".number_format($this->expenseAmount, 0, ',', '.').' berhasil dicatat.');
     }
 
     public function getFinanceBreakdownData(): array
@@ -84,9 +126,9 @@ trait HasExpenses
         };
 
         $dateFilterLabel = match ($this->financeDateFilter) {
-            'today' => 'Hari Ini (' . $now->translatedFormat('d M Y') . ')',
+            'today' => 'Hari Ini ('.$now->translatedFormat('d M Y').')',
             '7_days' => '7 Hari Terakhir',
-            'this_month' => 'Bulan Ini (' . $now->translatedFormat('F Y') . ')',
+            'this_month' => 'Bulan Ini ('.$now->translatedFormat('F Y').')',
             'all' => 'Semua Periode',
             default => 'Bulan Ini',
         };
@@ -106,7 +148,7 @@ trait HasExpenses
         foreach ($orders as $order) {
             foreach ($order->items as $it) {
                 $pId = $it->product_id;
-                if (!isset($itemsByProduct[$pId])) {
+                if (! isset($itemsByProduct[$pId])) {
                     $itemsByProduct[$pId] = [
                         'qty' => 0,
                         'subtotal' => 0,
@@ -138,7 +180,7 @@ trait HasExpenses
             $allProductRows[] = [
                 'id' => $prod->id,
                 'name' => $prod->name,
-                'sku' => $prod->sku ?? 'PRD-' . $prod->id,
+                'sku' => $prod->sku ?? 'PRD-'.$prod->id,
                 'category_id' => $prod->category_id,
                 'category_name' => $prod->category?->name ?? 'Uncategorized',
                 'image_url' => $prod->image_url,
@@ -167,15 +209,15 @@ trait HasExpenses
             $grossSales = (float) $soldData['subtotal'];
 
             $tarif = (float) $srv->base_price;
-            $unitMaterialCost = (float) ($srv->cost_price > 0 ? $srv->cost_price : 5000);
+            $unitMaterialCost = (float) ($srv->cost_price ?? 0);
             $totalMaterialCost = $sessionsCount * $unitMaterialCost;
 
             if ($srv->commission_type === 'percentage') {
                 $commissionPerSession = round(($tarif * (float) $srv->commission_value) / 100);
-                $commissionScheme = (int)$srv->commission_value . '% (Rp ' . number_format($commissionPerSession, 0, ',', '.') . ')';
+                $commissionScheme = (int) $srv->commission_value.'% (Rp '.number_format($commissionPerSession, 0, ',', '.').')';
             } else {
                 $commissionPerSession = (float) ($srv->commission_value ?: 20000);
-                $commissionScheme = 'Rp ' . number_format($commissionPerSession, 0, ',', '.') . ' (Tetap)';
+                $commissionScheme = 'Rp '.number_format($commissionPerSession, 0, ',', '.').' (Tetap)';
             }
 
             $totalCommission = $sessionsCount * $commissionPerSession;
@@ -230,12 +272,11 @@ trait HasExpenses
         // Apply filtering on Products
         $filteredProductRows = $allProductRows;
         if ($this->financeCategoryFilter !== 'all') {
-            $filteredProductRows = array_filter($filteredProductRows, fn($r) => (string)$r['category_id'] === (string)$this->financeCategoryFilter);
+            $filteredProductRows = array_filter($filteredProductRows, fn ($r) => (string) $r['category_id'] === (string) $this->financeCategoryFilter);
         }
-        if (!empty($this->financeSearch)) {
+        if (! empty($this->financeSearch)) {
             $kw = strtolower(trim($this->financeSearch));
-            $filteredProductRows = array_filter($filteredProductRows, fn($r) =>
-                str_contains(strtolower($r['name']), $kw) ||
+            $filteredProductRows = array_filter($filteredProductRows, fn ($r) => str_contains(strtolower($r['name']), $kw) ||
                 str_contains(strtolower($r['sku']), $kw) ||
                 str_contains(strtolower($r['category_name']), $kw)
             );
@@ -256,12 +297,11 @@ trait HasExpenses
         // Apply filtering on Services
         $filteredServiceRows = $allServiceRows;
         if ($this->financeCategoryFilter !== 'all') {
-            $filteredServiceRows = array_filter($filteredServiceRows, fn($r) => (string)$r['category_id'] === (string)$this->financeCategoryFilter);
+            $filteredServiceRows = array_filter($filteredServiceRows, fn ($r) => (string) $r['category_id'] === (string) $this->financeCategoryFilter);
         }
-        if (!empty($this->financeSearch)) {
+        if (! empty($this->financeSearch)) {
             $kw = strtolower(trim($this->financeSearch));
-            $filteredServiceRows = array_filter($filteredServiceRows, fn($r) =>
-                str_contains(strtolower($r['name']), $kw) ||
+            $filteredServiceRows = array_filter($filteredServiceRows, fn ($r) => str_contains(strtolower($r['name']), $kw) ||
                 str_contains(strtolower($r['category_tag']), $kw) ||
                 str_contains(strtolower($r['category_name']), $kw)
             );
@@ -285,6 +325,15 @@ trait HasExpenses
         $combinedGrossProfit = $productSummary['total_profit'] + $serviceSummary['total_profit'];
         $combinedMargin = $combinedSales > 0 ? round(($combinedGrossProfit / $combinedSales) * 100, 1) : 0;
 
+        // OPEX mengikuti periode yang sama dengan penjualan
+        $expenseQuery = Expense::where('tenant_id', $this->tenantId);
+        if ($dateStart) {
+            $expenseQuery->whereDate('expense_date', '>=', $dateStart->toDateString());
+        }
+        $expenseRows = (clone $expenseQuery)->orderBy('expense_date', 'desc')->orderBy('id', 'desc')->get();
+        $totalOpex = (float) $expenseRows->sum('amount');
+        $combinedNetProfit = $combinedGrossProfit - $totalOpex;
+
         // Categories list for active subtab filter
         $activeCategories = Category::where('tenant_id', $this->tenantId)
             ->whereHas('products', function ($q) {
@@ -307,6 +356,9 @@ trait HasExpenses
             'combinedDirectCost' => $combinedDirectCost,
             'combinedGrossProfit' => $combinedGrossProfit,
             'combinedMargin' => $combinedMargin,
+            'expenseRows' => $expenseRows,
+            'totalOpex' => $totalOpex,
+            'combinedNetProfit' => $combinedNetProfit,
             'activeCategories' => $activeCategories,
         ];
     }

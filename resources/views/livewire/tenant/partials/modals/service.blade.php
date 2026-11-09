@@ -68,6 +68,27 @@
                         <span class="text-[10px] text-slate-400">Pemakaian shampoo, pomade, obat cream, handuk, dll</span>
                     </div>
 
+                    <!-- Fee Kapster (Komisi per Sesi) -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Fee Kapster</label>
+                            <select wire:model.live="serviceCommissionType"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <option value="fixed">Nominal tetap (Rp)</option>
+                                <option value="percentage">Persentase dari tarif (%)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                {{ $serviceCommissionType === 'percentage' ? 'Fee (%)' : 'Fee (Rp)' }}
+                            </label>
+                            <input type="number" wire:model="serviceCommissionValue" min="0" step="any"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-orange-500">
+                            @error('serviceCommissionValue') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <span class="-mt-3 block text-[10px] text-slate-400">Fee dibayarkan ke kapster/terapis dari setiap sesi layanan ini.</span>
+
                     <!-- Upload Foto Layanan -->
                     <div class="border border-slate-200 rounded-2xl p-3.5 bg-slate-50/70 space-y-3" x-data="{ showUrlInput: {{ !empty($serviceImageUrl) ? 'true' : 'false' }} }">
                         <div class="flex items-center justify-between">

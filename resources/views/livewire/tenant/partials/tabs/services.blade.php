@@ -4,11 +4,11 @@
                             <div>
                                 <div class="flex items-center gap-2">
                                     <h1 class="text-xl font-bold text-slate-900">Katalog & Master Layanan</h1>
-                                    <span class="text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    <!-- <span class="text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
                                         Modul Salon & Barbershop
-                                    </span>
+                                    </span> -->
                                 </div>
-                                <p class="text-xs text-slate-500 mt-0.5">Kelola tarif potong rambut, perawatan spa, durasi waktu pengerjaan, modal bahan, dan foto layanan.</p>
+                                <!-- <p class="text-xs text-slate-500 mt-0.5">Kelola tarif potong rambut, perawatan spa, durasi waktu pengerjaan, modal bahan, dan foto layanan.</p> -->
                             </div>
                             <div class="flex items-center gap-2.5">
                                 <button wire:click="switchTab('products')"
@@ -55,7 +55,7 @@
                         </div>
 
                         <!-- Search & Category Filters -->
-                        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="flex flex-col gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
                             <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
                                 <!-- Filter Semua Kategori -->
                                 <button wire:click="$set('selectedServiceCategoryFilter', 'all')"
@@ -98,7 +98,7 @@
                                 </button>
                             </div>
 
-                            <div class="relative w-full sm:w-64">
+                            <div class="relative w-full sm:w-80">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                                 <input type="text" wire:model.live.debounce.300ms="searchService"
                                     placeholder="Cari layanan jasa..."
@@ -117,6 +117,7 @@
                                             <th class="py-3 px-4 text-center">Durasi</th>
                                             <th class="py-3 px-4 text-right">Tarif Jasa</th>
                                             <th class="py-3 px-4 text-right">Modal Bahan</th>
+                                            <th class="py-3 px-4 text-right">Fee Kapster</th>
                                             <th class="py-3 px-4 text-center">Margin Bersih</th>
                                             <th class="py-3 px-4 text-center">Status</th>
                                             <th class="py-3 px-4 text-right">Aksi</th>
@@ -151,6 +152,12 @@
                                                 </td>
                                                 <td class="py-3.5 px-4 text-right text-xs text-slate-500">
                                                     Rp {{ number_format($srv->cost_price, 0, ',', '.') }}
+                                                </td>
+                                                <td class="py-3.5 px-4 text-right text-xs">
+                                                    <div class="font-bold text-amber-600">Rp {{ number_format($srv->estimated_commission, 0, ',', '.') }}</div>
+                                                    <div class="text-[10px] text-slate-400">
+                                                        {{ $srv->commission_type === 'percentage' ? rtrim(rtrim(number_format((float) $srv->commission_value, 2, ',', '.'), '0'), ',').'% dari tarif' : 'Tetap per sesi' }}
+                                                    </div>
                                                 </td>
                                                 <td class="py-3.5 px-4 text-center">
                                                     @php
