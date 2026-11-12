@@ -418,6 +418,28 @@ class TenantBackofficeTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_finance_report_exports_excel_and_pdf()
+    {
+        $owner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->assertSee('Laporan Laba Rugi')
+            ->assertSee('Export Excel')
+            ->assertSee('Cetak PDF');
+
+        $component->call('exportFinanceExcel')
+            ->assertFileDownloaded(null, null, 'application/vnd.ms-excel; charset=UTF-8');
+
+        $component->call('exportFinancePdf')
+            ->assertDispatched('open-finance-pdf');
+
+        $this->actingAs($owner)
+            ->get('/app/finance/pdf/kunci-tidak-valid')
+            ->assertNotFound();
+    }
+
     public function test_salon_hides_order_type_filter_but_fnb_keeps_it()
     {
         $salonOwner = User::where('email', 'arsihapis@putribeautycare.site')->first();

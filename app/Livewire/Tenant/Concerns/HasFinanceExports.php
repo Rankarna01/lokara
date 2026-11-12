@@ -54,3 +54,4 @@ trait HasFinanceExports
         return Tenant::find($this->tenantId)?->slug ?? 'tenant';
     }
 }
+
