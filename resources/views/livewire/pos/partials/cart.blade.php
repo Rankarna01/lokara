@@ -170,10 +170,12 @@
                 <span>Diskon</span>
                 <span class="text-slate-400">Rp0</span>
             </div>
-            <div class="flex justify-between">
-                <span>Pajak (11%)</span>
-                <span class="font-semibold text-slate-900">Rp{{ number_format($totals['tax'], 0, ',', '.') }}</span>
-            </div>
+            @if (($totals['tax'] ?? 0) > 0 || ($totals['taxRate'] ?? 0) > 0)
+                <div class="flex justify-between">
+                    <span>Pajak ({{ (int)($totals['taxRate'] ?? 0) }}%)</span>
+                    <span class="font-semibold text-slate-900">Rp{{ number_format($totals['tax'] ?? 0, 0, ',', '.') }}</span>
+                </div>
+            @endif
             <div class="flex justify-between pt-2 border-t border-slate-100 items-baseline">
                 <span class="font-bold text-slate-900">Total Pembayaran</span>
                 <span class="text-lg font-extrabold text-slate-900">Rp{{ number_format($totals['total'], 0, ',', '.') }}</span>

@@ -178,14 +178,21 @@ trait HasCartAndCheckout
             $subtotal += $item['subtotal'];
         }
 
+        $taxRate = 0.0;
+        if (! empty($this->selectedOutletId)) {
+            $outlet = \App\Models\Outlet::find($this->selectedOutletId);
+            $taxRate = $outlet ? (float) $outlet->tax_rate : 0.0;
+        }
+
+        $tax = round($subtotal * ($taxRate / 100));
         $discount = 0;
-        $tax = $subtotal * 0.11; // 11% PPN
         $total = $subtotal - $discount + $tax;
 
         return [
             'subtotal' => $subtotal,
             'discount' => $discount,
             'tax' => $tax,
+            'taxRate' => $taxRate,
             'total' => $total,
         ];
     }
