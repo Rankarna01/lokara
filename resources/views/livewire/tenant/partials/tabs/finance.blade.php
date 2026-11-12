@@ -98,7 +98,7 @@
                         <i class="fa-solid fa-box text-sm"></i>
                         <span>1. Penjualan Produk Master</span>
                         <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] {{ $financeSubTab === 'products' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600' }}">
-                            {{ count($fd['productRows']) }} Produk
+                            {{ $fd['totalProductRows'] ?? count($fd['productRows']) }} Produk
                         </span>
                     </button>
 
@@ -108,7 +108,7 @@
                         <i class="fa-solid fa-scissors text-sm"></i>
                         <span>2. Penjualan Master Layanan</span>
                         <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] {{ $financeSubTab === 'services' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600' }}">
-                            {{ count($fd['serviceRows']) }} Layanan
+                            {{ $fd['totalServiceRows'] ?? count($fd['serviceRows']) }} Layanan
                         </span>
                     </button>
                 </div>
@@ -217,7 +217,7 @@
                             <p class="text-xs text-slate-400 mt-0.5">Menampilkan seluruh produk master salon & barbershop beserta performa margin penjualan</p>
                         </div>
                         <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-orange-50 text-orange-700">
-                            {{ count($fd['productRows']) }} item ditemukan
+                            {{ $fd['totalProductRows'] ?? count($fd['productRows']) }} item ditemukan
                         </span>
                     </div>
 
@@ -301,6 +301,34 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Table Footer: Count & Per Page Selector -->
+                    <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                        <div>
+                            @if ($fd['productRows'] instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                                Menampilkan <span class="font-bold text-slate-800">{{ $fd['productRows']->firstItem() ?? 0 }}</span> - <span class="font-bold text-slate-800">{{ $fd['productRows']->lastItem() ?? 0 }}</span> dari <span class="font-bold text-slate-800">{{ $fd['productRows']->total() }}</span> total produk master
+                            @else
+                                Menampilkan <span class="font-bold text-slate-800">{{ count($fd['productRows']) }}</span> total produk master
+                            @endif
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span>Tampilkan:</span>
+                            <select wire:model.live="financePerPage"
+                                    class="bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-1 px-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <option value="10">10 Baris</option>
+                                <option value="25">25 Baris</option>
+                                <option value="50">50 Baris</option>
+                                <option value="100">100 Baris</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @if ($fd['productRows'] instanceof \Illuminate\Pagination\LengthAwarePaginator && $fd['productRows']->hasPages())
+                        <div class="px-4 py-3 border-t border-slate-100 bg-white">
+                            {{ $fd['productRows']->links() }}
+                        </div>
+                    @endif
                 </div>
             @endif
 
@@ -342,7 +370,7 @@
                             <p class="text-xs text-slate-400 mt-0.5">Analisis omzet per layanan jasa dikurangi modal bahan kerja (shampoo, cream, pomade) dan komisi kapster</p>
                         </div>
                         <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-orange-50 text-orange-700">
-                            {{ count($fd['serviceRows']) }} layanan ditemukan
+                            {{ $fd['totalServiceRows'] ?? count($fd['serviceRows']) }} layanan ditemukan
                         </span>
                     </div>
 
@@ -433,6 +461,34 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Table Footer: Count & Per Page Selector -->
+                    <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                        <div>
+                            @if ($fd['serviceRows'] instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                                Menampilkan <span class="font-bold text-slate-800">{{ $fd['serviceRows']->firstItem() ?? 0 }}</span> - <span class="font-bold text-slate-800">{{ $fd['serviceRows']->lastItem() ?? 0 }}</span> dari <span class="font-bold text-slate-800">{{ $fd['serviceRows']->total() }}</span> total master layanan
+                            @else
+                                Menampilkan <span class="font-bold text-slate-800">{{ count($fd['serviceRows']) }}</span> total master layanan
+                            @endif
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span>Tampilkan:</span>
+                            <select wire:model.live="financePerPage"
+                                    class="bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-1 px-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                <option value="10">10 Baris</option>
+                                <option value="25">25 Baris</option>
+                                <option value="50">50 Baris</option>
+                                <option value="100">100 Baris</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @if ($fd['serviceRows'] instanceof \Illuminate\Pagination\LengthAwarePaginator && $fd['serviceRows']->hasPages())
+                        <div class="px-4 py-3 border-t border-slate-100 bg-white">
+                            {{ $fd['serviceRows']->links() }}
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>

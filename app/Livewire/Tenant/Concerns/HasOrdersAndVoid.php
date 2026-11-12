@@ -54,6 +54,7 @@ trait HasOrdersAndVoid
     public function setTransactionTypeTab(string $tab): void
     {
         $this->transactionTypeTab = in_array($tab, ['all', 'services', 'products']) ? $tab : 'all';
+        $this->resetPage('transactionsPage');
     }
 
     public function resetTransactionFilters(): void
@@ -66,6 +67,47 @@ trait HasOrdersAndVoid
         $this->transactionDateFilter = '30_days';
         $this->transactionStartDate = '';
         $this->transactionEndDate = '';
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedTransactionPerPage(): void
+    {
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedSearchTransaction(): void
+    {
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedTransactionStatusFilter(): void
+    {
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedTransactionPaymentMethodFilter(): void
+    {
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedTransactionOrderTypeFilter(): void
+    {
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedTransactionDateFilter(): void
+    {
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedTransactionStartDate(): void
+    {
+        $this->resetPage('transactionsPage');
+    }
+
+    public function updatedTransactionEndDate(): void
+    {
+        $this->resetPage('transactionsPage');
     }
 
     public function viewTransactionDetail(int $orderId): void
@@ -97,6 +139,7 @@ trait HasOrdersAndVoid
             $this->transactionStartDate = '';
             $this->transactionEndDate = '';
         }
+        $this->resetPage('transactionsPage');
     }
 
     public function setTransactionTrendPeriod(string $period): void
@@ -238,7 +281,9 @@ trait HasOrdersAndVoid
 
         $totalFilteredCount = (clone $query)->count();
         $sortedQuery = $query->orderBy('created_at', 'desc');
-        $transactions = $withoutLimit ? $sortedQuery->get() : $sortedQuery->take($this->transactionPerPage)->get();
+        $transactions = $withoutLimit
+            ? $sortedQuery->get()
+            : $sortedQuery->paginate($this->transactionPerPage, ['*'], 'transactionsPage');
 
         $viewingTransaction = null;
         if ($this->selectedTransactionId) {

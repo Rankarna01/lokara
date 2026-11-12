@@ -691,7 +691,11 @@
         <!-- Table Footer: Count & Per Page Selector -->
         <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div>
-                Menampilkan <span class="font-bold text-slate-800">{{ $transactions->count() }}</span> dari <span class="font-bold text-slate-800">{{ $totalFilteredTransactionsCount }}</span> total transaksi
+                @if ($transactions instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    Menampilkan <span class="font-bold text-slate-800">{{ $transactions->firstItem() ?? 0 }}</span> - <span class="font-bold text-slate-800">{{ $transactions->lastItem() ?? 0 }}</span> dari <span class="font-bold text-slate-800">{{ $transactions->total() }}</span> total transaksi
+                @else
+                    Menampilkan <span class="font-bold text-slate-800">{{ $transactions->count() }}</span> dari <span class="font-bold text-slate-800">{{ $totalFilteredTransactionsCount }}</span> total transaksi
+                @endif
             </div>
 
             <div class="flex items-center gap-2">
@@ -705,5 +709,11 @@
                 </select>
             </div>
         </div>
+
+        @if ($transactions instanceof \Illuminate\Pagination\LengthAwarePaginator && $transactions->hasPages())
+            <div class="px-5 py-3 border-t border-slate-100 bg-white">
+                {{ $transactions->links() }}
+            </div>
+        @endif
     </div>
 </div>

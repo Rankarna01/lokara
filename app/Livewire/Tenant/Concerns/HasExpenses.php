@@ -8,6 +8,8 @@ use App\Models\ExpenseCategory;
 use App\Models\Order;
 use App\Models\Product;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 trait HasExpenses
 {
@@ -41,10 +43,14 @@ trait HasExpenses
 
     public string $financeSortBy = 'profit_desc'; // 'profit_desc', 'qty_desc', 'sales_desc', 'margin_desc', 'name_asc'
 
+    public int $financePerPage = 10;
+
     public function setFinanceSubTab(string $tab): void
     {
         $this->financeSubTab = in_array($tab, ['products', 'services']) ? $tab : 'products';
         $this->financeCategoryFilter = 'all';
+        $this->resetPage('financeProductsPage');
+        $this->resetPage('financeServicesPage');
     }
 
     public function resetFinanceFilters(): void
@@ -53,6 +59,38 @@ trait HasExpenses
         $this->financeCategoryFilter = 'all';
         $this->financeDateFilter = 'this_month';
         $this->financeSortBy = 'profit_desc';
+        $this->resetPage('financeProductsPage');
+        $this->resetPage('financeServicesPage');
+    }
+
+    public function updatedFinanceSearch(): void
+    {
+        $this->resetPage('financeProductsPage');
+        $this->resetPage('financeServicesPage');
+    }
+
+    public function updatedFinanceCategoryFilter(): void
+    {
+        $this->resetPage('financeProductsPage');
+        $this->resetPage('financeServicesPage');
+    }
+
+    public function updatedFinanceDateFilter(): void
+    {
+        $this->resetPage('financeProductsPage');
+        $this->resetPage('financeServicesPage');
+    }
+
+    public function updatedFinanceSortBy(): void
+    {
+        $this->resetPage('financeProductsPage');
+        $this->resetPage('financeServicesPage');
+    }
+
+    public function updatedFinancePerPage(): void
+    {
+        $this->resetPage('financeProductsPage');
+        $this->resetPage('financeServicesPage');
     }
 
     public function openExpenseModal(): void
@@ -346,10 +384,43 @@ trait HasExpenses
             ->orderBy('name')
             ->get();
 
+        $filteredProductRows = array_values($filteredProductRows);
+        $totalProductRows = count($filteredProductRows);
+        $financePerPage = max(1, $this->financePerPage);
+        $productPage = (int) $this->getPage('financeProductsPage');
+        $productOffset = ($productPage - 1) * $financePerPage;
+        $paginatedProductRows = new LengthAwarePaginator(
+            array_slice($filteredProductRows, $productOffset, $financePerPage),
+            $totalProductRows,
+            $financePerPage,
+            $productPage,
+            [
+                'path' => Paginator::resolveCurrentPath(),
+                'pageName' => 'financeProductsPage',
+            ]
+        );
+
+        $filteredServiceRows = array_values($filteredServiceRows);
+        $totalServiceRows = count($filteredServiceRows);
+        $servicePage = (int) $this->getPage('financeServicesPage');
+        $serviceOffset = ($servicePage - 1) * $financePerPage;
+        $paginatedServiceRows = new LengthAwarePaginator(
+            array_slice($filteredServiceRows, $serviceOffset, $financePerPage),
+            $totalServiceRows,
+            $financePerPage,
+            $servicePage,
+            [
+                'path' => Paginator::resolveCurrentPath(),
+                'pageName' => 'financeServicesPage',
+            ]
+        );
+
         return [
             'dateFilterLabel' => $dateFilterLabel,
-            'productRows' => array_values($filteredProductRows),
-            'serviceRows' => array_values($filteredServiceRows),
+            'productRows' => $paginatedProductRows,
+            'totalProductRows' => $totalProductRows,
+            'serviceRows' => $paginatedServiceRows,
+            'totalServiceRows' => $totalServiceRows,
             'productSummary' => $productSummary,
             'serviceSummary' => $serviceSummary,
             'combinedSales' => $combinedSales,

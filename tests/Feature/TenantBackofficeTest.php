@@ -1450,6 +1450,14 @@ class TenantBackofficeTest extends TestCase
             ->assertSet('financeCategoryFilter', 'all')
             ->assertSet('financeDateFilter', 'this_month')
             ->assertSet('financeSortBy', 'profit_desc');
+
+        // 6. Test Pagination Controls in Finance
+        $component->set('financePerPage', 5)
+            ->assertSet('financePerPage', 5)
+            ->call('nextPage', 'financeServicesPage')
+            ->assertSet('paginators.financeServicesPage', 2)
+            ->call('previousPage', 'financeServicesPage')
+            ->assertSet('paginators.financeServicesPage', 1);
     }
 
     public function test_transaction_history_tab_renders_with_relations_chart_and_metrics()
@@ -1532,6 +1540,12 @@ class TenantBackofficeTest extends TestCase
             ->assertSet('transactionTrendPeriod', '14_days')
             ->call('setTransactionTrendPeriod', '7_days')
             ->assertSet('transactionTrendPeriod', '7_days');
+
+        // Test transaction per page and pagination
+        $component->set('transactionPerPage', 10)
+            ->assertSet('transactionPerPage', 10)
+            ->assertSee('Menampilkan')
+            ->assertSee('total transaksi');
     }
 
     public function test_transaction_filters_by_search_status_payment_method_and_date()
