@@ -152,7 +152,7 @@ trait HasExpenses
         $this->showToast("Pengeluaran OPEX '{$this->expenseTitle}' senilai Rp ".number_format($this->expenseAmount, 0, ',', '.').' berhasil dicatat.');
     }
 
-    public function getFinanceBreakdownData(): array
+    public function getFinanceBreakdownData(bool $forExport = false): array
     {
         $now = Carbon::now();
         $dateStart = match ($this->financeDateFilter) {
@@ -386,40 +386,47 @@ trait HasExpenses
 
         $filteredProductRows = array_values($filteredProductRows);
         $totalProductRows = count($filteredProductRows);
-        $financePerPage = max(1, $this->financePerPage);
-        $productPage = (int) $this->getPage('financeProductsPage');
-        $productOffset = ($productPage - 1) * $financePerPage;
-        $paginatedProductRows = new LengthAwarePaginator(
-            array_slice($filteredProductRows, $productOffset, $financePerPage),
-            $totalProductRows,
-            $financePerPage,
-            $productPage,
-            [
-                'path' => Paginator::resolveCurrentPath(),
-                'pageName' => 'financeProductsPage',
-            ]
-        );
 
         $filteredServiceRows = array_values($filteredServiceRows);
         $totalServiceRows = count($filteredServiceRows);
-        $servicePage = (int) $this->getPage('financeServicesPage');
-        $serviceOffset = ($servicePage - 1) * $financePerPage;
-        $paginatedServiceRows = new LengthAwarePaginator(
-            array_slice($filteredServiceRows, $serviceOffset, $financePerPage),
-            $totalServiceRows,
-            $financePerPage,
-            $servicePage,
-            [
-                'path' => Paginator::resolveCurrentPath(),
-                'pageName' => 'financeServicesPage',
-            ]
-        );
+
+        if ($forExport) {
+            $productRowsToReturn = $filteredProductRows;
+            $serviceRowsToReturn = $filteredServiceRows;
+        } else {
+            $financePerPage = max(1, $this->financePerPage);
+            $productPage = (int) $this->getPage('financeProductsPage');
+            $productOffset = ($productPage - 1) * $financePerPage;
+            $productRowsToReturn = new LengthAwarePaginator(
+                array_slice($filteredProductRows, $productOffset, $financePerPage),
+                $totalProductRows,
+                $financePerPage,
+                $productPage,
+                [
+                    'path' => Paginator::resolveCurrentPath(),
+                    'pageName' => 'financeProductsPage',
+                ]
+            );
+
+            $servicePage = (int) $this->getPage('financeServicesPage');
+            $serviceOffset = ($servicePage - 1) * $financePerPage;
+            $serviceRowsToReturn = new LengthAwarePaginator(
+                array_slice($filteredServiceRows, $serviceOffset, $financePerPage),
+                $totalServiceRows,
+                $financePerPage,
+                $servicePage,
+                [
+                    'path' => Paginator::resolveCurrentPath(),
+                    'pageName' => 'financeServicesPage',
+                ]
+            );
+        }
 
         return [
             'dateFilterLabel' => $dateFilterLabel,
-            'productRows' => $paginatedProductRows,
+            'productRows' => $productRowsToReturn,
             'totalProductRows' => $totalProductRows,
-            'serviceRows' => $paginatedServiceRows,
+            'serviceRows' => $serviceRowsToReturn,
             'totalServiceRows' => $totalServiceRows,
             'productSummary' => $productSummary,
             'serviceSummary' => $serviceSummary,

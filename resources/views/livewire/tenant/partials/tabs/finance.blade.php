@@ -1,4 +1,5 @@
-<div class="space-y-6">
+<div class="space-y-6"
+     @open-finance-pdf.window="window.open($event.detail.url, '_blank')">
     <!-- Header Title Bar -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
@@ -13,7 +14,17 @@
             </div>
             <p class="text-xs text-slate-500 mt-0.5">Analisis keuntungan bersih: Pendapatan dikurangi Biaya HPP/Modal Bahan, Komisi Staf, dan Beban Operasional (OPEX).</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            <button wire:click="exportFinanceExcel" wire:loading.attr="disabled" wire:target="exportFinanceExcel"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold shadow-sm transition cursor-pointer">
+                <i class="fa-solid fa-file-excel text-xs"></i>
+                <span>Export Excel</span>
+            </button>
+            <button wire:click="exportFinancePdf" wire:loading.attr="disabled" wire:target="exportFinancePdf"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-xs font-semibold shadow-sm transition cursor-pointer">
+                <i class="fa-solid fa-file-pdf text-xs"></i>
+                <span>Cetak PDF</span>
+            </button>
             <button wire:click="openExpenseModal"
                 class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition cursor-pointer">
                 <i class="fa-solid fa-plus"></i>

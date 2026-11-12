@@ -114,6 +114,13 @@ Route::middleware(['web', 'auth'])->group(function () {
         return response($payload['html']);
     })->name('tenant.transactions.pdf');
 
+    Route::get('/app/finance/pdf/{key}', function (string $key) {
+        $payload = Cache::pull('tenant-finance-pdf:'.$key);
+        abort_unless($payload && $payload['user_id'] === Auth::id(), 404);
+
+        return response($payload['html']);
+    })->name('tenant.finance.pdf');
+
     Route::get('/pos/receipt/{key}', function (string $key) {
         $payload = Cache::pull('pos-receipt:'.$key);
         abort_unless($payload && $payload['user_id'] === Auth::id(), 404);

@@ -6,6 +6,7 @@ use App\Livewire\Tenant\Concerns\HasCategories;
 use App\Livewire\Tenant\Concerns\HasCustomers;
 use App\Livewire\Tenant\Concerns\HasDiscounts;
 use App\Livewire\Tenant\Concerns\HasExpenses;
+use App\Livewire\Tenant\Concerns\HasFinanceExports;
 use App\Livewire\Tenant\Concerns\HasOrdersAndVoid;
 use App\Livewire\Tenant\Concerns\HasOutletsAndStaff;
 use App\Livewire\Tenant\Concerns\HasProducts;
@@ -43,6 +44,7 @@ class BackofficeDashboard extends Component
     use HasCustomers;
     use HasDiscounts;
     use HasExpenses;
+    use HasFinanceExports;
     use HasOrdersAndVoid;
     use HasOutletsAndStaff;
     use HasProducts;
