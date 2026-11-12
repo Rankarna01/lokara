@@ -118,48 +118,6 @@
                         </button>
                     </div>
                 </form>
-
-                <!-- Akses Demo Cepat (Tersedia Rapi & Tersembunyi di Accordion Bawah) -->
-                <div class="pt-1">
-                    <button type="button"
-                            @click="showDemoAccounts = !showDemoAccounts"
-                            class="text-[11px] text-slate-400 hover:text-slate-600 transition flex items-center gap-1.5 mx-auto font-medium">
-                        <i class="fa-solid fa-bolt text-[10px] text-orange-400"></i>
-                        <span x-text="showDemoAccounts ? 'Sembunyikan Akun Demo' : 'Pilihan Akun Demo Login'"></span>
-                        <i class="fa-solid fa-chevron-down text-[9px] transition-transform" :class="showDemoAccounts ? 'rotate-180' : ''"></i>
-                    </button>
-
-                    <div x-show="showDemoAccounts" x-transition class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Klik untuk Mengisi Otomatis:</div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                            <button type="button" wire:click="fillDemoAdmin"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                🔑 Super Admin
-                            </button>
-                            <button type="button" wire:click="fillDemoOwner"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                ☕ Owner F&B
-                            </button>
-                            <button type="button" wire:click="fillDemoSalonOwner"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                🌸 Owner Salon
-                            </button>
-                            <button type="button" wire:click="fillDemoBarberOwner"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                ✂️ Barbershop
-                            </button>
-                            <button type="button" wire:click="fillDemoSalonCashier"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                💄 Kasir Salon
-                            </button>
-                            <button type="button" wire:click="fillDemoCashier"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-orange-300 text-slate-700 text-left font-medium text-[11px] transition">
-                                🛒 Kasir F&B
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
             <!-- Footer Hak Cipta Sederhana -->
