@@ -729,6 +729,55 @@ class TenantBackofficeTest extends TestCase
         ]);
     }
 
+    public function test_opex_can_be_edited_deleted_and_paginated()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $outlet = Outlet::where('tenant_id', $owner->tenant_id)->first();
+
+        $expense = Expense::create([
+            'tenant_id' => $owner->tenant_id,
+            'outlet_id' => $outlet->id,
+            'category' => 'Operasional',
+            'title' => 'Beli Alat Tulis Kantor',
+            'amount' => 45000,
+            'expense_date' => now()->toDateString(),
+            'payment_method' => 'Kas Toko / Tunai',
+            'notes' => 'Nota 001',
+        ]);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->assertSee('Rincian Beban Biaya Operasional (OPEX)')
+            ->assertSee('Beli Alat Tulis Kantor')
+            ->call('editExpense', $expense->id)
+            ->assertSet('editingExpenseId', $expense->id)
+            ->assertSet('expenseTitle', 'Beli Alat Tulis Kantor')
+            ->assertSet('expenseAmount', 45000)
+            ->assertSet('showExpenseModal', true)
+            ->set('expenseTitle', 'Beli Alat Tulis & Kertas HVS')
+            ->set('expenseAmount', 60000)
+            ->call('saveExpense')
+            ->assertHasNoErrors()
+            ->assertSet('showExpenseModal', false);
+
+        $this->assertDatabaseHas('expenses', [
+            'id' => $expense->id,
+            'title' => 'Beli Alat Tulis & Kertas HVS',
+            'amount' => 60000,
+        ]);
+
+        // Test pagination controls
+        $component->set('financeExpensePerPage', 5)
+            ->assertSet('financeExpensePerPage', 5)
+            ->assertSee('Menampilkan')
+            ->assertSee('total catatan pengeluaran');
+
+        // Test delete
+        $component->call('deleteExpense', $expense->id);
+        $this->assertDatabaseMissing('expenses', ['id' => $expense->id]);
+    }
+
     public function test_service_fee_column_is_shown_and_editable()
     {
         $salonOwner = User::where('email', 'contact@studiorona.id')->first();

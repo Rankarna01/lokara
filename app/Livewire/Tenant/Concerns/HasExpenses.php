@@ -15,6 +15,8 @@ trait HasExpenses
 {
     public bool $showExpenseModal = false;
 
+    public ?int $editingExpenseId = null;
+
     public string $expenseCategory = '';
 
     public string $expenseNewCategory = '';
@@ -45,6 +47,8 @@ trait HasExpenses
 
     public int $financePerPage = 10;
 
+    public int $financeExpensePerPage = 10;
+
     public function setFinanceSubTab(string $tab): void
     {
         $this->financeSubTab = in_array($tab, ['products', 'services']) ? $tab : 'products';
@@ -61,6 +65,7 @@ trait HasExpenses
         $this->financeSortBy = 'profit_desc';
         $this->resetPage('financeProductsPage');
         $this->resetPage('financeServicesPage');
+        $this->resetPage('expensesPage');
     }
 
     public function updatedFinanceSearch(): void
@@ -79,6 +84,7 @@ trait HasExpenses
     {
         $this->resetPage('financeProductsPage');
         $this->resetPage('financeServicesPage');
+        $this->resetPage('expensesPage');
     }
 
     public function updatedFinanceSortBy(): void
@@ -93,8 +99,14 @@ trait HasExpenses
         $this->resetPage('financeServicesPage');
     }
 
+    public function updatedFinanceExpensePerPage(): void
+    {
+        $this->resetPage('expensesPage');
+    }
+
     public function openExpenseModal(): void
     {
+        $this->editingExpenseId = null;
         $this->expenseCategory = ExpenseCategory::namesForTenant($this->tenantId)[0] ?? 'Lainnya';
         $this->expenseDate = now()->toDateString();
         $this->expenseTitle = '';
@@ -104,6 +116,31 @@ trait HasExpenses
         $this->showNewExpenseCategory = false;
         $this->expenseNewCategory = '';
         $this->showExpenseModal = true;
+    }
+
+    public function editExpense(int $id): void
+    {
+        $expense = Expense::where('tenant_id', $this->tenantId)->findOrFail($id);
+        $this->editingExpenseId = $expense->id;
+        $this->expenseCategory = $expense->category;
+        $this->expenseDate = $expense->expense_date ? $expense->expense_date->format('Y-m-d') : now()->toDateString();
+        $this->expenseTitle = $expense->title;
+        $this->expenseAmount = (float) $expense->amount;
+        $this->expensePaymentMethod = $expense->payment_method ?? 'Kas Toko / Tunai';
+        $this->expenseNotes = $expense->notes ?? '';
+        $this->showNewExpenseCategory = false;
+        $this->expenseNewCategory = '';
+        $this->showExpenseModal = true;
+    }
+
+    public function deleteExpense(int $id): void
+    {
+        $expense = Expense::where('tenant_id', $this->tenantId)->find($id);
+        if ($expense) {
+            $title = $expense->title;
+            $expense->delete();
+            $this->showToast("Pengeluaran OPEX '{$title}' berhasil dihapus.", 'info');
+        }
     }
 
     public function addExpenseCategory(): void
@@ -137,19 +174,36 @@ trait HasExpenses
 
         ExpenseCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => $this->expenseCategory]);
 
-        Expense::create([
-            'tenant_id' => $this->tenantId,
-            'outlet_id' => $this->selectedOutletId,
-            'category' => $this->expenseCategory,
-            'title' => $this->expenseTitle,
-            'amount' => $this->expenseAmount,
-            'expense_date' => $this->expenseDate,
-            'payment_method' => $this->expensePaymentMethod,
-            'notes' => $this->expenseNotes,
-        ]);
+        if ($this->editingExpenseId) {
+            $expense = Expense::where('tenant_id', $this->tenantId)->findOrFail($this->editingExpenseId);
+            $expense->update([
+                'category' => $this->expenseCategory,
+                'title' => $this->expenseTitle,
+                'amount' => $this->expenseAmount,
+                'expense_date' => $this->expenseDate,
+                'payment_method' => $this->expensePaymentMethod,
+                'notes' => $this->expenseNotes,
+            ]);
 
-        $this->showExpenseModal = false;
-        $this->showToast("Pengeluaran OPEX '{$this->expenseTitle}' senilai Rp ".number_format($this->expenseAmount, 0, ',', '.').' berhasil dicatat.');
+            $this->showExpenseModal = false;
+            $this->showToast("Pengeluaran OPEX '{$this->expenseTitle}' berhasil diperbarui.");
+        } else {
+            Expense::create([
+                'tenant_id' => $this->tenantId,
+                'outlet_id' => $this->selectedOutletId,
+                'category' => $this->expenseCategory,
+                'title' => $this->expenseTitle,
+                'amount' => $this->expenseAmount,
+                'expense_date' => $this->expenseDate,
+                'payment_method' => $this->expensePaymentMethod,
+                'notes' => $this->expenseNotes,
+            ]);
+
+            $this->showExpenseModal = false;
+            $this->showToast("Pengeluaran OPEX '{$this->expenseTitle}' senilai Rp ".number_format($this->expenseAmount, 0, ',', '.').' berhasil dicatat.');
+        }
+
+        $this->editingExpenseId = null;
     }
 
     public function getFinanceBreakdownData(bool $forExport = false): array
@@ -372,6 +426,10 @@ trait HasExpenses
         $totalOpex = (float) $expenseRows->sum('amount');
         $combinedNetProfit = $combinedGrossProfit - $totalOpex;
 
+        $expenseRowsToReturn = $forExport
+            ? $expenseRows
+            : (clone $expenseQuery)->orderBy('expense_date', 'desc')->orderBy('id', 'desc')->paginate($this->financeExpensePerPage, ['*'], 'expensesPage');
+
         // Categories list for active subtab filter
         $activeCategories = Category::where('tenant_id', $this->tenantId)
             ->whereHas('products', function ($q) {
@@ -434,7 +492,8 @@ trait HasExpenses
             'combinedDirectCost' => $combinedDirectCost,
             'combinedGrossProfit' => $combinedGrossProfit,
             'combinedMargin' => $combinedMargin,
-            'expenseRows' => $expenseRows,
+            'expenseRows' => $expenseRowsToReturn,
+            'totalExpenseRows' => $expenseRows->count(),
             'totalOpex' => $totalOpex,
             'combinedNetProfit' => $combinedNetProfit,
             'activeCategories' => $activeCategories,

@@ -558,6 +558,7 @@
                         <th class="py-3 px-4">Deskripsi Biaya</th>
                         <th class="py-3 px-4">Metode Bayar</th>
                         <th class="py-3 px-4 text-right">Nominal</th>
+                        <th class="py-3 px-4 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -577,10 +578,23 @@
                             <td class="py-3 px-4 text-right font-bold text-rose-600">
                                 Rp {{ number_format($exp->amount, 0, ',', '.') }}
                             </td>
+                            <td class="py-3 px-4 text-center space-x-1 whitespace-nowrap">
+                                <button wire:click="editExpense({{ $exp->id }})"
+                                    title="Edit Beban Operasional"
+                                    class="p-1.5 text-xs text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition cursor-pointer">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button wire:click="deleteExpense({{ $exp->id }})"
+                                    wire:confirm="Yakin ingin menghapus catatan beban '{{ $exp->title }}' (Rp {{ number_format($exp->amount, 0, ',', '.') }})?"
+                                    title="Hapus Beban Operasional"
+                                    class="p-1.5 text-xs text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-6 text-center text-xs text-slate-400">
+                            <td colspan="6" class="py-6 text-center text-xs text-slate-400">
                                 Belum ada catatan pengeluaran operasional (OPEX) untuk toko ini.
                             </td>
                         </tr>
@@ -588,5 +602,33 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Table Footer: Count & Per Page Selector -->
+        <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div>
+                @if ($financeData['expenseRows'] instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    Menampilkan <span class="font-bold text-slate-800">{{ $financeData['expenseRows']->firstItem() ?? 0 }}</span> - <span class="font-bold text-slate-800">{{ $financeData['expenseRows']->lastItem() ?? 0 }}</span> dari <span class="font-bold text-slate-800">{{ $financeData['expenseRows']->total() }}</span> total catatan pengeluaran
+                @else
+                    Menampilkan <span class="font-bold text-slate-800">{{ count($financeData['expenseRows']) }}</span> total catatan pengeluaran
+                @endif
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span>Tampilkan:</span>
+                <select wire:model.live="financeExpensePerPage"
+                        class="bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-1 px-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500">
+                    <option value="5">5 Baris</option>
+                    <option value="10">10 Baris</option>
+                    <option value="25">25 Baris</option>
+                    <option value="50">50 Baris</option>
+                </select>
+            </div>
+        </div>
+
+        @if ($financeData['expenseRows'] instanceof \Illuminate\Pagination\LengthAwarePaginator && $financeData['expenseRows']->hasPages())
+            <div class="px-4 py-3 border-t border-slate-100 bg-white">
+                {{ $financeData['expenseRows']->links() }}
+            </div>
+        @endif
     </div>
 </div>

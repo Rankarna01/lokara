@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-100/90 flex items-center justify-center p-4 sm:p-6 lg:p-8 antialiased text-slate-800" x-data="{ showPassword: false, showDemoAccounts: false }">
+<div class="min-h-screen bg-slate-100/90 flex items-center justify-center p-4 sm:p-6 lg:p-8 antialiased text-slate-800" x-data="{ showPassword: false }">
 
     <!-- Card Login 2 Sisi Sederhana & Bersih (Inspirasi Gambar 2) -->
     <div class="max-w-4xl w-full bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200/80 overflow-hidden grid grid-cols-1 md:grid-cols-2">
