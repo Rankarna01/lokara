@@ -211,6 +211,10 @@
             @if ($financeSubTab === 'products')
                 @include('livewire.tenant.partials.tabs.finance-period-filter', ['periodKey' => 'products', 'periodLabel' => $fd['productPeriodLabel']])
 
+                @php
+                    $prodSum = $fd['productTableSummary'];
+                @endphp
+
                 <!-- Product Statistics Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm">
@@ -361,6 +365,10 @@
             <!-- ================= TAB 2: PENJUALAN MASTER LAYANAN ================= -->
             @if ($financeSubTab === 'services')
                 @include('livewire.tenant.partials.tabs.finance-period-filter', ['periodKey' => 'services', 'periodLabel' => $fd['servicePeriodLabel']])
+
+                @php
+                    $srvSum = $fd['serviceTableSummary'];
+                @endphp
 
                 <!-- Service Statistics Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
@@ -560,6 +568,24 @@
     @endif
 
     @include('livewire.tenant.partials.tabs.finance-period-filter', ['periodKey' => 'opex', 'periodLabel' => $financeData['opexPeriodLabel']])
+
+    <!-- Statistik OPEX (ikut filter periode tabel OPEX) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm">
+            <div class="text-[11px] text-slate-500 font-medium">Total OPEX Periode Ini</div>
+            <div class="text-base font-bold text-rose-600 mt-1">Rp {{ number_format($financeData['opexPeriodTotal'], 0, ',', '.') }}</div>
+        </div>
+        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm">
+            <div class="text-[11px] text-slate-500 font-medium">Jumlah Catatan Pengeluaran</div>
+            <div class="text-base font-bold text-slate-900 mt-1">{{ number_format($financeData['totalExpenseRows'], 0, ',', '.') }} catatan</div>
+        </div>
+        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm col-span-2 md:col-span-1">
+            <div class="text-[11px] text-slate-500 font-medium">Rata-rata per Catatan</div>
+            <div class="text-base font-bold text-amber-700 mt-1">
+                Rp {{ number_format($financeData['totalExpenseRows'] > 0 ? $financeData['opexPeriodTotal'] / $financeData['totalExpenseRows'] : 0, 0, ',', '.') }}
+            </div>
+        </div>
+    </div>
 
     <!-- Expenses (OPEX) Table -->
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">

@@ -100,6 +100,41 @@ class FinanceProfitLossPeriodTest extends TestCase
             ->assertSet('financePeriods.products.mode', 'all');
     }
 
+    public function test_commission_and_opex_infoboxes_follow_their_table_period(): void
+    {
+        [$owner, $service] = $this->salonOwnerWithCommissionService();
+        $this->recordCompletedServiceSale($owner, $service, qty: 2, daysAgo: 3);
+        Expense::create([
+            'tenant_id' => $owner->tenant_id,
+            'outlet_id' => Outlet::where('tenant_id', $owner->tenant_id)->value('id'),
+            'category' => 'Operasional',
+            'title' => 'Kotak Info Uji',
+            'amount' => 50000,
+            'expense_date' => now()->subDays(3)->toDateString(),
+            'payment_method' => 'Kas Toko / Tunai',
+        ]);
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->set('financeDateFilter', 'all')
+            ->call('setFinanceSubTab', 'commission')
+            ->call('setFinancePeriodMode', 'commission', 'day')
+            ->set('financePeriods.commission.date', now()->subDays(3)->toDateString())
+            ->assertSeeInOrder(['Total Komisi Periode Ini', 'Rp 20.000'])
+            ->call('setFinancePeriodMode', 'commission', 'day')
+            ->set('financePeriods.commission.date', now()->subYears(5)->toDateString())
+            ->assertSeeInOrder(['Total Komisi Periode Ini', 'Rp 0']);
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->set('financeDateFilter', 'all')
+            ->call('setFinancePeriodMode', 'opex', 'day')
+            ->set('financePeriods.opex.date', now()->subDays(3)->toDateString())
+            ->assertSeeInOrder(['Total OPEX Periode Ini', 'Rp 50.000']);
+    }
+
     /**
      * @return array{0: User, 1: Product}
      */
