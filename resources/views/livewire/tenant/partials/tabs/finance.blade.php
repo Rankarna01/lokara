@@ -122,6 +122,16 @@
                             {{ $fd['totalServiceRows'] ?? count($fd['serviceRows']) }} Layanan
                         </span>
                     </button>
+
+                    <!-- Tab 3: Komisi Pegawai -->
+                    <button wire:click="setFinanceSubTab('commission')"
+                        class="px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition cursor-pointer {{ $financeSubTab === 'commission' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                        <i class="fa-solid fa-user-tie text-sm"></i>
+                        <span>3. Komisi Pegawai</span>
+                        <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] {{ $financeSubTab === 'commission' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600' }}">
+                            {{ $fd['commissionSummary']['service_count'] }} Layanan
+                        </span>
+                    </button>
                 </div>
 
                 <div class="text-xs text-slate-500 font-medium">
@@ -129,6 +139,7 @@
                 </div>
             </div>
 
+            @if ($financeSubTab !== 'commission')
             <!-- Toolbar: Filtering, Searching & Sorting -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div class="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -194,8 +205,12 @@
                 @endif
             </div>
 
+            @endif
+
             <!-- ================= TAB 1: PENJUALAN PRODUK MASTER ================= -->
             @if ($financeSubTab === 'products')
+                @include('livewire.tenant.partials.tabs.finance-period-filter', ['periodKey' => 'products', 'periodLabel' => $fd['productPeriodLabel']])
+
                 <!-- Product Statistics Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm">
@@ -345,6 +360,8 @@
 
             <!-- ================= TAB 2: PENJUALAN MASTER LAYANAN ================= -->
             @if ($financeSubTab === 'services')
+                @include('livewire.tenant.partials.tabs.finance-period-filter', ['periodKey' => 'services', 'periodLabel' => $fd['servicePeriodLabel']])
+
                 <!-- Service Statistics Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
                     <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-sm">
@@ -502,6 +519,10 @@
                     @endif
                 </div>
             @endif
+
+            @if ($financeSubTab === 'commission')
+                @include('livewire.tenant.partials.tabs.finance-commission', ['fd' => $fd])
+            @endif
         </div>
     @else
         <!-- Standard P&L Waterfall Card (Non-salon / General F&B) -->
@@ -538,6 +559,8 @@
         </div>
     @endif
 
+    @include('livewire.tenant.partials.tabs.finance-period-filter', ['periodKey' => 'opex', 'periodLabel' => $financeData['opexPeriodLabel']])
+
     <!-- Expenses (OPEX) Table -->
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
@@ -546,7 +569,7 @@
                 <p class="text-xs text-slate-400 mt-0.5">Pengeluaran rutin outlet: sewa, listrik, air, gaji, dan pemeliharaan</p>
             </div>
             <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-rose-50 text-rose-700">
-                Total OPEX: Rp {{ number_format($financeData['totalOpex'], 0, ',', '.') }}
+                Total OPEX: Rp {{ number_format($financeData['opexPeriodTotal'], 0, ',', '.') }}
             </span>
         </div>
         <div class="overflow-x-auto">
