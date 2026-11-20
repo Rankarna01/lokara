@@ -89,6 +89,24 @@ class FinanceProfitLossPeriodTest extends TestCase
             ->assertDontSee('Layanan Komisi Uji');
     }
 
+    public function test_commission_table_is_paginated(): void
+    {
+        [$owner, $service] = $this->salonOwnerWithCommissionService();
+        $this->recordCompletedServiceSale($owner, $service, qty: 1, daysAgo: 3);
+
+        Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'finance')
+            ->set('financeDateFilter', 'all')
+            ->call('setFinanceSubTab', 'commission')
+            ->call('setFinancePeriodMode', 'commission', 'all')
+            ->assertSee('layanan berkomisi')
+            ->set('financePerPage', 10)
+            ->assertSee('Tampilkan:')
+            ->call('nextPage', 'financeCommissionPage')
+            ->assertSet('paginators.financeCommissionPage', 2);
+    }
+
     public function test_unknown_period_mode_is_ignored(): void
     {
         [$owner] = $this->salonOwnerWithCommissionService();

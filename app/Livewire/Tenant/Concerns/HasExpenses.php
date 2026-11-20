@@ -120,6 +120,7 @@ trait HasExpenses
     {
         $this->resetPage('financeProductsPage');
         $this->resetPage('financeServicesPage');
+        $this->resetPage('financeCommissionPage');
     }
 
     public function updatedFinanceExpensePerPage(): void
@@ -342,7 +343,8 @@ trait HasExpenses
             'combinedDirectCost' => $combinedDirectCost,
             'combinedGrossProfit' => $combinedGrossProfit,
             'combinedMargin' => $combinedMargin,
-            'commissionRows' => $commissionRows,
+            'commissionRows' => $forExport ? $commissionRows : $this->paginateFinanceRows($commissionRows, 'financeCommissionPage'),
+            'totalCommissionRows' => count($commissionRows),
             'commissionSummary' => $commissionSummary,
             'commissionPeriodLabel' => $this->financePeriodLabel('commission'),
             'expenseRows' => $expenseRowsToReturn,
@@ -401,6 +403,7 @@ trait HasExpenses
         match ($key) {
             'products' => $this->resetPage('financeProductsPage'),
             'services' => $this->resetPage('financeServicesPage'),
+            'commission' => $this->resetPage('financeCommissionPage'),
             'opex' => $this->resetPage('expensesPage'),
             default => null,
         };

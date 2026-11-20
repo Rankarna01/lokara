@@ -45,7 +45,7 @@
                 <p class="text-xs text-slate-400 mt-0.5">Hanya layanan yang dikerjakan (sesi > 0) pada periode terpilih, diurutkan dari komisi terbesar</p>
             </div>
             <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 whitespace-nowrap">
-                {{ count($commissionRows) }} layanan
+                {{ $fd['totalCommissionRows'] }} layanan
             </span>
         </div>
 
@@ -104,5 +104,33 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Table Footer: Count & Per Page Selector -->
+        <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div>
+                @if ($commissionRows instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    Menampilkan <span class="font-bold text-slate-800">{{ $commissionRows->firstItem() ?? 0 }}</span> - <span class="font-bold text-slate-800">{{ $commissionRows->lastItem() ?? 0 }}</span> dari <span class="font-bold text-slate-800">{{ $commissionRows->total() }}</span> layanan berkomisi
+                @else
+                    Menampilkan <span class="font-bold text-slate-800">{{ count($commissionRows) }}</span> layanan berkomisi
+                @endif
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span>Tampilkan:</span>
+                <select wire:model.live="financePerPage"
+                        class="bg-white border border-slate-200 text-xs font-semibold text-slate-700 py-1 px-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500">
+                    <option value="10">10 Baris</option>
+                    <option value="25">25 Baris</option>
+                    <option value="50">50 Baris</option>
+                    <option value="100">100 Baris</option>
+                </select>
+            </div>
+        </div>
+
+        @if ($commissionRows instanceof \Illuminate\Pagination\LengthAwarePaginator && $commissionRows->hasPages())
+            <div class="px-4 py-3 border-t border-slate-100 bg-white">
+                {{ $commissionRows->links() }}
+            </div>
+        @endif
     </div>
 </div>
