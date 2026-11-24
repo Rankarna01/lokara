@@ -65,6 +65,7 @@ trait HasOrdersAndVoid
         $this->transactionPaymentMethodFilter = 'all';
         $this->transactionOrderTypeFilter = 'all';
         $this->transactionDateFilter = '30_days';
+        $this->transactionTrendPeriod = '7_days';
         $this->transactionStartDate = '';
         $this->transactionEndDate = '';
         $this->resetPage('transactionsPage');
@@ -97,16 +98,33 @@ trait HasOrdersAndVoid
 
     public function updatedTransactionDateFilter(): void
     {
+        $this->transactionTrendPeriod = in_array($this->transactionDateFilter, ['7_days', '14_days', '30_days', 'this_month', 'last_month', 'custom'])
+            ? $this->transactionDateFilter
+            : '30_days';
+
+        if ($this->transactionDateFilter === 'custom') {
+            if (empty($this->transactionStartDate)) {
+                $this->transactionStartDate = Carbon::now()->subDays(29)->toDateString();
+            }
+            if (empty($this->transactionEndDate)) {
+                $this->transactionEndDate = Carbon::now()->toDateString();
+            }
+        }
+
         $this->resetPage('transactionsPage');
     }
 
     public function updatedTransactionStartDate(): void
     {
+        $this->transactionDateFilter = 'custom';
+        $this->transactionTrendPeriod = 'custom';
         $this->resetPage('transactionsPage');
     }
 
     public function updatedTransactionEndDate(): void
     {
+        $this->transactionDateFilter = 'custom';
+        $this->transactionTrendPeriod = 'custom';
         $this->resetPage('transactionsPage');
     }
 
@@ -135,16 +153,78 @@ trait HasOrdersAndVoid
     public function setTransactionDateFilter(string $filter): void
     {
         $this->transactionDateFilter = $filter;
-        if ($filter !== 'custom') {
+        $this->transactionTrendPeriod = in_array($filter, ['7_days', '14_days', '30_days', 'this_month', 'last_month', 'custom'])
+            ? $filter
+            : '30_days';
+
+        if ($filter === 'custom') {
+            if (empty($this->transactionStartDate)) {
+                $this->transactionStartDate = Carbon::now()->subDays(29)->toDateString();
+            }
+            if (empty($this->transactionEndDate)) {
+                $this->transactionEndDate = Carbon::now()->toDateString();
+            }
+        } else {
             $this->transactionStartDate = '';
             $this->transactionEndDate = '';
         }
+
         $this->resetPage('transactionsPage');
     }
 
     public function setTransactionTrendPeriod(string $period): void
     {
         $this->transactionTrendPeriod = $period;
+        $this->transactionDateFilter = $period;
+
+        if ($period === 'custom') {
+            if (empty($this->transactionStartDate)) {
+                $this->transactionStartDate = Carbon::now()->subDays(29)->toDateString();
+            }
+            if (empty($this->transactionEndDate)) {
+                $this->transactionEndDate = Carbon::now()->toDateString();
+            }
+        } else {
+            $this->transactionStartDate = '';
+            $this->transactionEndDate = '';
+        }
+
+        $this->resetPage('transactionsPage');
+    }
+
+    public function setCustomDatePreset(string $preset): void
+    {
+        match ($preset) {
+            'today' => [
+                $this->transactionStartDate = Carbon::today()->toDateString(),
+                $this->transactionEndDate = Carbon::today()->toDateString(),
+            ],
+            'yesterday' => [
+                $this->transactionStartDate = Carbon::yesterday()->toDateString(),
+                $this->transactionEndDate = Carbon::yesterday()->toDateString(),
+            ],
+            'last_month' => [
+                $this->transactionStartDate = Carbon::now()->subMonth()->startOfMonth()->toDateString(),
+                $this->transactionEndDate = Carbon::now()->subMonth()->endOfMonth()->toDateString(),
+            ],
+            'this_month' => [
+                $this->transactionStartDate = Carbon::now()->startOfMonth()->toDateString(),
+                $this->transactionEndDate = Carbon::now()->toDateString(),
+            ],
+            'last_30_days' => [
+                $this->transactionStartDate = Carbon::now()->subDays(29)->toDateString(),
+                $this->transactionEndDate = Carbon::now()->toDateString(),
+            ],
+            'last_60_days' => [
+                $this->transactionStartDate = Carbon::now()->subDays(59)->toDateString(),
+                $this->transactionEndDate = Carbon::now()->toDateString(),
+            ],
+            default => null,
+        };
+
+        $this->transactionDateFilter = 'custom';
+        $this->transactionTrendPeriod = 'custom';
+        $this->resetPage('transactionsPage');
     }
 
     public function setTransactionTrendMetric(string $metric): void
@@ -210,10 +290,19 @@ trait HasOrdersAndVoid
             $baseQuery->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
         } elseif ($this->transactionDateFilter === '7_days') {
             $baseQuery->where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay());
+        } elseif ($this->transactionDateFilter === '14_days') {
+            $baseQuery->where('created_at', '>=', Carbon::now()->subDays(13)->startOfDay());
         } elseif ($this->transactionDateFilter === '30_days') {
             $baseQuery->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay());
         } elseif ($this->transactionDateFilter === 'this_month') {
             $baseQuery->where('created_at', '>=', Carbon::now()->startOfMonth()->startOfDay());
+        } elseif ($this->transactionDateFilter === 'last_month') {
+            $baseQuery->whereBetween('created_at', [
+                Carbon::now()->subMonth()->startOfMonth()->startOfDay(),
+                Carbon::now()->subMonth()->endOfMonth()->endOfDay(),
+            ]);
+        } elseif ($this->transactionDateFilter === 'this_year') {
+            $baseQuery->where('created_at', '>=', Carbon::now()->startOfYear()->startOfDay());
         } elseif ($this->transactionDateFilter === 'custom') {
             if (! empty($this->transactionStartDate)) {
                 $start = Carbon::parse($this->transactionStartDate.' '.($this->transactionStartTime ?: '00:00:00'));
@@ -325,10 +414,19 @@ trait HasOrdersAndVoid
             $metricsQuery->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
         } elseif ($this->transactionDateFilter === '7_days') {
             $metricsQuery->where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay());
+        } elseif ($this->transactionDateFilter === '14_days') {
+            $metricsQuery->where('created_at', '>=', Carbon::now()->subDays(13)->startOfDay());
         } elseif ($this->transactionDateFilter === '30_days') {
             $metricsQuery->where('created_at', '>=', Carbon::now()->subDays(29)->startOfDay());
         } elseif ($this->transactionDateFilter === 'this_month') {
             $metricsQuery->where('created_at', '>=', Carbon::now()->startOfMonth()->startOfDay());
+        } elseif ($this->transactionDateFilter === 'last_month') {
+            $metricsQuery->whereBetween('created_at', [
+                Carbon::now()->subMonth()->startOfMonth()->startOfDay(),
+                Carbon::now()->subMonth()->endOfMonth()->endOfDay(),
+            ]);
+        } elseif ($this->transactionDateFilter === 'this_year') {
+            $metricsQuery->where('created_at', '>=', Carbon::now()->startOfYear()->startOfDay());
         } elseif ($this->transactionDateFilter === 'custom') {
             if (! empty($this->transactionStartDate)) {
                 $start = Carbon::parse($this->transactionStartDate.' '.($this->transactionStartTime ?: '00:00:00'));
@@ -369,29 +467,82 @@ trait HasOrdersAndVoid
             'delivery' => $completedOrders->where('order_type', 'delivery')->count(),
         ];
 
-        // Build Daily Trend Chart
-        $daysBack = match ($this->transactionTrendPeriod) {
-            '14_days' => 14,
-            '30_days' => 30,
-            default => 7,
-        };
+        // Determine chart date range based on active filter / trend period
+        $activePeriod = $this->transactionTrendPeriod ?: $this->transactionDateFilter;
+        switch ($activePeriod) {
+            case 'today':
+                $chartStart = Carbon::today();
+                $chartEnd = Carbon::today();
+                break;
+            case 'yesterday':
+                $chartStart = Carbon::yesterday();
+                $chartEnd = Carbon::yesterday();
+                break;
+            case '7_days':
+                $chartStart = Carbon::today()->subDays(6);
+                $chartEnd = Carbon::today();
+                break;
+            case '14_days':
+                $chartStart = Carbon::today()->subDays(13);
+                $chartEnd = Carbon::today();
+                break;
+            case '30_days':
+                $chartStart = Carbon::today()->subDays(29);
+                $chartEnd = Carbon::today();
+                break;
+            case 'this_month':
+                $chartStart = Carbon::now()->startOfMonth();
+                $chartEnd = Carbon::today();
+                break;
+            case 'last_month':
+                $chartStart = Carbon::now()->subMonth()->startOfMonth();
+                $chartEnd = Carbon::now()->subMonth()->endOfMonth();
+                break;
+            case 'this_year':
+                $chartStart = Carbon::now()->startOfYear();
+                $chartEnd = Carbon::today();
+                if ($chartStart->diffInDays($chartEnd) > 60) {
+                    $chartStart = $chartEnd->copy()->subDays(59);
+                }
+                break;
+            case 'custom':
+                $chartStart = ! empty($this->transactionStartDate) ? Carbon::parse($this->transactionStartDate) : Carbon::today()->subDays(29);
+                $chartEnd = ! empty($this->transactionEndDate) ? Carbon::parse($this->transactionEndDate) : Carbon::today();
+                if ($chartStart->gt($chartEnd)) {
+                    [$chartStart, $chartEnd] = [$chartEnd, $chartStart];
+                }
+                if ($chartStart->diffInDays($chartEnd) > 60) {
+                    $chartStart = $chartEnd->copy()->subDays(59);
+                }
+                break;
+            default:
+                $chartStart = Carbon::today()->subDays(29);
+                $chartEnd = Carbon::today();
+                break;
+        }
+
+        // Single query for all completed orders in the chart date range
+        $periodOrders = Order::where('tenant_id', $this->tenantId)
+            ->where('status', 'completed')
+            ->when($this->selectedOutletId, fn ($q) => $q->where('outlet_id', $this->selectedOutletId))
+            ->whereBetween('created_at', [$chartStart->copy()->startOfDay(), $chartEnd->copy()->endOfDay()])
+            ->get(['id', 'total_amount', 'created_at']);
+
+        $ordersByDate = $periodOrders->groupBy(fn ($order) => $order->created_at->format('Y-m-d'));
 
         $chartDays = [];
         $maxRevenue = 0;
         $maxCount = 0;
         $trendTotalRevenue = 0;
         $trendTotalCount = 0;
+        $daysCount = 0;
 
-        for ($i = $daysBack - 1; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
-            $dateStr = $date->toDateString();
+        $curr = $chartStart->copy()->startOfDay();
+        $endDay = $chartEnd->copy()->startOfDay();
 
-            $dayOrders = Order::where('tenant_id', $this->tenantId)
-                ->where('status', 'completed')
-                ->when($this->selectedOutletId, fn ($q) => $q->where('outlet_id', $this->selectedOutletId))
-                ->whereDate('created_at', $dateStr)
-                ->get();
-
+        while ($curr->lte($endDay)) {
+            $dateStr = $curr->toDateString();
+            $dayOrders = $ordersByDate->get($dateStr, collect());
             $rev = (float) $dayOrders->sum('total_amount');
             $cnt = $dayOrders->count();
 
@@ -404,16 +555,19 @@ trait HasOrdersAndVoid
 
             $trendTotalRevenue += $rev;
             $trendTotalCount += $cnt;
+            $daysCount++;
 
             $chartDays[] = [
                 'date' => $dateStr,
-                'short_label' => $date->format('d/m'),
-                'day_name' => $date->translatedFormat('D'),
-                'full_label' => $date->translatedFormat('d M Y'),
-                'is_today' => $date->isToday(),
+                'short_label' => $curr->format('d/m'),
+                'day_name' => $curr->translatedFormat('D'),
+                'full_label' => $curr->translatedFormat('d M Y'),
+                'is_today' => $curr->isToday(),
                 'revenue' => $rev,
                 'tx_count' => $cnt,
             ];
+
+            $curr->addDay();
         }
 
         // Compute bar percentages
@@ -426,7 +580,7 @@ trait HasOrdersAndVoid
         }
         unset($day);
 
-        $avgDailyRevenue = $daysBack > 0 ? ($trendTotalRevenue / $daysBack) : 0;
+        $avgDailyRevenue = $daysCount > 0 ? ($trendTotalRevenue / $daysCount) : 0;
 
         return [
             'totalRevenue' => $totalRevenue,

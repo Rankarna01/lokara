@@ -62,10 +62,13 @@ trait HasTransactionExports
     {
         return match ($this->transactionDateFilter) {
             '7_days' => '7 Hari Terakhir',
+            '14_days' => '14 Hari Terakhir',
             '30_days' => '30 Hari Terakhir',
             'today' => 'Hari Ini',
             'yesterday' => 'Kemarin',
             'this_month' => 'Bulan Ini',
+            'last_month' => 'Bulan Lalu',
+            'this_year' => 'Tahun Ini',
             'custom' => 'Kustom: '.($this->transactionStartDate ?: '-').' s/d '.($this->transactionEndDate ?: '-'),
             default => 'Semua Waktu',
         };

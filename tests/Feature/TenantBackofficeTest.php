@@ -1693,6 +1693,62 @@ class TenantBackofficeTest extends TestCase
             ->assertSet('transactionStartDate', '2026-10-01');
     }
 
+    public function test_transaction_history_past_date_range_and_presets()
+    {
+        $owner = User::where('email', 'rian@kopiruangpagi.id')->first();
+        $tenant = Tenant::find($owner->tenant_id);
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+
+        // Create an order in the past (e.g. last month)
+        $pastOrder = Order::create([
+            'tenant_id' => $tenant->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $owner->id,
+            'order_number' => 'ORD-PAST-999',
+            'order_type' => 'take_away',
+            'subtotal' => 75000,
+            'total_amount' => 75000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'created_at' => Carbon::now()->subMonth()->startOfMonth()->addDays(5),
+            'updated_at' => Carbon::now()->subMonth()->startOfMonth()->addDays(5),
+        ]);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'transactions');
+
+        // Test last_month filter
+        $component->call('setTransactionDateFilter', 'last_month')
+            ->assertSet('transactionDateFilter', 'last_month')
+            ->assertSet('transactionTrendPeriod', 'last_month')
+            ->assertSee('ORD-PAST-999');
+
+        // Test custom preset 'last_month'
+        $component->call('setCustomDatePreset', 'last_month')
+            ->assertSet('transactionDateFilter', 'custom')
+            ->assertSet('transactionTrendPeriod', 'custom')
+            ->assertSet('transactionStartDate', Carbon::now()->subMonth()->startOfMonth()->toDateString())
+            ->assertSet('transactionEndDate', Carbon::now()->subMonth()->endOfMonth()->toDateString())
+            ->assertSee('ORD-PAST-999');
+
+        // Test custom preset 'last_30_days'
+        $component->call('setCustomDatePreset', 'last_30_days')
+            ->assertSet('transactionDateFilter', 'custom')
+            ->assertSet('transactionTrendPeriod', 'custom')
+            ->assertSet('transactionStartDate', Carbon::now()->subDays(29)->toDateString());
+
+        // Test 14_days filter
+        $component->call('setTransactionTrendPeriod', '14_days')
+            ->assertSet('transactionTrendPeriod', '14_days')
+            ->assertSet('transactionDateFilter', '14_days');
+
+        // Test export label with last_month
+        $component->call('setTransactionDateFilter', 'last_month')
+            ->call('exportTransactionsExcel')
+            ->assertFileDownloaded(null, null, 'application/vnd.ms-excel; charset=UTF-8');
+    }
+
     public function test_transaction_detail_modal_and_print_receipt_modal()
     {
         $owner = User::where('email', 'rian@kopiruangpagi.id')->first();

@@ -41,7 +41,18 @@
                     Rp {{ number_format($transactionAnalytics['totalRevenue'], 0, ',', '.') }}
                 </div>
                 <div class="text-[11px] font-medium text-slate-400 mt-0.5">
-                    Periode: {{ match($transactionDateFilter) { 'today' => 'Hari Ini', 'yesterday' => 'Kemarin', '7_days' => '7 Hari Terakhir', '30_days' => '30 Hari Terakhir', 'this_month' => 'Bulan Ini', 'custom' => 'Rentang Kustom', default => 'Semua Waktu' } }}
+                    Periode: {{ match($transactionDateFilter) { 
+                        'today' => 'Hari Ini', 
+                        'yesterday' => 'Kemarin', 
+                        '7_days' => '7 Hari Terakhir', 
+                        '14_days' => '14 Hari Terakhir',
+                        '30_days' => '30 Hari Terakhir', 
+                        'this_month' => 'Bulan Ini', 
+                        'last_month' => 'Bulan Lalu',
+                        'this_year' => 'Tahun Ini',
+                        'custom' => 'Rentang Kustom ('.($transactionStartDate ? \Carbon\Carbon::parse($transactionStartDate)->format('d/m/Y') : '...').' - '.($transactionEndDate ? \Carbon\Carbon::parse($transactionEndDate)->format('d/m/Y') : '...').')', 
+                        default => 'Semua Waktu' 
+                    } }}
                 </div>
             </div>
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
@@ -148,7 +159,7 @@
                 </div>
 
                 <!-- Trend Period Selector -->
-                <div class="bg-slate-100 p-0.5 rounded-xl flex items-center text-xs font-bold">
+                <div class="bg-slate-100 p-0.5 rounded-xl flex flex-wrap items-center text-xs font-bold gap-0.5">
                     <button wire:click="setTransactionTrendPeriod('7_days')"
                             class="px-2.5 py-1.5 rounded-lg transition {{ $transactionTrendPeriod === '7_days' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900' }}">
                         7 Hari
@@ -161,9 +172,67 @@
                             class="px-2.5 py-1.5 rounded-lg transition {{ $transactionTrendPeriod === '30_days' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900' }}">
                         30 Hari
                     </button>
+                    <button wire:click="setTransactionTrendPeriod('this_month')"
+                            class="px-2.5 py-1.5 rounded-lg transition {{ $transactionTrendPeriod === 'this_month' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900' }}">
+                        Bulan Ini
+                    </button>
+                    <button wire:click="setTransactionTrendPeriod('last_month')"
+                            class="px-2.5 py-1.5 rounded-lg transition {{ $transactionTrendPeriod === 'last_month' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900' }}">
+                        Bulan Lalu
+                    </button>
+                    <button wire:click="setTransactionTrendPeriod('custom')"
+                            class="px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 {{ $transactionTrendPeriod === 'custom' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-500 hover:text-slate-900' }}">
+                        <i class="fa-solid fa-calendar-days text-[11px]"></i>
+                        <span>Rentang Tanggal</span>
+                    </button>
                 </div>
             </div>
         </div>
+
+        <!-- Custom Date Range Bar for Chart & Analytics -->
+        @if($transactionTrendPeriod === 'custom' || $transactionDateFilter === 'custom')
+            <div class="mt-4 p-3.5 bg-gradient-to-r from-orange-50/90 via-amber-50/60 to-orange-50/90 border border-orange-200/90 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs animate-in fade-in duration-200 shadow-xs">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-1.5 font-bold text-orange-950">
+                        <i class="fa-solid fa-calendar-week text-orange-500"></i>
+                        <span>Filter Tanggal Masa Lalu / Kustom:</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-600 font-medium">Dari:</span>
+                        <input type="date" wire:model.live="transactionStartDate"
+                               class="bg-white border border-slate-300 text-slate-800 font-semibold rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-orange-500 shadow-2xs" />
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-600 font-medium">Sampai:</span>
+                        <input type="date" wire:model.live="transactionEndDate"
+                               class="bg-white border border-slate-300 text-slate-800 font-semibold rounded-lg px-2.5 py-1 text-xs focus:ring-1 focus:ring-orange-500 shadow-2xs" />
+                    </div>
+                </div>
+
+                <!-- Quick Presets -->
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span class="text-slate-500 font-medium mr-1">Pilihan Cepat:</span>
+                    <button type="button" wire:click="setCustomDatePreset('last_month')"
+                            class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition font-medium shadow-2xs">
+                        Bulan Lalu
+                    </button>
+                    <button type="button" wire:click="setCustomDatePreset('this_month')"
+                            class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition font-medium shadow-2xs">
+                        Bulan Ini
+                    </button>
+                    <button type="button" wire:click="setCustomDatePreset('last_30_days')"
+                            class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition font-medium shadow-2xs">
+                        30 Hari Terakhir
+                    </button>
+                    <button type="button" wire:click="setCustomDatePreset('last_60_days')"
+                            class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition font-medium shadow-2xs">
+                        60 Hari Terakhir
+                    </button>
+                </div>
+            </div>
+        @endif
 
         <!-- Chart Body: Visual Bars + Side Breakdown -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
@@ -433,12 +502,15 @@
                 <select wire:model.live="transactionDateFilter"
                         class="w-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 py-2 px-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-500">
                     <option value="30_days">30 Hari Terakhir</option>
+                    <option value="14_days">14 Hari Terakhir</option>
                     <option value="7_days">7 Hari Terakhir</option>
                     <option value="today">Hari Ini</option>
                     <option value="yesterday">Kemarin</option>
                     <option value="this_month">Bulan Ini</option>
+                    <option value="last_month">Bulan Lalu</option>
+                    <option value="this_year">Tahun Ini</option>
                     <option value="all">Semua Waktu</option>
-                    <option value="custom">📅 Rentang Kustom...</option>
+                    <option value="custom">📅 Rentang Tanggal Kustom...</option>
                 </select>
 
                 <!-- Reset Button -->
@@ -468,26 +540,44 @@
 
         <!-- Custom Date & Time Filter Row -->
         @if($transactionDateFilter === 'custom')
-            <div class="p-3 bg-orange-50/60 border border-orange-200/80 rounded-xl flex flex-wrap items-center gap-3 text-xs animate-in fade-in duration-150">
-                <div class="flex items-center gap-1.5 font-bold text-orange-900">
-                    <i class="fa-solid fa-calendar-days text-orange-500"></i>
-                    <span>Kustom Periode:</span>
+            <div class="p-3 bg-orange-50/60 border border-orange-200/80 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs animate-in fade-in duration-150">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-1.5 font-bold text-orange-900">
+                        <i class="fa-solid fa-calendar-days text-orange-500"></i>
+                        <span>Kustom Rentang Tanggal & Jam:</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-500 font-medium">Dari:</span>
+                        <input type="date" wire:model.live="transactionStartDate"
+                               class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700" />
+                        <input type="time" wire:model.live="transactionStartTime"
+                               class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium text-slate-700" />
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-500 font-medium">Sampai:</span>
+                        <input type="date" wire:model.live="transactionEndDate"
+                               class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700" />
+                        <input type="time" wire:model.live="transactionEndTime"
+                               class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium text-slate-700" />
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <span class="text-slate-500 font-medium">Dari:</span>
-                    <input type="date" wire:model.live="transactionStartDate"
-                           class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700" />
-                    <input type="time" wire:model.live="transactionStartTime"
-                           class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium text-slate-700" />
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <span class="text-slate-500 font-medium">Sampai:</span>
-                    <input type="date" wire:model.live="transactionEndDate"
-                           class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700" />
-                    <input type="time" wire:model.live="transactionEndTime"
-                           class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium text-slate-700" />
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span class="text-slate-500 font-medium mr-1">Preset:</span>
+                    <button type="button" wire:click="setCustomDatePreset('last_month')"
+                            class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition font-medium">
+                        Bulan Lalu
+                    </button>
+                    <button type="button" wire:click="setCustomDatePreset('this_month')"
+                            class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition font-medium">
+                        Bulan Ini
+                    </button>
+                    <button type="button" wire:click="setCustomDatePreset('last_30_days')"
+                            class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-600 hover:bg-orange-50 hover:text-orange-600 transition font-medium">
+                        30 Hari Terakhir
+                    </button>
                 </div>
             </div>
         @endif
