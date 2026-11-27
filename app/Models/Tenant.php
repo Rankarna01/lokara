@@ -114,6 +114,11 @@ class Tenant extends Model
         return $this->hasMany(User::class);
     }
 
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
     public function modifiers(): HasMany
     {
         return $this->hasMany(ProductModifier::class);
@@ -135,7 +140,7 @@ class Tenant extends Model
 
     public function isSalon(): bool
     {
-        return in_array($this->businessType?->slug, ['salon', 'barbershop']) 
+        return in_array($this->businessType?->slug, ['salon', 'barbershop'])
             || in_array($this->attributes['business_type'] ?? null, ['salon', 'barbershop'])
             || $this->hasFeature('has_services')
             || in_array($this->settings['business_type'] ?? null, ['salon', 'barbershop']);
@@ -148,4 +153,3 @@ class Tenant extends Model
             || (isset($this->settings['business_type']) && $this->settings['business_type'] === 'barbershop');
     }
 }
-

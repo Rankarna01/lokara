@@ -6,6 +6,7 @@ use App\Livewire\Tenant\BackofficeDashboard;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Discount;
+use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\Ingredient;
 use App\Models\Order;
@@ -2062,5 +2063,110 @@ class TenantBackofficeTest extends TestCase
             ->assertSee('property="og:image"', false)
             ->assertSee('property="og:title"', false)
             ->assertSee('name="twitter:card"', false);
+    }
+
+    public function test_salon_employee_crud_and_weekly_fee_recap()
+    {
+        $owner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+        $tenant = Tenant::find($owner->tenant_id);
+        $outlet = Outlet::where('tenant_id', $tenant->id)->first();
+        $service = Product::where('tenant_id', $tenant->id)->where('type', 'service')->first();
+        $this->assertNotNull($service);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(BackofficeDashboard::class)
+            ->call('switchTab', 'employees')
+            ->assertSee('Pegawai & Rekap Fee Mingguan', false);
+
+        // Create Employee: Kak Sherly
+        $component->call('openNewEmployeeModal')
+            ->assertSet('showEmployeeModal', true)
+            ->set('employeeName', 'Kak Sherly')
+            ->set('employeeRoleTitle', 'Senior Terapis')
+            ->set('employeePhone', '081234567890')
+            ->set('employeeOutletId', $outlet->id)
+            ->call('saveEmployee')
+            ->assertSet('showEmployeeModal', false);
+
+        $sherly = Employee::where('tenant_id', $tenant->id)->where('name', 'Kak Sherly')->first();
+        $this->assertNotNull($sherly);
+        $this->assertEquals('Senior Terapis', $sherly->role_title);
+
+        // Create completed orders in two different weeks for Kak Sherly
+        $thisWeekDate = Carbon::now()->startOfWeek(Carbon::MONDAY)->addHours(10);
+        $lastWeekDate = Carbon::now()->subWeek()->startOfWeek(Carbon::MONDAY)->addDays(2)->addHours(14);
+
+        $orderThisWeek = Order::create([
+            'tenant_id' => $tenant->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $owner->id,
+            'order_number' => 'ORD-SHERLY-W1',
+            'order_type' => 'salon_order',
+            'subtotal' => 150000,
+            'total_amount' => 150000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'paid_at' => $thisWeekDate,
+            'created_at' => $thisWeekDate,
+            'updated_at' => $thisWeekDate,
+        ]);
+
+        OrderItem::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $orderThisWeek->id,
+            'product_id' => $service->id,
+            'employee_id' => $sherly->id,
+            'employee_name' => $sherly->name,
+            'product_name' => $service->name,
+            'variant_name' => 'Standar',
+            'qty' => 2,
+            'unit_price' => 75000,
+            'subtotal' => 150000,
+            'commission_amount' => 45000,
+        ]);
+
+        $orderLastWeek = Order::create([
+            'tenant_id' => $tenant->id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $owner->id,
+            'order_number' => 'ORD-SHERLY-W0',
+            'order_type' => 'salon_order',
+            'subtotal' => 100000,
+            'total_amount' => 100000,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'paid_at' => $lastWeekDate,
+            'created_at' => $lastWeekDate,
+            'updated_at' => $lastWeekDate,
+        ]);
+
+        OrderItem::create([
+            'tenant_id' => $tenant->id,
+            'order_id' => $orderLastWeek->id,
+            'product_id' => $service->id,
+            'employee_id' => $sherly->id,
+            'employee_name' => $sherly->name,
+            'product_name' => $service->name,
+            'variant_name' => 'Standar',
+            'qty' => 1,
+            'unit_price' => 100000,
+            'subtotal' => 100000,
+            'commission_amount' => 30000,
+        ]);
+
+        // Verify 4_weeks recap sees both weeks and combined total (45.000 + 30.000 = 75.000)
+        $component->call('setEmployeeFeePeriod', '4_weeks')
+            ->assertSee('Kak Sherly')
+            ->assertSee('45.000')
+            ->assertSee('30.000')
+            ->assertSee('75.000');
+
+        // Verify detail modal for this week shows exact order
+        $component->call('openEmployeeFeeDetail', $sherly->id, $thisWeekDate->copy()->startOfWeek(Carbon::MONDAY)->toDateString(), 'Minggu Ini')
+            ->assertSet('showEmployeeFeeDetailModal', true)
+            ->assertSee('ORD-SHERLY-W1')
+            ->assertDontSee('ORD-SHERLY-W0')
+            ->call('closeEmployeeFeeDetail')
+            ->assertSet('showEmployeeFeeDetailModal', false);
     }
 }

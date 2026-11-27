@@ -69,7 +69,7 @@ class FinanceProfitLossPeriodTest extends TestCase
             ->call('switchTab', 'finance')
             ->set('financeDateFilter', 'all')->call('setFinanceSubTab', 'commission')
             ->call('setFinancePeriodMode', 'commission', 'all')
-            ->assertSee('Komisi dihitung per layanan, belum per pegawai')
+            ->assertSee('Buka Rekap Fee Pegawai')
             ->assertSee('Rincian Komisi Pegawai per Layanan')
             ->assertSee('Layanan Komisi Uji')
             ->assertSee('Rp 20.000');

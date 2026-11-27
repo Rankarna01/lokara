@@ -106,47 +106,71 @@
         <!-- Items List -->
         <div class="space-y-3 pt-1">
             @forelse ($cart as $index => $item)
-                <div class="relative p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 flex items-start justify-between gap-3 group">
-                    <!-- Left: Thumbnail & Details -->
-                    <div class="flex items-start gap-2.5 min-w-0">
-                        <img src="{{ $item['image_url'] ?? 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=150&h=150&q=80' }}"
-                             alt="{{ $item['name'] }}"
-                             class="w-11 h-11 rounded-lg object-cover bg-white ring-1 ring-slate-200 flex-shrink-0" />
+                <div class="relative p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 group">
+                    <div class="flex items-start justify-between gap-3">
+                        <!-- Left: Thumbnail & Details -->
+                        <div class="flex items-start gap-2.5 min-w-0">
+                            <img src="{{ $item['image_url'] ?? 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=150&h=150&q=80' }}"
+                                 alt="{{ $item['name'] }}"
+                                 class="w-11 h-11 rounded-lg object-cover bg-white ring-1 ring-slate-200 flex-shrink-0" />
 
-                        <div class="min-w-0">
-                            <div class="font-bold text-xs text-slate-900 truncate">{{ $item['name'] }}</div>
-                            <div class="text-[10px] text-slate-400 mt-0.5 truncate">{{ $item['variant'] }}</div>
-                            <div class="text-xs font-semibold text-slate-700 mt-1">
-                                Rp{{ number_format($item['price'], 0, ',', '.') }}
+                            <div class="min-w-0">
+                                <div class="font-bold text-xs text-slate-900 truncate">{{ $item['name'] }}</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5 truncate">{{ $item['variant'] }}</div>
+                                <div class="text-xs font-semibold text-slate-700 mt-1">
+                                    Rp{{ number_format($item['price'], 0, ',', '.') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Stepper & Subtotal -->
+                        <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                            <!-- Remove Cross Button -->
+                            <button wire:click="removeFromCart({{ $index }})"
+                                    class="text-slate-300 hover:text-rose-500 text-xs">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+
+                            <!-- Stepper (- Qty +) -->
+                            <div class="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden text-xs">
+                                <button wire:click="decrementQty({{ $index }})"
+                                        class="w-6 h-6 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition">
+                                    −
+                                </button>
+                                <span class="w-6 text-center font-bold text-slate-800 text-[11px]">{{ $item['qty'] }}</span>
+                                <button wire:click="incrementQty({{ $index }})"
+                                        class="w-6 h-6 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition">
+                                    +
+                                </button>
+                            </div>
+
+                            <div class="text-xs font-bold text-slate-900 mt-0.5">
+                                Rp{{ number_format($item['subtotal'], 0, ',', '.') }}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right: Stepper & Subtotal -->
-                    <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-                        <!-- Remove Cross Button -->
-                        <button wire:click="removeFromCart({{ $index }})"
-                                class="text-slate-300 hover:text-rose-500 text-xs">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-
-                        <!-- Stepper (- Qty +) -->
-                        <div class="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden text-xs">
-                            <button wire:click="decrementQty({{ $index }})"
-                                    class="w-6 h-6 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition">
-                                −
-                            </button>
-                            <span class="w-6 text-center font-bold text-slate-800 text-[11px]">{{ $item['qty'] }}</span>
-                            <button wire:click="incrementQty({{ $index }})"
-                                    class="w-6 h-6 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition">
-                                +
-                            </button>
+                    @if (($isSalon ?? false) && (($item['type'] ?? 'product') === 'service'))
+                        <div class="mt-2 pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                                <i class="fa-solid fa-user-check text-[10px] {{ ! empty($item['employee_id']) ? 'text-orange-500' : 'text-slate-400' }}"></i>
+                                <select wire:change="assignItemEmployee({{ $index }}, $event.target.value)"
+                                        class="w-full bg-white border {{ ! empty($item['employee_id']) ? 'border-orange-300 text-slate-800 font-semibold' : 'border-slate-200 text-slate-500' }} rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                    <option value="">-- Pilih Pegawai / Terapis --</option>
+                                    @foreach ($employees ?? [] as $emp)
+                                        <option value="{{ $emp->id }}" {{ (int) ($item['employee_id'] ?? 0) === $emp->id ? 'selected' : '' }}>
+                                            {{ $emp->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @if (($item['commission_per_unit'] ?? 0) > 0)
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/60 whitespace-nowrap shrink-0">
+                                    Fee: Rp{{ number_format(($item['commission_per_unit'] ?? 0) * $item['qty'], 0, ',', '.') }}
+                                </span>
+                            @endif
                         </div>
-
-                        <div class="text-xs font-bold text-slate-900 mt-0.5">
-                            Rp{{ number_format($item['subtotal'], 0, ',', '.') }}
-                        </div>
-                    </div>
+                    @endif
                 </div>
             @empty
                 <div class="py-10 text-center text-slate-400 text-xs">

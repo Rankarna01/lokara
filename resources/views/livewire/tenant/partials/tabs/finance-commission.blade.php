@@ -28,13 +28,19 @@
         </div>
     </div>
 
-    <!-- Catatan keterbatasan data -->
-    <div class="p-4 rounded-2xl border border-amber-200 bg-amber-50/70 flex gap-3">
-        <i class="fa-solid fa-circle-info text-amber-600 mt-0.5"></i>
-        <div class="text-xs text-amber-900 space-y-1">
-            <p class="font-semibold">Komisi dihitung per layanan, belum per pegawai.</p>
-            <p>Komisi = jumlah sesi layanan selesai × skema komisi master layanan. Transaksi POS belum mencatat kapster/stylist yang mengerjakan setiap layanan, sehingga rincian komisi per pegawai belum bisa ditampilkan.</p>
+    <!-- Banner Rekap Fee Mingguan per Pegawai -->
+    <div class="p-4 rounded-2xl border border-orange-200 bg-orange-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex gap-3">
+            <i class="fa-solid fa-user-tie text-orange-600 mt-0.5"></i>
+            <div class="text-xs text-orange-950 space-y-0.5">
+                <p class="font-bold">Ingin melihat total fee per pegawai setiap minggu (misal Kak Sherly per minggu)?</p>
+                <p class="text-orange-800">Buka menu <strong>Pegawai & Fee</strong> untuk melihat total fee otomatis per pegawai dan rekap mingguannya.</p>
+            </div>
         </div>
+        <button wire:click="switchTab('employees')"
+                class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-xs transition shrink-0 cursor-pointer">
+            Buka Rekap Fee Pegawai
+        </button>
     </div>
 
     <!-- Tabel Rincian Komisi per Layanan -->

@@ -16,6 +16,7 @@ class OrderItem extends Model
         'qty' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'commission_amount' => 'decimal:2',
     ];
 
     public function order(): BelongsTo
@@ -32,5 +33,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
-}
 
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
+    }
+}

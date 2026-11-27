@@ -58,3 +58,6 @@
 <!-- 20. Modal Profil Lengkap & Riwayat Transaksi Pelanggan CRM -->
 @include('livewire.tenant.partials.modals.customer_detail')
 
+<!-- 21. Modal Pegawai & Rincian Fee Mingguan -->
+@include('livewire.tenant.partials.modals.employee')
+

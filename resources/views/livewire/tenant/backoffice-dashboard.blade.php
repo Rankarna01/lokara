@@ -40,6 +40,8 @@
                     @include('livewire.tenant.partials.tabs.finance')
                 @elseif ($activeTab === 'crm')
                     @include('livewire.tenant.partials.tabs.crm')
+                @elseif ($activeTab === 'employees')
+                    @include('livewire.tenant.partials.tabs.employees')
                 @elseif ($activeTab === 'settings')
                     @include('livewire.tenant.partials.tabs.settings')
                 @endif

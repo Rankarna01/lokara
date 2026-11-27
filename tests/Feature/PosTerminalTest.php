@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Livewire\Pos\Terminal;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Shift;
@@ -542,5 +544,52 @@ class PosTerminalTest extends TestCase
             $component->call('addToCart', $salonProduct->id)
                 ->assertSet('showOpenShiftModal', false);
         }
+    }
+
+    public function test_salon_pos_assigns_employee_to_service_and_records_commission()
+    {
+        $owner = User::where('email', 'arsihapis@putribeautycare.site')->first();
+        $tenantId = $owner->tenant_id;
+        $outlet = Outlet::where('tenant_id', $tenantId)->first();
+
+        $sherly = Employee::create([
+            'tenant_id' => $tenantId,
+            'outlet_id' => $outlet->id,
+            'name' => 'Kak Sherly',
+            'role_title' => 'Terapis',
+            'is_active' => true,
+        ]);
+
+        $service = Product::create([
+            'tenant_id' => $tenantId,
+            'type' => 'service',
+            'name' => 'Facial Gold Sherly',
+            'slug' => 'facial-gold-sherly',
+            'sku' => 'SRV-GOLD-1',
+            'base_price' => 120000,
+            'commission_type' => 'fixed',
+            'commission_value' => 25000,
+            'is_available' => true,
+        ]);
+
+        $component = Livewire::actingAs($owner, 'web')
+            ->test(Terminal::class)
+            ->call('addToCart', $service->id)
+            ->call('assignItemEmployee', 0, $sherly->id)
+            ->call('incrementQty', 0)
+            ->set('paymentMethod', 'cash')
+            ->set('cashTendered', 300000)
+            ->call('processPayment')
+            ->assertSet('showSuccessModal', true);
+
+        $orderItem = OrderItem::where('tenant_id', $tenantId)
+            ->where('product_id', $service->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($orderItem);
+        $this->assertEquals($sherly->id, $orderItem->employee_id);
+        $this->assertEquals('Kak Sherly', $orderItem->employee_name);
+        $this->assertEquals(50000.0, (float) $orderItem->commission_amount); // 25.000 x 2 qty
     }
 }

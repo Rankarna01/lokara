@@ -110,6 +110,15 @@
                                                     {{ $item->variant_name }}
                                                 </span>
                                             @endif
+                                            @if($item->employee_name)
+                                                <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 text-[10px] font-semibold">
+                                                    <i class="fa-solid fa-user-tie text-[9px]"></i>
+                                                    <span>{{ $item->employee_name }}</span>
+                                                    @if((float) $item->commission_amount > 0)
+                                                        <span class="text-amber-600">(Fee: Rp {{ number_format($item->commission_amount, 0, ',', '.') }})</span>
+                                                    @endif
+                                                </span>
+                                            @endif
                                             @if($item->notes)
                                                 <span class="block text-[10px] text-amber-600 italic">
                                                     Catatan: {{ $item->notes }}

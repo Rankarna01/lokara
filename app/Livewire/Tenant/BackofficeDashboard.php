@@ -5,6 +5,7 @@ namespace App\Livewire\Tenant;
 use App\Livewire\Tenant\Concerns\HasCategories;
 use App\Livewire\Tenant\Concerns\HasCustomers;
 use App\Livewire\Tenant\Concerns\HasDiscounts;
+use App\Livewire\Tenant\Concerns\HasEmployees;
 use App\Livewire\Tenant\Concerns\HasExpenses;
 use App\Livewire\Tenant\Concerns\HasFinanceExports;
 use App\Livewire\Tenant\Concerns\HasOrdersAndVoid;
@@ -43,6 +44,7 @@ class BackofficeDashboard extends Component
     use HasCategories;
     use HasCustomers;
     use HasDiscounts;
+    use HasEmployees;
     use HasExpenses;
     use HasFinanceExports;
     use HasOrdersAndVoid;
@@ -481,9 +483,11 @@ class BackofficeDashboard extends Component
             ->first();
 
         $financeData = $this->getFinanceBreakdownData();
+        $employeesData = $tenant?->isSalon() ? $this->getEmployeesAndFeeData() : null;
 
         return view('livewire.tenant.backoffice-dashboard', [
             'tenant' => $tenant,
+            'employeesData' => $employeesData,
             'allTenants' => $allTenants,
             'outlets' => $outlets,
             'selectedOutlet' => $selectedOutlet,

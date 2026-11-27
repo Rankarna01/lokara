@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Pos\Concerns;
 
+use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
@@ -105,9 +106,16 @@ trait HasCartAndCheckout
 
     private function insertItemToCart(Product $product, string $name, float $price, string $variant)
     {
+        $commissionPerUnit = 0.0;
+        if ($product->type === 'service') {
+            $commissionPerUnit = $product->commission_type === 'percentage'
+                ? round(($price * (float) $product->commission_value) / 100)
+                : (float) $product->commission_value;
+        }
+
         $found = false;
         foreach ($this->cart as $key => $item) {
-            if ($item['product_id'] === $product->id && $item['variant'] === $variant) {
+            if ($item['product_id'] === $product->id && $item['variant'] === $variant && ($item['employee_id'] ?? null) === null) {
                 $this->cart[$key]['qty']++;
                 $this->cart[$key]['subtotal'] = $this->cart[$key]['qty'] * $this->cart[$key]['price'];
                 $found = true;
@@ -118,17 +126,44 @@ trait HasCartAndCheckout
         if (! $found) {
             $this->cart[] = [
                 'product_id' => $product->id,
+                'type' => $product->type ?? 'product',
                 'name' => $name,
                 'variant' => $variant,
                 'price' => $price,
                 'qty' => 1,
                 'subtotal' => $price,
+                'commission_per_unit' => $commissionPerUnit,
+                'employee_id' => null,
+                'employee_name' => null,
                 'image_url' => $product->image_url,
             ];
         }
 
         $this->calculateTotals();
         $this->notify("{$name} ditambahkan ke pesanan.");
+    }
+
+    public function assignItemEmployee(int $index, $employeeId): void
+    {
+        if (! isset($this->cart[$index])) {
+            return;
+        }
+
+        if (empty($employeeId)) {
+            $this->cart[$index]['employee_id'] = null;
+            $this->cart[$index]['employee_name'] = null;
+
+            return;
+        }
+
+        $user = Auth::user();
+        $tenantId = $user?->tenant_id ?? (Tenant::where('slug', 'kopiruangpagi')->first()?->id ?? Tenant::first()?->id);
+        $employee = Employee::where('tenant_id', $tenantId)->find((int) $employeeId);
+
+        if ($employee) {
+            $this->cart[$index]['employee_id'] = $employee->id;
+            $this->cart[$index]['employee_name'] = $employee->name;
+        }
     }
 
     public function incrementQty(int $index)
@@ -279,15 +314,21 @@ trait HasCartAndCheckout
             ]);
 
             foreach ($this->cart as $item) {
+                $unitCommission = (float) ($item['commission_per_unit'] ?? 0);
+                $totalCommission = $unitCommission * (float) $item['qty'];
+
                 OrderItem::create([
                     'tenant_id' => $tenantId,
                     'order_id' => $order->id,
                     'product_id' => $item['product_id'],
+                    'employee_id' => $item['employee_id'] ?? null,
+                    'employee_name' => $item['employee_name'] ?? null,
                     'product_name' => $item['name'],
                     'variant_name' => $item['variant'],
                     'qty' => $item['qty'],
                     'unit_price' => $item['price'],
                     'subtotal' => $item['subtotal'],
+                    'commission_amount' => $totalCommission,
                 ]);
 
                 // Decrement stock for retail items that track stock

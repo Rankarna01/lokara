@@ -11,6 +11,7 @@ use App\Livewire\Pos\Concerns\HasReceiptPrinting;
 use App\Livewire\Pos\Concerns\HasShiftAndCash;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\ExpenseCategory;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -248,9 +249,18 @@ class Terminal extends Component
 
         $totals = $this->calculateTotals();
 
+        $employees = $this->isSalonTenant()
+            ? Employee::where('tenant_id', $tenantId)
+                ->where('is_active', true)
+                ->when($this->selectedOutletId, fn ($q) => $q->where(fn ($sub) => $sub->whereNull('outlet_id')->orWhere('outlet_id', $this->selectedOutletId)))
+                ->orderBy('name')
+                ->get()
+            : collect();
+
         return view('livewire.pos.terminal', [
             'tenant' => $tenant,
             'isSalon' => $this->isSalonTenant(),
+            'employees' => $employees,
             'products' => $products,
             'categories' => $categories,
             'allMenuCount' => $allMenuCount,

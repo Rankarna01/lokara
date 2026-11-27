@@ -161,6 +161,19 @@
                         </div>
                     </button>
 
+                    @if($isSalon)
+                        <!-- Pegawai & Fee Mingguan (Khusus Jasa & Produk) -->
+                        <button wire:click="switchTab('employees')"
+                            class="w-full flex items-center rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'employees' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                            :class="sidebarOpen ? 'px-3 py-2.5 justify-between' : 'px-2 py-2.5 justify-center'"
+                            title="Pegawai & Fee">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-user-tie w-5 text-center shrink-0 {{ $activeTab === 'employees' ? 'text-orange-500' : 'text-slate-400' }}"></i>
+                                <span x-show="sidebarOpen" x-transition.opacity.duration.200ms>Pegawai & Fee</span>
+                            </div>
+                        </button>
+                    @endif
+
                     <!-- Pengaturan Outlet -->
                     <button wire:click="switchTab('settings')"
                         class="w-full flex items-center rounded-xl text-sm font-medium transition-colors {{ $activeTab === 'settings' ? 'bg-orange-50 text-orange-600 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
