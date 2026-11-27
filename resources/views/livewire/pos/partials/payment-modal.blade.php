@@ -18,6 +18,36 @@
                 <div class="text-2xl font-extrabold text-orange-600">Rp{{ number_format($totals['total'], 0, ',', '.') }}</div>
             </div>
 
+            @php
+                $serviceCartItems = collect($cart ?? [])->filter(fn ($i) => ($i['type'] ?? 'product') === 'service');
+            @endphp
+            @if (($isSalon ?? false) && $serviceCartItems->isNotEmpty())
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 max-h-36 overflow-y-auto">
+                    <div class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-tie text-orange-500"></i>
+                        <span>Pilih Pegawai / Terapis Pengerjaan Jasa:</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        @foreach ($cart as $idx => $cItem)
+                            @if (($cItem['type'] ?? 'product') === 'service')
+                                <div class="flex items-center justify-between gap-2 text-xs">
+                                    <span class="font-medium text-slate-700 truncate flex-1">{{ $cItem['qty'] }}x {{ $cItem['name'] }}</span>
+                                    <select wire:change="assignItemEmployee({{ $idx }}, $event.target.value)"
+                                            class="bg-white border {{ ! empty($cItem['employee_id']) ? 'border-orange-300 text-slate-900 font-semibold' : 'border-slate-300 text-slate-500' }} rounded-lg px-2 py-1 text-[11px] max-w-[170px] focus:outline-none focus:ring-1 focus:ring-orange-500">
+                                        <option value="">-- Pilih Pegawai --</option>
+                                        @foreach ($employees ?? [] as $emp)
+                                            <option value="{{ $emp->id }}" {{ (int) ($cItem['employee_id'] ?? 0) === $emp->id ? 'selected' : '' }}>
+                                                {{ $emp->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <!-- Payment Method Tabs -->
             @php
                 $tSettings = $tenant->settings ?? [];
